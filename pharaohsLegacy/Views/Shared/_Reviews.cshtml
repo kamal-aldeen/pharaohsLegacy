@@ -1,0 +1,963 @@
+﻿@using pharaohsLegacy.Extensions
+@model (List<pharaohsLegacy.Models.Review> Reviews, string Type, int ItemId, bool UserReviewed)
+
+@{
+    var reviews = Model.Reviews;
+    var type = Model.Type;
+    var itemId = Model.ItemId;
+    var hasReviewed = Model.UserReviewed;
+    var email = Context.Session.GetString("UserEmail");
+    var isGuest = string.IsNullOrEmpty(email) || email == "guest";
+    var isAdmin = Context.Session.GetString("UserRole") == "Admin";
+
+    double avgRating = reviews.Any() ? reviews.Average(r => r.Rating) : 0;
+    int totalReviews = reviews.Count;
+}
+
+<section class="reviews-section">
+    <h3 class="reviews-title">
+        <span class="reviews-icon">⭐</span>
+        @Html.L("Review_SectionTitle")
+        @if (totalReviews > 0)
+        {
+            <span class="reviews-avg">@avgRating.ToString("0.0") / 5</span>
+            <span class="reviews-count">(@totalReviews @Html.L("Review_ReviewsSuffix"))</span>
+        }
+    </h3>
+
+    <!-- Star Summary Bar -->
+    @if (totalReviews > 0)
+    {
+        <div class="rating-summary">
+            <div class="big-rating">@avgRating.ToString("0.0")</div>
+            <div class="big-stars">
+                @for (int i = 1; i <= 5; i++)
+                {
+                    <span class="@(i <= Math.Round(avgRating) ? "star filled" : "star")">★</span>
+                }
+            </div>
+            <div class="rating-bars">
+                @for (int star = 5; star >= 1; star--)
+                {
+                    var count = reviews.Count(r => r.Rating == star);
+                    var pct = totalReviews > 0 ? (count * 100 / totalReviews) : 0;
+                    <div class="bar-row">
+                        <span class="bar-label">@star ★</span>
+                        <div class="bar-track">
+                            <div class="bar-fill" style="width:@pct%"></div>
+                        </div>
+                        <span class="bar-count">@count</span>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- Write Review Form -->
+    @if (isAdmin)
+    {
+        <div class="already-reviewed">⚠️ @Html.L("Review_AdminsCannotWrite")</div>
+    }
+    else if (!isGuest && !hasReviewed)
+    {
+        <div class="write-review">
+            <h4>@Html.L("Review_WriteReview_Title")</h4>
+            <div class="star-picker" id="starPicker">
+                @for (int i = 1; i <= 5; i++)
+                {
+                    <span class="pick-star" data-value="@i">★</span>
+                }
+            </div>
+            <p class="star-hint">@Html.L("Review_ClickStarHint")</p>
+            <input type="hidden" id="selectedRating" value="0" />
+            <textarea id="reviewComment" placeholder="@Html.L("Review_CommentPlaceholder")" maxlength="500"></textarea>
+            <div class="char-count"><span id="charCount">0</span>/500</div>
+            <button class="btn-submit-review" onclick="submitReview('@type', @itemId)">@Html.L("Review_SubmitBtn")</button>
+            <p id="reviewMsg" class="review-msg"></p>
+        </div>
+    }
+    else if (hasReviewed)
+    {
+        <div class="already-reviewed">✅ @Html.L("Review_AlreadyReviewed")</div>
+    }
+    else if (isGuest)
+    {
+        <div class="login-to-review">
+            <a href="/User/Login">@Html.L("Common_Login")</a> @Html.L("Review_ToLeaveReview")
+        </div>
+    }
+
+    <!-- Filter by Rating -->
+    @if (reviews.Any())
+    {
+        <div class="reviews-filter">
+            <button class="rev-filter-btn active" onclick="filterByRating(0, this)">@Html.L("Booking_Filter_All")</button>
+            <button class="rev-filter-btn" onclick="filterByRating(5, this)">★★★★★</button>
+            <button class="rev-filter-btn" onclick="filterByRating(4, this)">★★★★☆</button>
+            <button class="rev-filter-btn" onclick="filterByRating(3, this)">★★★☆☆</button>
+            <button class="rev-filter-btn" onclick="filterByRating(2, this)">★★☆☆☆</button>
+            <button class="rev-filter-btn" onclick="filterByRating(1, this)">★☆☆☆☆</button>
+        </div>
+    }
+
+    <!-- Reviews List -->
+    <div class="reviews-list" id="reviewsList">
+        @if (!reviews.Any())
+        {
+            <p class="no-reviews">@Html.L("Review_NoReviewsYet")</p>
+        }
+        else
+        {
+            @foreach (var r in reviews.OrderByDescending(x => x.CreatedAt))
+            {
+                <div class="review-card" id="review-@r.Id" data-rating="@r.Rating">
+                    <div class="review-header">
+                        <div class="reviewer-avatar">@r.UserName[0]</div>
+                        <div class="reviewer-info">
+                            <span class="reviewer-name">
+                                @r.UserName
+                                @if (r.IsEdited)
+                                {
+                                    <span class="edited-badge">(@Html.L("Review_EditedBadge"))</span>
+                                }
+                            </span>
+                            <span class="reviewer-date">@r.CreatedAt.ToString("MMM dd, yyyy")</span>
+                        </div>
+                        <div class="review-stars" id="stars-display-@r.Id">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                <span class="@(i <= r.Rating ? "star filled" : "star")">★</span>
+                            }
+                        </div>
+
+                        <!-- Edit button: only for review owner -->
+                        @if (!isGuest && !isAdmin && r.UserEmail == email)
+                        {
+                            <button class="btn-edit-review" onclick="toggleEditForm(@r.Id)" id="edit-btn-@r.Id">✏️ @Html.L("Common_Edit")</button>
+                        }
+
+                        <!-- Report button: non-owner, non-admin, non-guest -->
+                        @if (!isGuest && !isAdmin && r.UserEmail != email)
+                        {
+                            <button class="btn-report-review" onclick="openReportModal(@r.Id)" title="@Html.L("Review_ReportTitle")">🚩</button>
+                        }
+                    </div>
+
+                    <!-- Comment text -->
+                    <p class="review-comment" id="comment-display-@r.Id">@r.Comment</p>
+
+                    <!-- Inline Edit Form (hidden) -->
+                    @if (!isGuest && !isAdmin && r.UserEmail == email)
+                    {
+                        <div class="edit-form" id="edit-form-@r.Id" style="display:none;">
+                            <div class="star-picker edit-star-picker" id="editStarPicker-@r.Id">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    <span class="pick-star @(i <= r.Rating ? "active" : "")"
+                                          data-value="@i"
+                                          data-review="@r.Id">★</span>
+                                }
+                            </div>
+                            <input type="hidden" id="editRating-@r.Id" value="@r.Rating" />
+                            <textarea id="editComment-@r.Id" maxlength="500">@r.Comment</textarea>
+                            <div class="char-count">
+                                <span id="editCharCount-@r.Id">@r.Comment.Length</span>/500
+                            </div>
+                            <div class="edit-actions">
+                                <button class="btn-save-edit" onclick="saveEdit(@r.Id)">💾 @Html.L("Common_Save")</button>
+                                <button class="btn-cancel-edit" onclick="toggleEditForm(@r.Id)">@Html.L("Common_Cancel")</button>
+                            </div>
+                            <p id="editMsg-@r.Id" class="review-msg"></p>
+                        </div>
+                    }
+
+                    <!-- Helpful Button -->
+                    <div class="review-footer">
+                        @if (!isGuest && !isAdmin)
+                        {
+                            <button class="btn-helpful" id="helpful-btn-@r.Id" onclick="toggleHelpful(@r.Id)">
+                                👍 @Html.L("Review_HelpfulLabel") (<span id="helpful-count-@r.Id">0</span>)
+                            </button>
+                        }
+                        else
+                        {
+                            <span class="helpful-display">👍 <span id="helpful-count-@r.Id">0</span></span>
+                        }
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</section>
+
+<!-- ══════════════ Report Modal ══════════════ -->
+<div id="reportModalOverlay" class="report-overlay" onclick="closeReportModal()"></div>
+<div id="reportModal" class="report-modal">
+    <h4>🚩 @Html.L("Review_ReportModal_Title")</h4>
+    <p class="report-subtitle">@Html.L("Review_ReportModal_Sub")</p>
+    <input type="hidden" id="reportReviewId" value="0" />
+    <div class="report-reasons">
+        <button class="reason-btn" onclick="selectReason(this, 'Spam or fake review')">@Html.L("Review_Reason_Spam")</button>
+        <button class="reason-btn" onclick="selectReason(this, 'Offensive language')">@Html.L("Review_Reason_Offensive")</button>
+        <button class="reason-btn" onclick="selectReason(this, 'Irrelevant content')">@Html.L("Review_Reason_Irrelevant")</button>
+        <button class="reason-btn" onclick="selectReason(this, 'Misinformation')">@Html.L("Review_Reason_Misinfo")</button>
+    </div>
+    <textarea id="reportReason" placeholder="@Html.L("Review_ReportPlaceholder")" maxlength="300"></textarea>
+    <div class="report-actions">
+        <button class="btn-submit-report" onclick="submitReport()">@Html.L("Review_SubmitReportBtn")</button>
+        <button class="btn-cancel-report" onclick="closeReportModal()">@Html.L("Common_Cancel")</button>
+    </div>
+    <p id="reportMsg" class="review-msg"></p>
+</div>
+
+<!-- ══════════════ Styles ══════════════ -->
+<style>
+    /* ── Filter ── */
+    .reviews-filter {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+
+    .rev-filter-btn {
+        background: transparent;
+        border: 1px solid rgba(212,175,55,0.3);
+        color: #aaa;
+        padding: 6px 14px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: .85rem;
+        transition: all .2s;
+    }
+
+        .rev-filter-btn:hover {
+            border-color: #d4af37;
+            color: #d4af37;
+        }
+
+        .rev-filter-btn.active {
+            background: rgba(212,175,55,0.15);
+            border-color: #d4af37;
+            color: #d4af37;
+        }
+
+    /* ── Section ── */
+    .reviews-section {
+        margin: 50px 0;
+        padding: 30px;
+        background: rgba(0,0,0,0.3);
+        border: 1px solid rgba(212,175,55,0.2);
+        border-radius: 12px;
+    }
+
+    .reviews-title {
+        color: #d4af37;
+        font-size: 1.4rem;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .reviews-avg {
+        font-size: 1.1rem;
+    }
+
+    .reviews-count {
+        color: #aaa;
+        font-size: 0.95rem;
+    }
+
+    /* ── Summary Bar ── */
+    .rating-summary {
+        display: flex;
+        align-items: center;
+        gap: 30px;
+        margin-bottom: 30px;
+        padding: 20px;
+        background: rgba(212,175,55,0.05);
+        border-radius: 10px;
+        flex-wrap: wrap;
+    }
+
+    .big-rating {
+        font-size: 3rem;
+        color: #d4af37;
+        font-weight: bold;
+    }
+
+    .big-stars .star {
+        font-size: 1.5rem;
+        color: #444;
+    }
+
+        .big-stars .star.filled {
+            color: #d4af37;
+        }
+
+    .rating-bars {
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .bar-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+    }
+
+    .bar-label {
+        color: #aaa;
+        font-size: .85rem;
+        width: 30px;
+    }
+
+    .bar-track {
+        flex: 1;
+        background: #333;
+        border-radius: 4px;
+        height: 8px;
+    }
+
+    .bar-fill {
+        background: #d4af37;
+        height: 100%;
+        border-radius: 4px;
+        transition: width .5s;
+    }
+
+    .bar-count {
+        color: #aaa;
+        font-size: .85rem;
+        width: 20px;
+    }
+
+    /* ── Write Review ── */
+    .write-review {
+        background: rgba(212,175,55,0.05);
+        border: 1px solid rgba(212,175,55,0.2);
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+
+        .write-review h4 {
+            color: #d4af37;
+            margin-bottom: 15px;
+        }
+
+    .star-picker {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 5px;
+    }
+
+    .pick-star {
+        font-size: 2rem;
+        cursor: pointer;
+        color: #555;
+        transition: color .2s,transform .2s;
+    }
+
+        .pick-star:hover, .pick-star.active {
+            color: #d4af37;
+            transform: scale(1.2);
+        }
+
+    .star-hint {
+        color: #888;
+        font-size: .85rem;
+        margin-bottom: 15px;
+    }
+
+    .write-review textarea, .edit-form textarea {
+        width: 100%;
+        min-height: 90px;
+        background: rgba(0,0,0,0.4);
+        border: 1px solid rgba(212,175,55,0.3);
+        border-radius: 8px;
+        color: #e8d5a3;
+        padding: 12px;
+        font-size: .95rem;
+        resize: vertical;
+        box-sizing: border-box;
+    }
+
+        .write-review textarea:focus, .edit-form textarea:focus {
+            outline: none;
+            border-color: #d4af37;
+        }
+
+    .char-count {
+        text-align: right;
+        color: #888;
+        font-size: .8rem;
+        margin-bottom: 12px;
+    }
+
+    .btn-submit-review {
+        background: linear-gradient(135deg,#d4af37,#f0c040);
+        color: #1a0a00;
+        border: none;
+        padding: 10px 28px;
+        border-radius: 6px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: opacity .2s;
+    }
+
+        .btn-submit-review:hover {
+            opacity: .85;
+        }
+
+    .review-msg {
+        margin-top: 10px;
+        font-size: .9rem;
+    }
+
+    /* ── Already reviewed / login ── */
+    .already-reviewed, .login-to-review {
+        background: rgba(212,175,55,0.08);
+        border: 1px solid rgba(212,175,55,0.2);
+        border-radius: 8px;
+        padding: 15px 20px;
+        color: #d4af37;
+        margin-bottom: 25px;
+    }
+
+        .login-to-review a {
+            color: #f0c040;
+        }
+
+    /* ── Review Card ── */
+    .review-card {
+        border-bottom: 1px solid rgba(212,175,55,0.1);
+        padding: 20px 0;
+    }
+
+        .review-card:last-child {
+            border-bottom: none;
+        }
+
+    .review-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+    }
+
+    .reviewer-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg,#d4af37,#8b6914);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #1a0a00;
+        font-weight: bold;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+        text-transform: uppercase;
+    }
+
+    .reviewer-name {
+        color: #e8d5a3;
+        font-weight: 600;
+        display: block;
+    }
+
+    .reviewer-date {
+        color: #888;
+        font-size: .8rem;
+    }
+
+    .edited-badge {
+        color: #888;
+        font-size: .75rem;
+        margin-left: 5px;
+    }
+
+    .review-stars .star {
+        color: #444;
+    }
+
+        .review-stars .star.filled {
+            color: #d4af37;
+        }
+
+    .review-comment {
+        color: #ccc;
+        line-height: 1.6;
+        margin: 0 0 12px;
+    }
+
+    .no-reviews {
+        color: #888;
+        font-style: italic;
+        text-align: center;
+        padding: 20px 0;
+    }
+
+    /* ── Edit Button ── */
+    .btn-edit-review {
+        margin-left: auto;
+        background: transparent;
+        border: 1px solid rgba(212,175,55,0.4);
+        color: #d4af37;
+        padding: 4px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: .82rem;
+        transition: all .2s;
+    }
+
+        .btn-edit-review:hover {
+            background: rgba(212,175,55,0.15);
+        }
+
+    /* ── Report Button ── */
+    .btn-report-review {
+        background: transparent;
+        border: none;
+        color: #888;
+        cursor: pointer;
+        font-size: 1rem;
+        padding: 4px 6px;
+        border-radius: 4px;
+        transition: all .2s;
+        margin-left: auto;
+    }
+
+        .btn-report-review:hover {
+            color: #e74c3c;
+        }
+
+    /* ── Inline Edit Form ── */
+    .edit-form {
+        background: rgba(212,175,55,0.04);
+        border: 1px solid rgba(212,175,55,0.2);
+        border-radius: 8px;
+        padding: 18px;
+        margin: 10px 0;
+    }
+
+    .edit-star-picker {
+        margin-bottom: 8px;
+    }
+
+        .edit-star-picker .pick-star {
+            font-size: 1.6rem;
+        }
+
+    .edit-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 8px;
+    }
+
+    .btn-save-edit {
+        background: linear-gradient(135deg,#d4af37,#f0c040);
+        color: #1a0a00;
+        border: none;
+        padding: 8px 20px;
+        border-radius: 6px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: opacity .2s;
+    }
+
+        .btn-save-edit:hover {
+            opacity: .85;
+        }
+
+    .btn-cancel-edit {
+        background: transparent;
+        border: 1px solid #555;
+        color: #aaa;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all .2s;
+    }
+
+        .btn-cancel-edit:hover {
+            border-color: #888;
+            color: #fff;
+        }
+
+    /* ── Helpful Button ── */
+    .review-footer {
+        margin-top: 8px;
+    }
+
+    .btn-helpful {
+        background: transparent;
+        border: 1px solid rgba(212,175,55,0.25);
+        color: #aaa;
+        padding: 5px 14px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: .82rem;
+        transition: all .2s;
+    }
+
+        .btn-helpful:hover {
+            border-color: #d4af37;
+            color: #d4af37;
+        }
+
+        .btn-helpful.voted {
+            background: rgba(212,175,55,0.15);
+            border-color: #d4af37;
+            color: #d4af37;
+        }
+
+    .helpful-display {
+        color: #888;
+        font-size: .82rem;
+    }
+
+    /* ── Report Modal ── */
+    .report-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.6);
+        z-index: 1000;
+        backdrop-filter: blur(3px);
+    }
+
+    .report-modal {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%,-50%);
+        background: #1a0f00;
+        border: 1px solid rgba(212,175,55,0.3);
+        border-radius: 12px;
+        padding: 30px;
+        width: 90%;
+        max-width: 420px;
+        z-index: 1001;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    }
+
+        .report-modal h4 {
+            color: #d4af37;
+            margin-bottom: 6px;
+            font-size: 1.15rem;
+        }
+
+    .report-subtitle {
+        color: #aaa;
+        font-size: .85rem;
+        margin-bottom: 16px;
+    }
+
+    .report-reasons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 14px;
+    }
+
+    .reason-btn {
+        background: transparent;
+        border: 1px solid rgba(212,175,55,0.3);
+        color: #aaa;
+        padding: 6px 12px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: .82rem;
+        transition: all .2s;
+    }
+
+        .reason-btn:hover {
+            border-color: #d4af37;
+            color: #d4af37;
+        }
+
+        .reason-btn.active {
+            background: rgba(212,175,55,0.15);
+            border-color: #d4af37;
+            color: #d4af37;
+        }
+
+    .report-modal textarea {
+        width: 100%;
+        min-height: 80px;
+        background: rgba(0,0,0,0.4);
+        border: 1px solid rgba(212,175,55,0.3);
+        border-radius: 8px;
+        color: #e8d5a3;
+        padding: 10px;
+        font-size: .9rem;
+        resize: vertical;
+        box-sizing: border-box;
+        margin-bottom: 14px;
+    }
+
+        .report-modal textarea:focus {
+            outline: none;
+            border-color: #d4af37;
+        }
+
+    .report-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn-submit-report {
+        background: linear-gradient(135deg,#c0392b,#e74c3c);
+        color: #fff;
+        border: none;
+        padding: 9px 22px;
+        border-radius: 6px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: opacity .2s;
+    }
+
+        .btn-submit-report:hover {
+            opacity: .85;
+        }
+
+    .btn-cancel-report {
+        background: transparent;
+        border: 1px solid #555;
+        color: #aaa;
+        padding: 9px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all .2s;
+    }
+
+        .btn-cancel-report:hover {
+            border-color: #888;
+            color: #fff;
+        }
+</style>
+
+<!-- ══════════════ Scripts ══════════════ -->
+<script>
+    (function () {
+        /* ── Star Picker (Write Review) ── */
+        const stars = document.querySelectorAll('#starPicker .pick-star');
+        stars.forEach(s => {
+            s.addEventListener('mouseover', () => highlightStars(stars, +s.dataset.value));
+            s.addEventListener('mouseout',  () => highlightStars(stars, +document.getElementById('selectedRating').value));
+            s.addEventListener('click', () => {
+                document.getElementById('selectedRating').value = s.dataset.value;
+                highlightStars(stars, +s.dataset.value);
+                document.querySelector('.star-hint').textContent =
+                    s.dataset.value + ' star' + (s.dataset.value > 1 ? 's' : '');
+            });
+        });
+
+        /* ── Char counter (Write Review) ── */
+        const ta = document.getElementById('reviewComment');
+        if (ta) {
+            ta.addEventListener('input', () => {
+                document.getElementById('charCount').textContent = ta.value.length;
+            });
+        }
+
+        /* ── Edit Star Pickers ── */
+        document.querySelectorAll('.edit-star-picker').forEach(picker => {
+            const pickStars = picker.querySelectorAll('.pick-star');
+            const reviewId  = pickStars[0]?.dataset.review;
+            pickStars.forEach(s => {
+                s.addEventListener('mouseover', () => highlightStars(pickStars, +s.dataset.value));
+                s.addEventListener('mouseout',  () => highlightStars(pickStars, +document.getElementById('editRating-' + reviewId).value));
+                s.addEventListener('click', () => {
+                    document.getElementById('editRating-' + reviewId).value = s.dataset.value;
+                    highlightStars(pickStars, +s.dataset.value);
+                });
+            });
+        });
+
+        /* ── Edit Char Counters ── */
+        document.querySelectorAll('[id^="editComment-"]').forEach(el => {
+            const reviewId = el.id.split('-')[1];
+            el.addEventListener('input', () => {
+                document.getElementById('editCharCount-' + reviewId).textContent = el.value.length;
+            });
+        });
+
+        /* ── Load Helpful Data on Page Load ── */
+        const type   = '@type';
+        const itemId = @itemId;
+        fetch(`/Review/GetHelpfulData?type=${type}&itemId=${itemId}`)
+            .then(r => r.json())
+            .then(data => {
+                // update counts
+                Object.entries(data.counts).forEach(([id, count]) => {
+                    const el = document.getElementById('helpful-count-' + id);
+                    if (el) el.textContent = count;
+                });
+                // mark user's votes
+                data.userVotes.forEach(id => {
+                    const btn = document.getElementById('helpful-btn-' + id);
+                    if (btn) btn.classList.add('voted');
+                });
+            })
+            .catch(() => {});
+
+    })();
+
+    /* ── Helpers ── */
+    function highlightStars(stars, val) {
+        stars.forEach(s => s.classList.toggle('active', +s.dataset.value <= val));
+    }
+
+    function showMsg(el, text, type) {
+        el.textContent = text;
+        el.style.color = type === 'ok' ? '#27ae60' : type === 'warn' ? '#f39c12' : '#e74c3c';
+    }
+
+    /* ── Submit Review ── */
+    function submitReview(type, itemId) {
+        const rating  = document.getElementById('selectedRating').value;
+        const comment = document.getElementById('reviewComment').value.trim();
+        const msg     = document.getElementById('reviewMsg');
+
+        if (rating < 1) { showMsg(msg, '⚠️ Please select a star rating.', 'warn'); return; }
+        if (!comment)   { showMsg(msg, '⚠️ Please write a comment.', 'warn');       return; }
+
+        fetch('/Review/Add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `type=${type}&itemId=${itemId}&rating=${rating}&comment=${encodeURIComponent(comment)}`
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                showMsg(msg, '✅ Review submitted! Refreshing...', 'ok');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showMsg(msg, '❌ ' + data.message, 'err');
+            }
+        });
+    }
+
+    /* ── Toggle Inline Edit Form ── */
+    function toggleEditForm(reviewId) {
+        const form = document.getElementById('edit-form-' + reviewId);
+        const btn  = document.getElementById('edit-btn-' + reviewId);
+        const isOpen = form.style.display !== 'none';
+        form.style.display = isOpen ? 'none' : 'block';
+        btn.textContent    = isOpen ? '✏️ Edit' : '✖ Cancel';
+    }
+
+        /* ── Save Edit ── */
+    function saveEdit(reviewId) {
+        const rating  = document.getElementById('editRating-'  + reviewId).value;
+        const comment = document.getElementById('editComment-' + reviewId).value.trim();
+        const msg     = document.getElementById('editMsg-'     + reviewId);
+
+        if (rating < 1) { showMsg(msg, '⚠️ Please select a star rating.', 'warn'); return; }
+        if (!comment)   { showMsg(msg, '⚠️ Please write a comment.', 'warn');       return; }
+
+        fetch('/Review/Edit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `id=${reviewId}&rating=${rating}&comment=${encodeURIComponent(comment)}`
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                showMsg(msg, '✅ Review updated! Refreshing...', 'ok');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showMsg(msg, '❌ ' + data.message, 'err');
+            }
+        });
+    }
+
+    /* ── Helpful Toggle ── */
+    function toggleHelpful(reviewId) {
+        fetch('/Review/ToggleHelpful', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `reviewId=${reviewId}`
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const btn   = document.getElementById('helpful-btn-'   + reviewId);
+                const count = document.getElementById('helpful-count-' + reviewId);
+                if (btn)   btn.classList.toggle('voted', data.isHelpful);
+                if (count) count.textContent = data.count;
+            }
+        });
+    }
+
+    /* ── Filter by Rating ── */
+    function filterByRating(rating, btn) {
+        document.querySelectorAll('.rev-filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.review-card').forEach(card => {
+            card.style.display = (rating === 0 || +card.dataset.rating === rating) ? '' : 'none';
+        });
+    }
+
+    /* ── Report Modal ── */
+    function openReportModal(reviewId) {
+        document.getElementById('reportReviewId').value = reviewId;
+        document.getElementById('reportReason').value   = '';
+        document.getElementById('reportMsg').textContent = '';
+        document.querySelectorAll('.reason-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('reportModalOverlay').style.display = 'block';
+        document.getElementById('reportModal').style.display        = 'block';
+    }
+
+    function closeReportModal() {
+        document.getElementById('reportModalOverlay').style.display = 'none';
+        document.getElementById('reportModal').style.display        = 'none';
+    }
+
+    function selectReason(btn, reason) {
+        document.querySelectorAll('.reason-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('reportReason').placeholder = reason;
+        btn.dataset.reason = reason;
+    }
+
+    function submitReport() {
+        const reviewId = document.getElementById('reportReviewId').value;
+        const msg      = document.getElementById('reportMsg');
+
+        // Priority: typed text → selected reason button
+        let reason = document.getElementById('reportReason').value.trim();
+        if (!reason) {
+            const activeBtn = document.querySelector('.reason-btn.active');
+            reason = activeBtn ? activeBtn.dataset.reason : '';
+        }
+
+        if (!reason) {
+            showMsg(msg, '⚠️ Please select or describe a reason.', 'warn');
+            return;
+        }
+
+        fetch('/Review/Report', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `reviewId=${reviewId}&reason=${encodeURIComponent(reason)}`
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                showMsg(msg, '✅ Report submitted. Thank you!', 'ok');
+                setTimeout(closeReportModal, 1800);
+            } else {
+                showMsg(msg, '❌ ' + data.message, 'err');
+            }
+        });
+    }
+</script>

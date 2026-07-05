@@ -1,0 +1,17 @@
+﻿@using pharaohsLegacy.Extensions
+@{
+    ViewData["Title"] = "Account";
+}
+
+
+<div class="text-center">
+    <h1 class="display-4">@Html.L("Welcome_Title")</h1>
+
+    <a asp-controller="User" asp-action="Login" class="btn btn-primary">
+        @Html.L("Common_Login")
+    </a>
+
+    <a asp-controller="User" asp-action="Register" class="btn btn-success">
+        @Html.L("Common_Register")
+    </a>
+</div>

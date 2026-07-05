@@ -1,0 +1,660 @@
+﻿/* ══════════════════════════════════════
+   DYNASTY PAGE — Egyptian Dark Gold Theme
+   ══════════════════════════════════════ */
+
+
+
+:root {
+    --gold: #c9a84c;
+    --gold2: #f0d080;
+    --dark: #0d0d0d;
+    --dark2: #1a1505;
+    --dark3: #141414;
+    --card-bg: #111106;
+    --border: rgba(201,168,76,0.25);
+}
+
+.dynasty-page, .dyn-details-page {
+    background: #0d0702;
+    color: #e8d9b0;
+    min-height: 100vh;
+}
+
+/* ── HERO ── */
+.dynasty-hero {
+    position: relative;
+    height: 60vh;
+    min-height: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.dyn-hero-bg {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #0d0800 0%, #1a1000 40%, #0d0500 100%);
+}
+
+    .dyn-hero-bg::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 5 L55 50 H5Z' fill='none' stroke='rgba(201,168,76,0.06)' stroke-width='1'/%3E%3C/svg%3E");
+        background-size: 60px 60px;
+    }
+
+.dyn-hero-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding: 0 20px;
+}
+
+.dyn-hero-label {
+    font-size: .75rem;
+    letter-spacing: .3em;
+    color: #c9a227;
+    text-transform: uppercase;
+    opacity: .8;
+}
+
+.dyn-hero-title {
+    font-size: clamp(2.2rem,6vw,4rem);
+    font-weight: 800;
+    color: #e8d9b0;
+    margin: .5rem 0 1rem;
+    line-height: 1.1;
+}
+
+    .dyn-hero-title .gold {
+        color: #c9a227;
+    }
+
+.dyn-hero-sub {
+    max-width: 600px;
+    margin: 0 auto 2rem;
+    color: rgba(232,217,176,0.7);
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.dyn-stats {
+    display: flex;
+    gap: 2.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.dyn-stat {
+    text-align: center;
+}
+
+.dyn-stat-num {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #c9a227;
+}
+
+.dyn-stat span:last-child {
+    font-size: .8rem;
+    color: rgba(232,217,176,0.6);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+}
+
+/* ── FILTER BAR ── */
+.dyn-filter-bar {
+    display: flex;
+    gap: .75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 2rem 1rem;
+    background: #1a0e05;
+    border-bottom: 1px solid rgba(201,168,76,0.25);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.dyn-filter-btn {
+    background: transparent;
+    border: 1px solid rgba(201,168,76,0.25);
+    color: rgba(232,217,176,0.7);
+    padding: .45rem 1.2rem;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: .85rem;
+    transition: all .25s;
+}
+
+    .dyn-filter-btn:hover, .dyn-filter-btn.active {
+        background: #c9a227;
+        border-color: #c9a227;
+        color: #000;
+        font-weight: 600;
+    }
+
+/* ── GRID SECTION ── */
+.dyn-grid-section {
+    padding: 3rem 0 5rem;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+}
+
+.dyn-era-block {
+    margin-bottom: 4rem;
+}
+
+.dyn-era-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.dyn-era-line {
+    flex: 1;
+    height: 1px;
+    background: rgba(201,168,76,0.25);
+}
+
+.dyn-era-title {
+    font-size: 1.3rem;
+    color: #c9a227;
+    white-space: nowrap;
+    font-weight: 700;
+    letter-spacing: .05em;
+}
+
+.dyn-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(270px,1fr));
+    gap: 1.5rem;
+}
+
+.dyn-card {
+    background: var(--card-bg);
+    border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 12px;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    transition: transform .25s, box-shadow .25s;
+    display: flex;
+    flex-direction: column;
+}
+
+    .dyn-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 12px 40px rgba(201,168,76,0.2);
+        border-color: #c9a227;
+    }
+
+.dyn-card-img-wrap {
+    position: relative;
+    height: 180px;
+    overflow: hidden;
+}
+
+    .dyn-card-img-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform .4s;
+    }
+
+.dyn-card:hover .dyn-card-img-wrap img {
+    transform: scale(1.06);
+}
+
+.dyn-card-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,.7) 0%, transparent 60%);
+}
+
+.dyn-card-period-badge {
+    position: absolute;
+    bottom: .6rem;
+    left: .8rem;
+    background: rgba(0,0,0,.7);
+    border: 1px solid #c9a227;
+    color: #c9a227;
+    font-size: .72rem;
+    padding: .25rem .7rem;
+    border-radius: 20px;
+}
+
+.dyn-card-body {
+    padding: 1.2rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+}
+
+.dyn-card-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #e8d9b0;
+}
+
+.dyn-card-capital {
+    font-size: .8rem;
+    color: rgba(232,217,176,0.6);
+}
+
+.dyn-card-desc {
+    font-size: .85rem;
+    color: rgba(232,217,176,0.75);
+    line-height: 1.5;
+    flex: 1;
+}
+
+.dyn-card-link {
+    font-size: .8rem;
+    color: #c9a227;
+    font-weight: 600;
+    margin-top: .5rem;
+}
+
+/* ── MINI TIMELINE ── */
+.dyn-timeline-section {
+    background: #1a0e05;
+    padding: 4rem 0;
+    border-top: 1px solid rgba(201,168,76,0.25);
+}
+
+.section-title {
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #e8d9b0;
+    margin-bottom: .5rem;
+}
+
+.section-sub {
+    text-align: center;
+    color: rgba(232,217,176,0.6);
+    font-size: .9rem;
+    margin-bottom: 2.5rem;
+}
+
+.section-title .gold {
+    color: #c9a227;
+}
+
+.dyn-timeline-wrap {
+    overflow-x: auto;
+    padding-bottom: 1rem;
+}
+
+.dyn-timeline-track {
+    position: relative;
+    height: 56px;
+    min-width: 800px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 8px;
+    border: 1px solid rgba(201,168,76,0.25);
+}
+
+.dyn-tl-segment {
+    position: absolute;
+    top: 4px;
+    height: calc(100% - 8px);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    text-decoration: none;
+    transition: filter .2s, transform .2s;
+    cursor: pointer;
+}
+
+    .dyn-tl-segment:hover {
+        filter: brightness(1.3);
+        transform: scaleY(1.08);
+        z-index: 5;
+    }
+
+.dyn-tl-label {
+    font-size: .6rem;
+    color: #000;
+    font-weight: 700;
+    text-align: center;
+    padding: 0 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.dyn-tl-markers {
+    position: relative;
+    min-width: 800px;
+    height: 30px;
+    margin-top: .5rem;
+}
+
+.dyn-tl-marker {
+    position: absolute;
+    transform: translateX(-50%);
+    text-align: center;
+}
+
+    .dyn-tl-marker::before {
+        content: '';
+        display: block;
+        width: 1px;
+        height: 8px;
+        background: rgba(201,168,76,0.25);
+        margin: 0 auto 3px;
+    }
+
+    .dyn-tl-marker span {
+        font-size: .65rem;
+        color: rgba(232,217,176,0.5);
+        white-space: nowrap;
+    }
+
+.dyn-tl-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 1.5rem;
+}
+
+.dyn-legend-item {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .8rem;
+    color: rgba(232,217,176,0.7);
+}
+
+.dyn-legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+/* ══════════════════════════════════════
+   DETAILS PAGE
+   ══════════════════════════════════════ */
+.dyn-det-hero {
+    position: relative;
+    height: 55vh;
+    min-height: 380px;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: flex-end;
+}
+
+.dyn-det-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,.9) 0%, rgba(0,0,0,.4) 60%, rgba(0,0,0,.2) 100%);
+}
+
+.dyn-det-hero-content {
+    position: relative;
+    z-index: 2;
+    padding: 2.5rem;
+    width: 100%;
+}
+
+.dyn-back-btn {
+    display: inline-block;
+    color: #c9a227;
+    text-decoration: none;
+    font-size: .85rem;
+    margin-bottom: 1rem;
+    border: 1px solid rgba(201,168,76,0.25);
+    padding: .3rem .9rem;
+    border-radius: 20px;
+    transition: all .2s;
+}
+
+    .dyn-back-btn:hover {
+        background: #c9a227;
+        color: #000;
+    }
+
+.dyn-det-era-badge {
+    display: inline-block;
+    background: rgba(201,168,76,0.2);
+    border: 1px solid #c9a227;
+    color: #c9a227;
+    font-size: .75rem;
+    padding: .25rem .8rem;
+    border-radius: 20px;
+    margin-bottom: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+}
+
+.dyn-det-hero-content h1 {
+    font-size: clamp(1.8rem,5vw,3.5rem);
+    font-weight: 800;
+    color: #e8d9b0;
+    margin-bottom: .75rem;
+}
+
+.dyn-det-hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    font-size: .9rem;
+    color: rgba(232,217,176,0.75);
+}
+
+.dyn-det-body {
+    padding: 3rem 1.5rem 5rem;
+}
+
+.dyn-det-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.dyn-det-wide {
+    grid-column: 1/-1;
+}
+
+.dyn-det-card {
+    background: var(--card-bg);
+    border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+    .dyn-det-card h3 {
+        font-size: 1rem;
+        color: #c9a227;
+        margin-bottom: 1rem;
+        font-weight: 700;
+        border-bottom: 1px solid rgba(201,168,76,0.25);
+        padding-bottom: .5rem;
+    }
+
+    .dyn-det-card p {
+        color: rgba(232,217,176,0.8);
+        line-height: 1.7;
+        font-size: .95rem;
+    }
+
+.dyn-facts-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+}
+
+    .dyn-facts-list li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: .9rem;
+        border-bottom: 1px solid rgba(201,168,76,0.25);
+        padding-bottom: .5rem;
+    }
+
+        .dyn-facts-list li span {
+            color: rgba(232,217,176,0.55);
+        }
+
+        .dyn-facts-list li strong {
+            color: #e8d9b0;
+        }
+
+/* Related sections */
+.dyn-related-section {
+    margin-bottom: 3.5rem;
+}
+
+.dyn-related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px,1fr));
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.dyn-related-card {
+    background: var(--card-bg);
+    border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 10px;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    transition: all .25s;
+}
+
+    .dyn-related-card:hover {
+        border-color: #c9a227;
+        transform: translateY(-4px);
+    }
+
+    .dyn-related-card img {
+        width: 100%;
+        height: 130px;
+        object-fit: cover;
+    }
+
+.dyn-related-info {
+    padding: .8rem;
+}
+
+    .dyn-related-info h4 {
+        font-size: .9rem;
+        color: #e8d9b0;
+        margin-bottom: .25rem;
+    }
+
+    .dyn-related-info p {
+        font-size: .75rem;
+        color: rgba(232,217,176,0.55);
+    }
+
+.dyn-empty-state {
+    text-align: center;
+    padding: 3rem;
+    border: 1px dashed rgba(201,168,76,0.25);
+    border-radius: 12px;
+}
+
+    .dyn-empty-state span {
+        font-size: 3rem;
+        display: block;
+        margin-bottom: 1rem;
+    }
+
+    .dyn-empty-state p {
+        color: rgba(232,217,176,0.5);
+    }
+
+/* Prev/Next nav */
+.dyn-nav-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(201,168,76,0.25);
+}
+
+.dyn-nav-btn {
+    display: flex;
+    flex-direction: column;
+    background: var(--card-bg);
+    border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 10px;
+    padding: 1rem 1.5rem;
+    text-decoration: none;
+    color: inherit;
+    transition: all .25s;
+    max-width: 45%;
+}
+
+    .dyn-nav-btn:hover {
+        border-color: #c9a227;
+        background: rgba(201,168,76,0.08);
+    }
+
+    .dyn-nav-btn span {
+        font-size: .75rem;
+        color: rgba(232,217,176,0.5);
+        margin-bottom: .25rem;
+    }
+
+    .dyn-nav-btn strong {
+        font-size: .95rem;
+        color: #e8d9b0;
+    }
+
+.dyn-nav-next {
+    align-items: flex-end;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .dyn-det-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dyn-det-wide {
+        grid-column: 1;
+    }
+
+    .dyn-nav-buttons {
+        flex-direction: column;
+    }
+
+    .dyn-nav-btn {
+        max-width: 100%;
+    }
+
+    .dyn-cards-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .dyn-cards-grid {
+        grid-template-columns: 1fr;
+    }
+}

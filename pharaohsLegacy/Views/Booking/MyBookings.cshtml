@@ -1,0 +1,1275 @@
+@using pharaohsLegacy.Extensions
+@model List<pharaohsLegacy.Models.Booking>
+@{
+    ViewData["Title"] = "My Bookings";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <style>
+        @@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cairo:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --gold: #c9a84c;
+            --gold-light: #e8c96a;
+            --gold-dark: #9a7a2e;
+            --bg-deep: #0d0a05;
+            --bg-card: #16110a;
+            --bg-card2: #1e1608;
+            --border: rgba(201,168,76,0.18);
+            --border-bright: rgba(201,168,76,0.45);
+            --text-main: #f0e6c8;
+            --text-muted: #9e8e6a;
+            --red: #c0392b;
+            --green: #27ae60;
+            --yellow: #f39c12;
+            --shadow-gold: 0 0 30px rgba(201,168,76,0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        .bookings-page {
+            min-height: 100vh;
+            background: var(--bg-deep);
+            font-family: 'Cairo', sans-serif;
+            color: var(--text-main);
+            padding-bottom: 80px;
+        }
+
+    
+        .bookings-hero {
+            position: relative;
+            padding: 60px 20px 50px;
+            text-align: center;
+            overflow: hidden;
+            background: linear-gradient(180deg, #1a1205 0%, var(--bg-deep) 100%);
+        }
+
+            .bookings-hero::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                background: radial-gradient(ellipse 60% 50% at 50% 0%, rgba(201,168,76,0.12) 0%, transparent 70%);
+                pointer-events: none;
+            }
+
+        .hero-hieroglyph {
+            font-size: 3rem;
+            margin-bottom: 12px;
+            display: block;
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @@keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        .bookings-hero h1 {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(1.8rem, 4vw, 2.8rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--gold-light), #c9a227, var(--gold-dark));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        .bookings-hero p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+   
+        .summary-bar {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            padding: 0 20px;
+            margin: -20px auto 40px;
+            max-width: 900px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .summary-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(201,168,76,0.15);
+            border-radius: 16px;
+            padding: 18px 28px;
+            text-align: center;
+            min-width: 140px;
+            flex: 1;
+            transition: border-color .3s, transform .3s;
+            box-shadow: var(--shadow-gold);
+        }
+
+            .summary-card:hover {
+                border-color: #c9a227;
+                transform: translateY(-3px);
+            }
+
+            .summary-card .s-num {
+                font-family: 'Cinzel', serif;
+                font-size: 1.8rem;
+                font-weight: 700;
+                color: var(--gold-light);
+            }
+
+            .summary-card .s-label {
+                font-size: 0.78rem;
+                color: var(--text-muted);
+                margin-top: 4px;
+                letter-spacing: 1px;
+                text-transform: uppercase;
+            }
+
+   
+        .filter-wrap {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 0 20px;
+            margin-bottom: 36px;
+        }
+
+        .filter-btn {
+            background: transparent;
+            border: 1px solid rgba(201,168,76,0.15);
+            color: var(--text-muted);
+            padding: 9px 22px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 600;
+            transition: all .3s;
+            letter-spacing: .5px;
+        }
+
+            .filter-btn:hover {
+                border-color: #c9a227;
+                color: var(--gold-light);
+            }
+
+            .filter-btn.active {
+                background: linear-gradient(135deg, var(--gold-dark), #c9a227);
+                border-color: #c9a227;
+                color: #0d0a05;
+                box-shadow: 0 4px 20px rgba(201,168,76,0.35);
+            }
+
+   
+        .bookings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 24px;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+    
+        .booking-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(201,168,76,0.15);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: transform .35s ease, box-shadow .35s ease, border-color .35s ease;
+            position: relative;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+            .booking-card.visible {
+                opacity: 1;
+                transform: translateY(0);
+                transition: opacity .5s ease, transform .5s ease, box-shadow .35s ease, border-color .35s ease;
+            }
+
+            .booking-card:hover {
+                transform: translateY(-6px);
+                box-shadow: 0 20px 50px rgba(0,0,0,0.6), 0 0 30px rgba(201,168,76,0.1);
+                border-color: var(--border-bright);
+            }
+
+            .booking-card.cancelling {
+                animation: cardFadeOut .5s ease forwards;
+            }
+
+        @@keyframes cardFadeOut {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+                max-height: 600px;
+            }
+
+            50% {
+                opacity: .3;
+                transform: scale(0.96);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(0.9);
+                max-height: 0;
+                padding: 0;
+                margin: 0;
+            }
+        }
+
+  
+        .card-banner {
+            position: relative;
+            height: 140px;
+            background: linear-gradient(135deg, #1e1608, #2a1e0a);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+            .card-banner img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                opacity: .45;
+                transition: opacity .4s;
+            }
+
+        .booking-card:hover .card-banner img {
+            opacity: .65;
+        }
+
+        .card-banner-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, transparent 30%, var(--bg-card) 100%);
+        }
+
+        .card-type-icon {
+            position: absolute;
+            top: 12px;
+            left: 16px;
+            font-size: 1.6rem;
+            filter: drop-shadow(0 2px 8px rgba(0,0,0,.8));
+        }
+
+        .status-badge {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .badge-confirmed {
+            background: rgba(39,174,96,.2);
+            color: #2ecc71;
+            border: 1px solid rgba(39,174,96,.4);
+        }
+
+        .badge-cancelled {
+            background: rgba(192,57,43,.2);
+            color: #e74c3c;
+            border: 1px solid rgba(192,57,43,.4);
+        }
+
+        .badge-refunded {
+            background: rgba(52,152,219,.2);
+            color: #3498db;
+            border: 1px solid rgba(52,152,219,.4);
+        }
+
+   
+        .card-body {
+            padding: 20px;
+        }
+
+        .card-place-name {
+            font-family: 'Cinzel', serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--gold-light);
+            margin-bottom: 14px;
+            line-height: 1.3;
+        }
+
+        .card-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .meta-item {
+            background: var(--bg-card2);
+            border: 1px solid rgba(201,168,76,0.15);
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+
+            .meta-item .mi-label {
+                font-size: 0.68rem;
+                color: var(--text-muted);
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                margin-bottom: 4px;
+            }
+
+            .meta-item .mi-value {
+                font-size: 0.9rem;
+                font-weight: 600;
+                color: var(--text-main);
+            }
+
+            .meta-item.price .mi-value {
+                color: var(--gold-light);
+                font-family: 'Cinzel', serif;
+            }
+
+    
+        .countdown-wrap {
+            background: var(--bg-card2);
+            border: 1px solid rgba(201,168,76,0.15);
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin-bottom: 16px;
+        }
+
+        .countdown-label {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+            .countdown-label .pulse-dot {
+                width: 7px;
+                height: 7px;
+                border-radius: 50%;
+                background: var(--green);
+                animation: pulse 1.5s infinite;
+            }
+
+        @@keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: .4;
+                transform: scale(1.4);
+            }
+        }
+
+        .countdown-digits {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+
+        .digit-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+        }
+
+        .digit-num {
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gold-light);
+            background: rgba(201,168,76,0.08);
+            border: 1px solid rgba(201,168,76,0.2);
+            border-radius: 8px;
+            width: 100%;
+            text-align: center;
+            padding: 6px 0;
+            line-height: 1;
+            transition: color .5s;
+        }
+
+        .digit-block.urgent .digit-num {
+            color: #e74c3c;
+            border-color: rgba(231,76,60,.3);
+        }
+
+        .digit-block.warning .digit-num {
+            color: var(--yellow);
+            border-color: rgba(243,156,18,.3);
+        }
+
+        .digit-sep {
+            font-size: 1.3rem;
+            color: var(--gold-dark);
+            align-self: center;
+            margin-top: -6px;
+        }
+
+        .digit-lbl {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-top: 4px;
+            letter-spacing: .5px;
+        }
+
+        .progress-bar-wrap {
+            height: 5px;
+            background: rgba(255,255,255,0.07);
+            border-radius: 99px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 99px;
+            transition: width 1s linear, background .5s;
+        }
+
+        .expired-notice {
+            text-align: center;
+            padding: 10px;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            font-style: italic;
+        }
+
+    
+        .btn-cancel {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            border: 1px solid rgba(192,57,43,0.5);
+            color: #e74c3c;
+            border-radius: 12px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all .3s;
+            letter-spacing: .5px;
+        }
+
+            .btn-cancel:hover:not(:disabled) {
+                background: rgba(192,57,43,0.15);
+                border-color: #e74c3c;
+                box-shadow: 0 0 20px rgba(192,57,43,0.2);
+            }
+
+            .btn-cancel:disabled {
+                opacity: .35;
+                cursor: not-allowed;
+                border-color:;
+                color: var(--text-muted);
+            }
+
+ 
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            grid-column: 1 / -1;
+        }
+
+            .empty-state.show {
+                display: flex;
+            }
+
+        .empty-icon {
+            font-size: 4rem;
+            opacity: .4;
+        }
+
+        .empty-state h3 {
+            font-family: 'Cinzel', serif;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .empty-state p {
+            color: var(--text-muted);
+            font-size: .88rem;
+        }
+
+        .btn-explore {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, var(--gold-dark), #c9a227);
+            color: #0d0a05;
+            border-radius: 30px;
+            font-weight: 700;
+            font-family: 'Cairo', sans-serif;
+            text-decoration: none;
+            transition: all .3s;
+        }
+
+            .btn-explore:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(201,168,76,.4);
+            }
+
+  
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.8);
+            backdrop-filter: blur(6px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .3s;
+        }
+
+            .modal-overlay.open {
+                opacity: 1;
+                pointer-events: all;
+            }
+
+        .modal-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-bright);
+            border-radius: 24px;
+            padding: 40px 36px;
+            max-width: 420px;
+            width: 90%;
+            text-align: center;
+            transform: scale(.9);
+            transition: transform .3s;
+            box-shadow: 0 30px 80px rgba(0,0,0,.7), 0 0 40px rgba(201,168,76,.1);
+        }
+
+        .modal-overlay.open .modal-box {
+            transform: scale(1);
+        }
+
+        .modal-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+        }
+
+        .modal-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.3rem;
+            color: var(--gold-light);
+            margin-bottom: 10px;
+        }
+
+        .modal-sub {
+            color: var(--text-muted);
+            font-size: .9rem;
+            margin-bottom: 28px;
+            line-height: 1.6;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 13px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            font-family: 'Cairo', sans-serif;
+            font-size: .95rem;
+            font-weight: 700;
+            transition: all .3s;
+        }
+
+            .modal-btn.confirm {
+                background: linear-gradient(135deg, #c0392b, #e74c3c);
+                color: #fff;
+            }
+
+                .modal-btn.confirm:hover {
+                    box-shadow: 0 6px 20px rgba(231,76,60,.4);
+                    transform: translateY(-1px);
+                }
+
+            .modal-btn.dismiss {
+                background: var(--bg-card2);
+                border: 1px solid rgba(201,168,76,0.15);
+                color: var(--text-muted);
+            }
+
+                .modal-btn.dismiss:hover {
+                    border-color: #c9a227;
+                    color: var(--gold-light);
+                }
+
+   
+        .skeleton-wrap {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 24px;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .skeleton-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(201,168,76,0.15);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .sk-banner {
+            height: 140px;
+            background: var(--bg-card2);
+        }
+
+        .sk-body {
+            padding: 20px;
+        }
+
+        .sk-line {
+            height: 14px;
+            border-radius: 99px;
+            background: linear-gradient(90deg, var(--bg-card2) 25%, rgba(201,168,76,.08) 50%, var(--bg-card2) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            margin-bottom: 12px;
+        }
+
+            .sk-line.short {
+                width: 60%;
+            }
+
+            .sk-line.med {
+                width: 80%;
+            }
+
+        @@keyframes shimmer {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+    
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--bg-card);
+            border: 1px solid var(--border-bright);
+            border-radius: 14px;
+            padding: 14px 28px;
+            font-size: .9rem;
+            color: var(--text-main);
+            box-shadow: 0 10px 40px rgba(0,0,0,.6);
+            z-index: 9998;
+            transition: transform .4s cubic-bezier(.175,.885,.32,1.275);
+            white-space: nowrap;
+        }
+
+            .toast.show {
+                transform: translateX(-50%) translateY(0);
+            }
+
+    
+        .btn-track {
+            width: 100%;
+            padding: 10px;
+            background: transparent;
+            border: 1px solid rgba(201,168,76,0.15);
+            color: var(--text-muted);
+            border-radius: 12px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .3s;
+            margin-top: 10px;
+            letter-spacing: .3px;
+        }
+
+            .btn-track:hover {
+                border-color: #c9a227;
+                color: var(--gold-light);
+                background: rgba(201,168,76,0.05);
+            }
+
+        .tracking-panel {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height .45s cubic-bezier(.4,0,.2,1), opacity .3s;
+            opacity: 0;
+        }
+
+            .tracking-panel.open {
+                max-height: 400px;
+                opacity: 1;
+            }
+
+        .track-header {
+            font-family: 'Cinzel', serif;
+            font-size: 0.75rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #c9a227;
+            margin: 14px 0 6px;
+        }
+
+        .track-id {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 14px;
+            font-style: italic;
+        }
+
+        .track-timeline {
+            padding: 4px 0 8px 8px;
+        }
+
+        .track-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            position: relative;
+            padding-bottom: 18px;
+        }
+
+            .track-step:last-child {
+                padding-bottom: 0;
+            }
+
+        .step-dot {
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            border: 2px solid;
+            background: var(--bg-card2);
+            flex-shrink: 0;
+            margin-top: 3px;
+            transition: all .3s;
+            position: relative;
+            z-index: 1;
+        }
+
+        .track-step.done .step-dot {
+            background: var(--green);
+            border-color: var(--green);
+            box-shadow: 0 0 8px rgba(39,174,96,.4);
+        }
+
+        .track-step.pending .step-dot {
+            background: var(--bg-card2);
+            border-color: var(--gold-dark);
+        }
+
+        .track-step.cancelled .step-dot {
+            background: #e74c3c;
+            border-color: #e74c3c;
+            box-shadow: 0 0 8px rgba(231,76,60,.3);
+        }
+
+        .step-line {
+            position: absolute;
+            left: 6px;
+            top: 16px;
+            width: 1px;
+            height: calc(100% - 8px);
+            background: rgba(201,168,76,0.15);
+        }
+
+        .track-step.done .step-line {
+            background: var(--green);
+            opacity: .4;
+        }
+
+        .track-step.cancelled .step-line {
+            background: #e74c3c;
+            opacity: .3;
+        }
+
+        .step-info {
+            flex: 1;
+        }
+
+        .step-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 2px;
+        }
+
+        .track-step.pending .step-title {
+            color: var(--text-muted);
+        }
+
+        .track-step.cancelled .step-title {
+            color: #e74c3c;
+        }
+
+        .step-date {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
+        @@media (max-width: 600px) {
+            .bookings-grid, .skeleton-wrap {
+                grid-template-columns: 1fr;
+            }
+
+            .summary-card {
+                min-width: 100px;
+                padding: 14px 16px;
+            }
+
+            .digit-num {
+                font-size: 1.15rem;
+            }
+
+            .modal-box {
+                padding: 28px 20px;
+            }
+        }
+    </style>
+}
+
+<div class="bookings-page">
+
+    <div class="bookings-hero">
+        <span class="hero-hieroglyph">𓂀</span>
+        <h1>@Html.L("Booking_Hero_Title")</h1>
+        <p>@Html.L("Booking_Hero_Sub")</p>
+    </div>
+
+    <div class="summary-bar">
+        <div class="summary-card">
+            <div class="s-num" id="total-count">0</div>
+            <div class="s-label">@Html.L("Booking_Summary_Total")</div>
+        </div>
+        <div class="summary-card">
+            <div class="s-num" id="active-count">0</div>
+            <div class="s-label">@Html.L("Booking_Summary_Active")</div>
+        </div>
+        <div class="summary-card">
+            <div class="s-num" id="total-spent">0</div>
+            <div class="s-label">@Html.L("Booking_Summary_Spent")</div>
+        </div>
+    </div>
+
+    <div class="filter-wrap">
+        <button class="filter-btn active" data-filter="all">🏛️ @Html.L("Booking_Filter_All")</button>
+        <button class="filter-btn" data-filter="Confirmed">✅ @Html.L("Status_Confirmed")</button>
+        <button class="filter-btn" data-filter="Cancelled">❌ @Html.L("Status_Cancelled")</button>
+        <button class="filter-btn" data-filter="Refunded">💰 @Html.L("Status_Refunded")</button>
+    </div>
+
+    <div class="skeleton-wrap" id="skeleton-loader">
+        @for (int i = 0; i < 3; i++)
+        {
+            <div class="skeleton-card">
+                <div class="sk-banner"></div>
+                <div class="sk-body">
+                    <div class="sk-line med"></div>
+                    <div class="sk-line short"></div>
+                    <div class="sk-line med"></div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="bookings-grid" id="bookings-grid" style="display:none">
+
+        @if (Model != null && Model.Any())
+        {
+            @foreach (var b in Model.OrderByDescending(x => x.CreatedAt))
+            {
+                var isConfirmed = b.Status == "Confirmed";
+                var isCancelled = b.Status == "Cancelled";
+                var hoursLeft = isConfirmed ? (b.CreatedAt.AddHours(48) - DateTime.Now).TotalSeconds : 0;
+                var canCancel = isConfirmed && hoursLeft > 0;
+                var typeIcon = b.PlaceType == "Temple" ? "🛕" : "🏛️";
+                var badgeClass = b.Status switch
+                {
+                    "Confirmed" => "badge-confirmed",
+                    "Cancelled" => "badge-cancelled",
+                    "Refunded" => "badge-refunded",
+                    _ => "badge-confirmed"
+                };
+
+                <div class="booking-card" data-status="@b.Status" data-id="@b.Id">
+                    <div class="card-banner">
+                        <img src="@(b.PlaceType == "Temple" ? "/images/temple-default.jpg" : "/images/museum-default.jpg")"
+                             alt="@b.PlaceType"
+                             onerror="this.style.display='none'" />
+                        <div class="card-banner-overlay"></div>
+                        <span class="card-type-icon">@typeIcon</span>
+                        <span class="status-badge @badgeClass">@Html.L("Status_" + b.Status)</span>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="card-place-name">@b.PlaceName</div>
+
+                        <div class="card-meta">
+                            <div class="meta-item">
+                                <div class="mi-label">📅 @Html.L("Booking_VisitDate_Label")</div>
+                                <div class="mi-value">@b.VisitDate.ToString("dd MMM yyyy")</div>
+                            </div>
+                            <div class="meta-item">
+                                <div class="mi-label">🎟️ @Html.L("Booking_Tickets_Label")</div>
+                                <div class="mi-value">@b.NumberOfTickets @Html.L("Booking_TicketSuffix")</div>
+                            </div>
+                            <div class="meta-item price">
+                                <div class="mi-label">💰 @Html.L("Common_Total")</div>
+                                <div class="mi-value">@b.TotalPrice @Html.L("Common_EGP")</div>
+                            </div>
+                        </div>
+
+                        @if (isConfirmed)
+                        {
+                            <div class="countdown-wrap">
+                                @if (canCancel)
+                                {
+                                    <div class="countdown-label">
+                                        <span class="pulse-dot"></span>
+                                        @Html.L("Booking_Countdown_Label")
+                                    </div>
+                                    <div class="countdown-digits"
+                                         data-deadline="@b.CreatedAt.AddHours(48).ToString("yyyy-MM-ddTHH:mm:ss")">
+                                        <div class="digit-block" id="d-days-@b.Id">
+                                            <div class="digit-num">00</div>
+                                            <div class="digit-lbl">@Html.L("Booking_Days")</div>
+                                        </div>
+                                        <span class="digit-sep">:</span>
+                                        <div class="digit-block" id="d-hrs-@b.Id">
+                                            <div class="digit-num">00</div>
+                                            <div class="digit-lbl">@Html.L("Booking_Hours")</div>
+                                        </div>
+                                        <span class="digit-sep">:</span>
+                                        <div class="digit-block" id="d-min-@b.Id">
+                                            <div class="digit-num">00</div>
+                                            <div class="digit-lbl">@Html.L("Booking_Mins")</div>
+                                        </div>
+                                        <span class="digit-sep">:</span>
+                                        <div class="digit-block" id="d-sec-@b.Id">
+                                            <div class="digit-num">00</div>
+                                            <div class="digit-lbl">@Html.L("Booking_Secs")</div>
+                                        </div>
+                                    </div>
+                                    <div class="progress-bar-wrap">
+                                        <div class="progress-bar-fill"
+                                             id="prog-@b.Id"
+                                             style="width:100%; background: var(--green);">
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="expired-notice">⏰ @Html.L("Booking_Expired_Notice")</div>
+                                }
+                            </div>
+
+                            <button class="btn-cancel"
+                                    data-id="@b.Id"
+                                @(canCancel ? "" : "disabled")
+                                    onclick="openCancelModal(@b.Id, '@b.PlaceName')">
+                                @(canCancel ? "🗑️ " + Html.L("Booking_CancelBtn") : "⛔ " + Html.L("Booking_CannotCancelBtn"))
+                            </button>
+                        }
+
+                        <button class="btn-track" onclick="toggleTracking(@b.Id, this)">
+                            📍 @Html.L("Booking_TrackBtn")
+                        </button>
+                        <div class="tracking-panel" id="track-@b.Id">
+                            <div class="track-header">@Html.L("Booking_TrackHeader")</div>
+                            <div class="track-id">@Html.L("Booking_TrackIdPrefix")@b.Id</div>
+                            <div class="track-timeline">
+                                <div class="track-step done">
+                                    <div class="step-dot"></div>
+                                    <div class="step-line"></div>
+                                    <div class="step-info">
+                                        <div class="step-title">@Html.L("Booking_Step_Created")</div>
+                                        <div class="step-date">@b.CreatedAt.ToString("dd MMM yyyy — hh:mm tt")</div>
+                                    </div>
+                                </div>
+                                <div class="track-step @(b.Status == "Confirmed" || b.Status == "Refunded" ? "done" : b.Status == "Cancelled" ? "cancelled" : "pending")">
+                                    <div class="step-dot"></div>
+                                    <div class="step-line"></div>
+                                    <div class="step-info">
+                                        <div class="step-title">@(b.Status == "Refunded" ? Html.L("Booking_Step_PaymentRefunded") : Html.L("Booking_Step_PaymentConfirmed"))</div>
+                                        <div class="step-date">@(b.Status == "Confirmed" || b.Status == "Refunded" ? Html.L("Booking_Step_Completed") : b.Status == "Cancelled" ? Html.L("Status_Cancelled") : Html.L("Booking_Step_Pending"))</div>
+                                    </div>
+                                </div>
+                                <div class="track-step @(b.Status == "Cancelled" ? "cancelled" : DateTime.Now >= b.VisitDate ? "done" : "pending")">
+                                    <div class="step-dot"></div>
+                                    <div class="step-line"></div>
+                                    <div class="step-info">
+                                        <div class="step-title">@(b.Status == "Cancelled" ? Html.L("Booking_Step_BookingCancelled") : Html.L("Booking_Step_VisitDay"))</div>
+                                        <div class="step-date">@b.VisitDate.ToString("dd MMM yyyy")</div>
+                                    </div>
+                                </div>
+                                <div class="track-step @(b.Status == "Cancelled" ? "cancelled" : DateTime.Now > b.VisitDate ? "done" : "pending")">
+                                    <div class="step-dot"></div>
+                                    <div class="step-info">
+                                        <div class="step-title">@(b.Status == "Cancelled" ? Html.L("Booking_Step_RefundProcessed") : Html.L("Booking_Step_VisitCompleted"))</div>
+                                        <div class="step-date">@(b.Status == "Cancelled" ? Html.L("Booking_Step_RefundNote") : DateTime.Now > b.VisitDate ? Html.L("Booking_Step_Done") : Html.L("Booking_Step_Upcoming"))</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+
+        <div class="empty-state" id="empty-state">
+            <div class="empty-icon">𓋹</div>
+            <h3>@Html.L("Booking_Empty_Title")</h3>
+            <p>@Html.L("Booking_Empty_Text")</p>
+            <a href="/Home/Index" class="btn-explore">@Html.L("Booking_Explore_Link")</a>
+        </div>
+
+    </div>
+
+</div>
+
+@Html.AntiForgeryToken()
+
+<div class="modal-overlay" id="cancelModal">
+    <div class="modal-box">
+        <div class="modal-icon">⚠️</div>
+        <div class="modal-title">@Html.L("Booking_Modal_Title")</div>
+        <div class="modal-sub" id="modal-place-text">
+            @Html.L("Booking_Modal_Sub_Line1")<br>
+            @Html.L("Booking_Modal_Sub_Line2")
+        </div>
+        <div class="modal-actions">
+            <button class="modal-btn dismiss" onclick="closeModal()">@Html.L("Booking_Modal_Dismiss")</button>
+            <button class="modal-btn confirm" id="modal-confirm-btn">@Html.L("Booking_Modal_Confirm")</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+@section Scripts {
+    <script>
+        const bookingsData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                    Model?.Select(b => new
+                    {
+                            id = b.Id,
+                            status = b.Status,
+                            totalPrice = b.TotalPrice,
+                            createdAt = b.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss"),
+                            deadline = b.CreatedAt.AddHours(48).ToString("yyyy-MM-ddTHH:mm:ss")
+                    }) ?? Enumerable.Empty<object>()
+            ));
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                document.getElementById('skeleton-loader').style.display = 'none';
+                document.getElementById('bookings-grid').style.display   = 'grid';
+                initPage();
+            }, 900);
+        });
+
+        function initPage() {
+            updateSummary();
+            initScrollReveal();
+            initFilters();
+            startCountdowns();
+        }
+
+        function updateSummary() {
+            const confirmed = document.querySelectorAll('.booking-card[data-status="Confirmed"]');
+            const total     = bookingsData.reduce((s, b) =>
+                b.status !== 'Cancelled' ? s + b.totalPrice : s, 0);
+            animateNum('total-count',  document.querySelectorAll('.booking-card').length);
+            animateNum('active-count', confirmed.length);
+            animateNum('total-spent',  Math.round(total));
+        }
+
+        function animateNum(id, target) {
+            const el = document.getElementById(id);
+            let cur = 0;
+            const step = Math.max(1, Math.ceil(target / 40));
+            const t = setInterval(() => {
+                cur = Math.min(cur + step, target);
+                el.textContent = cur.toLocaleString('en-US');
+                if (cur >= target) clearInterval(t);
+            }, 30);
+        }
+
+        function initScrollReveal() {
+            const cards = document.querySelectorAll('.booking-card');
+            const obs = new IntersectionObserver((entries) => {
+                entries.forEach((e, i) => {
+                    if (e.isIntersecting) {
+                        setTimeout(() => e.target.classList.add('visible'), i * 100);
+                        obs.unobserve(e.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+            cards.forEach(c => obs.observe(c));
+        }
+
+        function initFilters() {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    filterCards(this.dataset.filter);
+                });
+            });
+        }
+
+        function filterCards(filter) {
+            const cards = document.querySelectorAll('.booking-card');
+            let visible = 0;
+            cards.forEach(card => {
+                const show = filter === 'all' || card.dataset.status === filter;
+                card.style.display = show ? '' : 'none';
+                if (show) visible++;
+            });
+            document.getElementById('empty-state').classList.toggle('show', visible === 0);
+        }
+
+        function startCountdowns() {
+            document.querySelectorAll('.countdown-digits[data-deadline]').forEach(wrap => {
+                const deadline  = new Date(wrap.dataset.deadline);
+                const totalMs   = 48 * 60 * 60 * 1000;
+                const card      = wrap.closest('.booking-card');
+                const bookingId = card.dataset.id;
+                const progBar   = document.getElementById('prog-' + bookingId);
+
+                function tick() {
+                    const diff = deadline - new Date();
+                    if (diff <= 0) {
+                        const btn = card.querySelector('.btn-cancel');
+                        if (btn) { btn.disabled = true; btn.textContent = '⛔ Cannot Cancel'; }
+                        wrap.innerHTML = '<div class="expired-notice">⏰ Cancellation window has expired</div>';
+                        if (progBar) { progBar.style.width = '0%'; progBar.style.background = '#e74c3c'; }
+                        return;
+                    }
+                    setDigit('d-days-' + bookingId, Math.floor(diff / 86400000));
+                    setDigit('d-hrs-'  + bookingId, Math.floor((diff % 86400000) / 3600000));
+                    setDigit('d-min-'  + bookingId, Math.floor((diff % 3600000) / 60000));
+                    setDigit('d-sec-'  + bookingId, Math.floor((diff % 60000) / 1000));
+                    const urgency = diff / totalMs;
+                    card.querySelectorAll('.digit-block').forEach(b => {
+                        b.classList.remove('urgent','warning');
+                        if      (urgency < 0.1)  b.classList.add('urgent');
+                        else if (urgency < 0.25) b.classList.add('warning');
+                    });
+                    if (progBar) {
+                        const pct = (diff / totalMs) * 100;
+                        progBar.style.width = pct + '%';
+                        progBar.style.background = pct < 10 ? '#e74c3c' : pct < 25 ? '#f39c12' : 'var(--green)';
+                    }
+                    setTimeout(tick, 1000);
+                }
+                tick();
+            });
+        }
+
+        function setDigit(id, val) {
+            const el = document.getElementById(id);
+            if (el) el.querySelector('.digit-num').textContent = String(val).padStart(2,'0');
+        }
+
+        function toggleTracking(id, btn) {
+            const panel = document.getElementById('track-' + id);
+            panel.classList.toggle('open');
+            btn.textContent = panel.classList.contains('open') ? '🔼 Hide Details' : '@Html.L("Booking_TrackBtn")';
+        }
+
+
+        let pendingCancelId = null;
+
+        function openCancelModal(id, name) {
+            pendingCancelId = id;
+            document.getElementById('modal-place-text').innerHTML =
+                `Are you sure you want to cancel the booking for <strong style="color:var(--gold-light)">${name}</strong>?<br>
+                 Your refund will be processed within 3-5 business days.`;
+            document.getElementById('cancelModal').classList.add('open');
+        }
+
+        function closeModal() {
+            document.getElementById('cancelModal').classList.remove('open');
+            pendingCancelId = null;
+        }
+
+        document.getElementById('modal-confirm-btn').addEventListener('click', () => {
+            if (!pendingCancelId) return;
+            const idToCancel = pendingCancelId;
+            closeModal();
+            submitCancel(idToCancel);
+        });
+
+        document.getElementById('cancelModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        function submitCancel(id) {
+            const card = document.querySelector(`.booking-card[data-id="${id}"]`);
+            if (card) card.classList.add('cancelling');
+
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/Booking/Cancel/${id}`;
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]');
+            if (token) {
+                const t = document.createElement('input');
+                t.type  = 'hidden';
+                t.name  = '__RequestVerificationToken';
+                t.value = token.value;
+                form.appendChild(t);
+            }
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3500);
+        }
+    </script>
+}

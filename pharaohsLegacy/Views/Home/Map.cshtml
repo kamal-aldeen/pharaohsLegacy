@@ -1,0 +1,361 @@
+﻿@using pharaohsLegacy.Extensions
+
+@{
+    ViewData["Title"] = "Interactive Map";
+    var temples = ViewBag.Temples as List<pharaohsLegacy.Models.Temple>;
+    var museums = ViewBag.Museums as List<pharaohsLegacy.Models.Museum>;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        .main-content {
+            padding-top: 0 !important;
+        }
+
+        #map-container {
+            position: relative;
+            width: 100%;
+            height: calc(100vh - 70px);
+            margin-top: 70px;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        .map-controls {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: .5rem;
+        }
+
+        .map-filter-btn {
+            font-family: 'Cinzel', serif;
+            font-size: .65rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: .6rem 1.2rem;
+            border-radius: 20px;
+            cursor: pointer;
+            border: 1px solid #3d2a15;
+            transition: all .3s;
+            background: rgba(13,7,2,.92);
+            color: #8a7055;
+            backdrop-filter: blur(10px);
+        }
+
+            .map-filter-btn.active {
+                border-color: #c9a227;
+                color: #c9a227;
+            }
+
+            .map-filter-btn:hover {
+                border-color: #c9a227;
+                color: #c9a227;
+            }
+
+        /* Popup */
+        .leaflet-popup-content-wrapper {
+            background: #1a0e05 !important;
+            border: 1px solid #3d2a15 !important;
+            border-radius: 8px !important;
+            box-shadow: 0 8px 32px rgba(0,0,0,.5) !important;
+        }
+
+        .leaflet-popup-tip {
+            background: #1a0e05 !important;
+        }
+
+        .leaflet-popup-content {
+            margin: 0 !important;
+            padding: 0 !important;
+            min-width: 220px;
+        }
+
+        .leaflet-popup-close-button {
+            color: #8a7055 !important;
+            top: 8px !important;
+            right: 8px !important;
+        }
+
+        .popup-card {
+            padding: 1rem;
+        }
+
+        .popup-img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-bottom: .75rem;
+        }
+
+        .popup-tag {
+            font-family: 'Cinzel', serif;
+            font-size: .6rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #c9a227;
+            display: block;
+            margin-bottom: .3rem;
+        }
+
+        .popup-title {
+            font-family: 'Cinzel', serif;
+            font-size: .95rem;
+            color: #e8d5b0;
+            margin-bottom: .5rem;
+        }
+
+        .popup-desc {
+            color: #8a7055;
+            font-size: .85rem;
+            line-height: 1.5;
+            margin-bottom: .75rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .popup-btn {
+            display: block;
+            text-align: center;
+            padding: .5rem;
+            background: linear-gradient(135deg, #c9a227, #a07a1a);
+            border-radius: 4px;
+            color: #0d0702 !important;
+            font-family: 'Cinzel', serif;
+            font-size: .65rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-decoration: none;
+        }
+
+            .popup-btn:hover {
+                opacity: .85;
+            }
+
+        /* Map Legend */
+        .map-legend {
+            position: absolute;
+            bottom: 2rem;
+            left: 1rem;
+            z-index: 1000;
+            background: rgba(13,7,2,.92);
+            border: 1px solid #3d2a15;
+            border-radius: 8px;
+            padding: .75rem 1rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .legend-title {
+            font-family: 'Cinzel', serif;
+            font-size: .6rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #c9a227;
+            margin-bottom: .5rem;
+            display: block;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            color: #8a7055;
+            font-size: .85rem;
+            margin-bottom: .25rem;
+        }
+
+        /* اكسر حدود الـ Layout */
+        body {
+            overflow: hidden;
+        }
+
+        .main-content {
+            padding: 0 !important;
+            margin: 0 !important;
+            max-width: 100% !important;
+            width: 100% !important;
+        }
+
+        #map-container {
+            position: fixed;
+            top: 70px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            margin: 0 !important;
+            height: calc(100vh - 70px) !important;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        footer.main-footer {
+            display: none;
+        }
+    </style>
+}
+
+<div id="map-container">
+    <div id="map"></div>
+
+    <!-- Filter Buttons -->
+    <div class="map-controls">
+        <button class="map-filter-btn active" onclick="filterMap('all', this)">🗺️ @Html.L("Booking_Filter_All")</button>
+        <button class="map-filter-btn" onclick="filterMap('temple', this)">🛕 @Html.L("Common_TemplesPlural")</button>
+        <button class="map-filter-btn" onclick="filterMap('museum', this)">🏛️ @Html.L("Common_MuseumsPlural")</button>
+    </div>
+
+    <!-- Legend -->
+    <div class="map-legend">
+        <span class="legend-title">@Html.L("Map_Legend_Title")</span>
+        <div class="legend-item">🛕 @Html.L("Map_Legend_Temple")</div>
+        <div class="legend-item">🏛️ @Html.L("Common_Museum")</div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        var mapI18n = {
+        temple: '@Html.Raw(Html.L("Common_Temple"))',
+        museum: '@Html.Raw(Html.L("Common_Museum"))',
+        viewDetails: '@Html.Raw(Html.L("Common_ViewDetails"))'
+        };
+        // Initialize Map centered on Egypt
+        var map = L.map('map', {
+        center: [26.5, 30.0],
+        zoom: 6
+        });
+
+        // Dark Tile Layer
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '',
+        maxZoom: 19
+        }).addTo(map);
+
+        map.attributionControl.remove();
+
+        // Custom Icons
+        var templeIcon = L.divIcon({
+        className: '',
+        html: '<div style="font-size:2rem;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,.9));">🛕</div>',
+        iconSize: [32, 32],
+        iconAnchor: [16, 32],
+        popupAnchor: [0, -32]
+        });
+
+        var museumIcon = L.divIcon({
+        className: '',
+        html: '<div style="font-size:2rem;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,.9));">🏛️</div>',
+        iconSize: [32, 32],
+        iconAnchor: [16, 32],
+        popupAnchor: [0, -32]
+        });
+
+        var templeMarkers = [];
+        var museumMarkers = [];
+
+        // ===== TEMPLES =====
+        var templesData = @Html.Raw(
+                System.Text.Json.JsonSerializer.Serialize(
+                    temples?.Select(t => new
+                    {
+                        id = t.Id,
+                        name = t.Name,
+                        location = t.Location,
+                        description = t.Description,
+                        imageUrl = t.ImageUrl,
+                        lat = t.Latitude,
+                        lng = t.Longitude
+                    }),
+                    new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = null }
+                ) ?? "[]"
+            );
+
+        templesData.forEach(function(t) {
+        if (!t.lat || !t.lng || (t.lat === 0 && t.lng === 0)) return;
+
+        var popup =
+        '<div class="popup-card">' +
+        '<img class="popup-img" src="' + t.imageUrl + '" ' +
+        'onerror="this.src=\'https://via.placeholder.com/220x120/2d1a08/c9a227?text=Temple\'" />' +
+        '<span class="popup-tag">🛕 ' + mapI18n.temple + ' &middot; ' + t.location + '</span>' +
+        '<div class="popup-title">' + t.name + '</div>' +
+        '<div class="popup-desc">' + t.description + '</div>' +
+        '<a class="popup-btn" href="/Temple/Details/' + t.id + '">' + mapI18n.viewDetails + ' &rarr;</a>' +
+        '</div>';
+
+        var marker = L.marker([t.lat, t.lng], { icon: templeIcon })
+        .bindPopup(popup, { maxWidth: 260, closeButton: true });
+
+        templeMarkers.push(marker);
+        marker.addTo(map);
+        });
+
+        // ===== MUSEUMS =====
+        var museumsData = @Html.Raw(
+                System.Text.Json.JsonSerializer.Serialize(
+                    museums?.Select(m => new
+                    {
+                        id = m.Id,
+                        name = m.Name,
+                        location = m.Location,
+                        description = m.Description,
+                        imageUrl = m.ImageUrl,
+                        lat = m.Latitude,
+                        lng = m.Longitude
+                    }),
+                    new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = null }
+                ) ?? "[]"
+            );
+
+        museumsData.forEach(function(m) {
+        if (!m.lat || !m.lng || (m.lat === 0 && m.lng === 0)) return;
+
+        var popup =
+        '<div class="popup-card">' +
+        '<img class="popup-img" src="' + m.imageUrl + '" ' +
+        'onerror="this.src=\'https://via.placeholder.com/220x120/2d1a08/c9a227?text=Museum\'" />' +
+        '<span class="popup-tag">🏛️ ' + mapI18n.museum + ' &middot; ' + m.location + '</span>' +
+        '<div class="popup-title">' + m.name + '</div>' +
+        '<div class="popup-desc">' + m.description + '</div>' +
+        '<a class="popup-btn" href="/Museum/Details/' + m.id + '">' + mapI18n.viewDetails + ' &rarr;</a>' +
+        '</div>';
+
+        var marker = L.marker([m.lat, m.lng], { icon: museumIcon })
+        .bindPopup(popup, { maxWidth: 260, closeButton: true });
+
+        museumMarkers.push(marker);
+        marker.addTo(map);
+        });
+
+        // ===== FILTER =====
+        function filterMap(type, btn) {
+        document.querySelectorAll('.map-filter-btn').forEach(function(b) {
+        b.classList.remove('active');
+        });
+        btn.classList.add('active');
+
+        templeMarkers.forEach(function(m) {
+        if (type === 'all' || type === 'temple') map.addLayer(m);
+        else map.removeLayer(m);
+        });
+        museumMarkers.forEach(function(m) {
+        if (type === 'all' || type === 'museum') map.addLayer(m);
+        else map.removeLayer(m);
+        });
+        }
+    </script>
+}

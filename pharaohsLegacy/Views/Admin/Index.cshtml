@@ -1,0 +1,2936 @@
+﻿@using pharaohsLegacy.ViewModels
+@model pharaohsLegacy.ViewModels.AdminOverviewViewModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    Layout = null; 
+    var activeTab = Context.Request.Query["tab"].ToString();
+    if (string.IsNullOrEmpty(activeTab)) activeTab = "overview";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin — Pharaohs Legacy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+
+:root {
+    --gold:        #c9a84c;
+    --gold-light:  #f0c96e;
+    --gold-dim:    #8b6914;
+    --dark:        #0b0905;
+    --dark-2:      #111009;
+    --dark-3:      #181410;
+    --dark-4:      #201c14;
+    --dark-card:   #151209;
+    --sidebar-w:   260px;
+    --border:      rgba(201,168,76,0.15);
+    --border-h:    rgba(201,168,76,0.4);
+    --text:        #e8dcc8;
+    --text-dim:    #9e8e70;
+    --text-muted:  #5a5040;
+    --red:         #e05252;
+    --green:       #4caf80;
+    --blue:        #5b8dd9;
+    --orange:      #e09050;
+    --shadow:      0 8px 32px rgba(0,0,0,0.5);
+    --shadow-gold: 0 0 40px rgba(201,168,76,0.1);
+    --radius:      14px;
+    --radius-sm:   8px;
+}
+*, *::before, *::after { box-sizing: border-box; margin:0; padding:0; }
+html, body { height: 100%; }
+body {
+    font-family: 'Inter', sans-serif;
+    background: #0d0702;
+    color: #e8d5b0;
+    display: flex;
+    overflow: hidden;
+}
+
+
+.adm-sidebar {
+    width: var(--sidebar-w);
+    height: 100vh;
+    background: var(--dark-2);
+    border-right: 1px solid #3d2a15 ;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    position: fixed;
+    left: 0; top: 0;
+    z-index: 100;
+    overflow-y: auto;
+}
+.adm-logo {
+    padding: 28px 24px 20px;
+        border-bottom: 1px solid #3d2a15;
+}
+.adm-logo-symbol {
+    font-size: 28px;
+    margin-bottom: 8px;
+    display: block;
+}
+.adm-logo-title {
+    font-family: 'Cinzel', serif;
+    font-size: 15px;
+    color: var(--gold-light);
+    letter-spacing: 1.5px;
+    line-height: 1.3;
+}
+.adm-logo-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 3px;
+}
+
+.adm-nav { padding: 16px 12px; flex: 1; }
+.adm-nav-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    padding: 8px 12px 6px;
+    display: block;
+}
+.adm-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+    color: var(--text-dim);
+        border: 1px solid transparent;
+    margin-bottom: 2px;
+    font-weight: 500;
+    text-decoration: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+}
+.adm-nav-item:hover {
+    background: rgba(201,168,76,0.06);
+    color: #e8d5b0;
+    border-color: #3d2a15 ;
+}
+.adm-nav-item.active {
+    background: rgba(201,168,76,0.1);
+    color: var(--gold-light);
+    border-color:  #3d2a15;
+}
+.adm-nav-item .nav-icon { font-size: 17px; width: 22px; text-align: center; }
+.adm-nav-item .nav-count {
+    margin-left: auto;
+    background: var(--dark-4);
+    border: 1px solid #3d2a15 ;
+    border-radius: 20px;
+    padding: 2px 8px;
+    font-size: 11px;
+    color: var(--text-dim);
+}
+.adm-nav-item.active .nav-count {
+    background: rgba(201,168,76,0.15);
+    color: #c9a227;
+}
+
+.adm-sidebar-footer {
+    padding: 16px 12px;
+    border-top: 1px solid  #3d2a15;
+}
+.adm-back-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 13px;
+    transition: all 0.2s;
+    border: 1px solid #3d2a15 ;
+}
+        .adm-back-btn:hover {
+        color: #e8d5b0;
+        border-color: #3d2a15;
+        }
+
+
+.adm-main {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    height: 100vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.adm-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(11,9,5,0.85);
+    backdrop-filter: blur(12px);
+        border-bottom: 1px solid #3d2a15;
+    padding: 0 32px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+.adm-topbar-title {
+    font-family: 'Cinzel', serif;
+    font-size: 17px;
+    color: var(--gold-light);
+    letter-spacing: 1px;
+}
+.adm-topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.adm-admin-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(201,168,76,0.08);
+    border: 1px solid  #3d2a15;
+    border-radius: 25px;
+    padding: 6px 14px;
+    font-size: 13px;
+    color: #c9a227;
+}
+.adm-admin-dot {
+    width: 8px; height: 8px;
+    background: var(--green);
+    border-radius: 50%;
+}
+
+.adm-body { padding: 32px; flex: 1; }
+
+
+.adm-panel { display: none; }
+.adm-panel.active { display: block; }
+
+.adm-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-bottom: 32px;
+}
+.adm-stat {
+    background: var(--dark-card);
+        border: 1px solid #3d2a15;
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+.adm-stat::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+.adm-stat.c-gold::after  { background: linear-gradient(90deg, transparent, #c9a227, transparent); }
+.adm-stat.c-green::after { background: linear-gradient(90deg, transparent, var(--green), transparent); }
+.adm-stat.c-blue::after  { background: linear-gradient(90deg, transparent, var(--blue), transparent); }
+.adm-stat.c-orange::after{ background: linear-gradient(90deg, transparent, var(--orange), transparent); }
+.adm-stat.c-red::after   { background: linear-gradient(90deg, transparent, var(--red), transparent); }
+.adm-stat.c-purple::after{ background: linear-gradient(90deg, transparent, #9b6dd9, transparent); }
+.adm-stat:hover { border-color: var(--border-h); transform: translateY(-3px); box-shadow: var(--shadow-gold); }
+.adm-stat:hover::after { opacity: 1; }
+.adm-stat-icon {
+    width: 50px; height: 50px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+    border: 1px solid #3d2a15 ;
+}
+.adm-stat.c-gold   .adm-stat-icon { background: rgba(201,168,76,0.1); }
+.adm-stat.c-green  .adm-stat-icon { background: rgba(76,175,128,0.1); }
+.adm-stat.c-blue   .adm-stat-icon { background: rgba(91,141,217,0.1); }
+.adm-stat.c-orange .adm-stat-icon { background: rgba(224,144,80,0.1); }
+.adm-stat.c-red    .adm-stat-icon { background: rgba(224,82,82,0.1); }
+.adm-stat.c-teal .adm-stat-icon { background: rgba(0,191,165,0.1); }
+.adm-stat.c-purple .adm-stat-icon { background: rgba(155,109,217,0.1); }
+.adm-stat-val {
+    font-size: 30px;
+    font-weight: 700;
+    font-family: 'Cinzel', serif;
+    color: var(--gold-light);
+    line-height: 1;
+    margin-bottom: 4px;
+}
+.adm-stat-label {
+    font-size: 12px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+
+.adm-sec-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+.adm-sec-title {
+    font-family: 'Cinzel', serif;
+    font-size: 17px;
+    color: var(--gold-light);
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.adm-sec-title::before {
+    content: '';
+    width: 4px; height: 20px;
+    background: linear-gradient(to bottom, #c9a227, var(--gold-dim));
+    border-radius: 4px;
+    display: block;
+}
+
+
+.adm-search-wrap {
+    position: relative;
+    width: 280px;
+}
+.adm-search {
+    width: 100%;
+    background: var(--dark-3);
+    border: 1px solid  #3d2a15;
+    border-radius: 25px;
+    padding: 9px 16px 9px 38px;
+    color: #e8d5b0;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.adm-search:focus { border-color: #c9a227; }
+.adm-search::placeholder { color: var(--text-muted); }
+.adm-search-icon {
+    position: absolute;
+    left: 13px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 14px;
+    pointer-events: none;
+}
+
+
+.adm-table-wrap {
+    background: var(--dark-card);
+    border: 1px solid #3d2a15 ;
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+.adm-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.adm-table thead tr {
+    background: rgba(201,168,76,0.05);
+    border-bottom: 1px solid #3d2a15 ;
+}
+.adm-table th {
+    padding: 14px 18px;
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    font-weight: 600;
+    white-space: nowrap;
+}
+.adm-table td {
+    padding: 14px 18px;
+    font-size: 13.5px;
+    color: #e8d5b0;
+    border-bottom: 1px solid rgba(201,168,76,0.07);
+    vertical-align: middle;
+}
+.adm-table tbody tr:last-child td { border-bottom: none; }
+.adm-table tbody tr {
+    transition: background 0.15s;
+}
+.adm-table tbody tr:hover { background: rgba(201,168,76,0.03); }
+
+.adm-thumb {
+    width: 44px; height: 44px;
+    border-radius: 8px;
+    object-fit: cover;
+    background: var(--dark-3);
+    border: 1px solid #3d2a15 ;
+}
+.adm-name-cell { font-weight: 500; color: var(--gold-light); }
+.adm-sub-cell  { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+
+
+.adm-actions { display: flex; gap: 6px; align-items: center; }
+.adm-btn {
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+        border: 1px solid #3d2a15 transparent;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.3px;
+}
+.adm-btn-edit {
+    background: rgba(91,141,217,0.1);
+    border-color: rgba(91,141,217,0.3);
+    color: var(--blue);
+}
+.adm-btn-edit:hover { background: rgba(91,141,217,0.2); }
+.adm-btn-del {
+    background: rgba(224,82,82,0.1);
+    border-color: rgba(224,82,82,0.3);
+    color: var(--red);
+}
+.adm-btn-del:hover { background: rgba(224,82,82,0.2); }
+.adm-btn-add {
+    background: linear-gradient(135deg, var(--gold-dim), #c9a227);
+        color: #0d0702;
+    font-weight: 700;
+    padding: 9px 20px;
+    font-size: 13px;
+    font-family: 'Cinzel', serif;
+    letter-spacing: 0.5px;
+}
+.adm-btn-add:hover { filter: brightness(1.15); transform: translateY(-1px); }
+
+
+.adm-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+}
+.adm-badge.Confirmed { background: rgba(76,175,128,0.12); color: var(--green); border: 1px solid rgba(76,175,128,0.25); }
+.adm-badge.Cancelled { background: rgba(224,82,82,0.1);  color: var(--red);   border: 1px solid rgba(224,82,82,0.2); }
+.adm-badge.Refunded  { background: rgba(91,141,217,0.1); color: var(--blue);  border: 1px solid rgba(91,141,217,0.2); }
+
+
+.adm-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.adm-overlay.open { display: flex; }
+.adm-modal {
+    background: var(--dark-2);
+    border: 1px solid #3d2a15;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 560px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow);
+    animation: modalIn 0.25s ease;
+}
+@@keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.adm-modal-head {
+    padding: 24px 28px 20px;
+    border-bottom: 1px solid  #3d2a15;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0;
+    background: var(--dark-2);
+    border-radius: 20px 20px 0 0;
+}
+.adm-modal-title {
+    font-family: 'Cinzel', serif;
+    font-size: 17px;
+    color: var(--gold-light);
+    letter-spacing: 1px;
+}
+.adm-modal-close {
+    width: 32px; height: 32px;
+    background: var(--dark-3);
+    border: 1px solid #3d2a15;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    color: var(--text-dim);
+    font-size: 16px;
+    transition: all 0.2s;
+}
+.adm-modal-close:hover { color: var(--red); border-color: var(--red); }
+.adm-modal-body { padding: 24px 28px; }
+.adm-modal-foot {
+    padding: 16px 28px 24px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+/* Form */
+.adm-form-row { margin-bottom: 18px; }
+.adm-form-row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+.adm-label {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    margin-bottom: 7px;
+    font-weight: 600;
+}
+.adm-input, .adm-textarea, .adm-select {
+    width: 100%;
+    background: var(--dark-3);
+    border: 1px solid  #3d2a15;
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    color: #e8d5b0;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    font-family: 'Inter', sans-serif;
+}
+.adm-input:focus, .adm-textarea:focus, .adm-select:focus {
+    border-color: #c9a227;
+    background: rgba(201,168,76,0.03);
+}
+.adm-textarea { resize: vertical; min-height: 90px; }
+.adm-select option { background: var(--dark-3); }
+
+
+.adm-img-preview {
+    width: 100%; height: 120px;
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+    background: var(--dark-3);
+        border: 1px solid #3d2a15;
+    display: block;
+    margin-top: 8px;
+}
+
+
+.adm-toast {
+    position: fixed;
+    bottom: 30px; right: 30px;
+    background: var(--dark-3);
+    border: 1px solid var(--green);
+    border-radius: var(--radius-sm);
+    padding: 14px 20px;
+    color: var(--green);
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: var(--shadow);
+    animation: toastIn 0.3s ease, toastOut 0.3s ease 3s forwards;
+}
+@@keyframes toastIn  { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+@@keyframes toastOut { from { opacity:1; } to { opacity:0; pointer-events:none; } }
+
+
+.adm-empty {
+    text-align: center;
+    padding: 48px;
+    color: var(--text-muted);
+}
+.adm-empty-icon { font-size: 40px; margin-bottom: 12px; }
+.adm-empty-text { font-size: 14px; font-family: 'Cinzel', serif; }
+
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--dark-2); }
+::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 3px; }
+
+        .adm-badge.Visited {
+        background: rgba(76,175,128,0.15);
+        color: #4caf80;
+        border: 1px solid rgba(76,175,128,0.3);
+        }
+        }
+
+        .db-filter-btn {
+        background: var(--dark-card, #1a1509);
+        border: 1px solid rgba(201,168,76,0.18);
+        color: #9e8e70;
+        padding: 8px 18px;
+        border-radius: 25px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+        }
+
+        .db-filter-btn:hover, .db-filter-btn.active {
+        background: rgba(201,168,76,0.12);
+        border-color: #c9a84c;
+        color: #f0c96e;
+        }
+
+        .adm-badge.Visited {
+        background: rgba(76,175,128,0.15);
+        color: #4caf80;
+        border: 1px solid rgba(76,175,128,0.3);
+        }
+
+        .resolved-row {
+        opacity: 0.6;
+        }
+
+        .badge-resolved {
+        background: rgba(39,174,96,0.15);
+        color: #27ae60;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: .8rem;
+        }
+
+        .badge-pending {
+        background: rgba(231,76,60,0.15);
+        color: #e74c3c;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: .8rem;
+        }
+
+        .adm-btn-resolve {
+        background: transparent;
+        border: 1px solid #27ae60;
+        color: #27ae60;
+        padding: 4px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: .82rem;
+        transition: all .2s;
+        margin-right: 5px;
+        }
+
+        .adm-btn-resolve:hover {
+        background: #27ae60;
+        color: #fff;
+        }
+
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR-->
+    <aside class="adm-sidebar">
+        <div class="adm-logo">
+            <span class="adm-logo-symbol">𓂀</span>
+            <div class="adm-logo-title">Pharaohs Legacy</div>
+            <div class="adm-logo-sub">Admin Panel</div>
+        </div>
+
+        <nav class="adm-nav">
+            <span class="adm-nav-label">Main</span>
+            <button class="adm-nav-item @(activeTab == "overview" ? "active" : "")"
+                    onclick="switchPanel('overview',this)">
+                <span class="nav-icon">𓋹</span> Overview
+            </button>
+
+            <span class="adm-nav-label" style="margin-top:12px;">Content</span>
+            <button class="adm-nav-item @(activeTab == "pharaohs" ? "active" : "")"
+                    onclick="switchPanel('pharaohs',this)">
+                <span class="nav-icon">👑</span> Pharaohs
+                <span class="nav-count">@Model.TotalPharaohs</span>
+            </button>
+            <button class="adm-nav-item @(activeTab == "temples" ? "active" : "")"
+                    onclick="switchPanel('temples',this)">
+                <span class="nav-icon">🛕</span> Temples
+                <span class="nav-count">@Model.TotalTemples</span>
+            </button>
+            <button class="adm-nav-item @(activeTab == "museums" ? "active" : "")"
+                    onclick="switchPanel('museums',this)">
+                <span class="nav-icon">🏛️</span> Museums
+                <span class="nav-count">@Model.TotalMuseums</span>
+            </button>
+            <button class="adm-nav-item @(activeTab == "gods" ? "active" : "")"
+                    onclick="switchPanel('gods',this)">
+                <span class="nav-icon">⚡</span> Gods
+                <span class="nav-count">@Model.TotalGods</span>
+            </button>
+            <button class="adm-nav-item @(activeTab == "artifacts" ? "active" : "")"
+                    onclick="switchPanel('artifacts',this)">
+                <span class="nav-icon">𓏠</span> Artifacts
+                <span class="nav-count">@Model.TotalArtifacts</span>
+            </button>
+            <button class="adm-nav-item @(activeTab == "dynasties" ? "active" : "")"
+                    onclick="switchPanel('dynasties',this)">
+                <span class="nav-icon">𓂀</span> Dynasties
+                <span class="nav-count">@Model.TotalDynasties</span>
+            </button>
+
+            <button class="adm-nav-item @(activeTab == "events" ? "active" : "")"
+                    onclick="switchPanel('events',this)">
+                <span class="nav-icon">𓋹</span> Events
+                <span class="nav-count">@Model.TotalHistoricalEvents</span>
+            </button>
+
+            <span class="adm-nav-label" style="margin-top:12px;">Users & Data</span>
+            <button class="adm-nav-item @(activeTab == "users" ? "active" : "")"
+                    onclick="switchPanel('users',this)">
+                <span class="nav-icon">👥</span> Users
+                <span class="nav-count">@Model.TotalUsers</span>
+            </button>
+            <button class="adm-nav-item @(activeTab == "bookings" ? "active" : "")"
+                    onclick="switchPanel('bookings',this)">
+                <span class="nav-icon">📅</span> Bookings
+                <span class="nav-count">@Model.TotalBookings</span>
+            </button>
+            <button class="adm-nav-item @(activeTab == "reviews" ? "active" : "")"
+                    onclick="switchPanel('reviews',this)">
+                <span class="nav-icon">⭐</span> Reviews
+                <span class="nav-count">@Model.TotalReviews</span>
+            </button>
+            <button class="adm-nav-item @(activeTab == "reports" ? "active" : "")"
+                    onclick="switchPanel('reports',this)">
+                <span class="nav-icon">🚩</span> Reports
+                <span class="nav-count">@Model.Reports.Count</span>
+            </button>
+        </nav>
+
+    <div class="adm-sidebar-footer">
+        <a href="/Home/Index" class="adm-back-btn">← View Site</a>
+    </div>
+</aside>
+
+<!-- MAIN -->
+<main class="adm-main">
+
+    <!-- Topbar -->
+    <div class="adm-topbar">
+        <div class="adm-topbar-title" id="topbarTitle">
+            @(activeTab == "overview" ? "𓋹 Dashboard Overview" :
+              activeTab == "pharaohs" ? "👑 Manage Pharaohs" :
+              activeTab == "temples"  ? "🛕 Manage Temples" :
+              activeTab == "museums"  ? "🏛️ Manage Museums" :
+              activeTab == "artifacts" ? "𓏠 Manage Artifacts" :
+                  activeTab == "reviews" ? "⭐ Manage Reviews" :
+              activeTab == "users"    ? "👥 Users" : "📅 Bookings")
+        </div>
+        <div class="adm-topbar-right">
+            <div class="adm-admin-pill">
+                <span class="adm-admin-dot"></span>
+                Admin
+            </div>
+        </div>
+    </div>
+
+    <div class="adm-body">
+        @* استخدمت TempData لنقل رسائل النجاح بين الـ Requests. *@
+        @if (TempData["Success"] != null)
+        {
+            <div class="adm-toast" id="toastMsg">✓ @TempData["Success"]</div>
+        }
+
+        <!-- OVERVIEW  -->
+        <div id="panel-overview" class="adm-panel @(activeTab=="overview"?"active":"")">
+
+         <div class="adm-stats">
+    <div class="adm-stat c-gold">
+        <div class="adm-stat-icon">𓋹</div>
+        <div>
+            <div class="adm-stat-val counter" data-target="@Model.TotalPharaohs">0</div>
+            <div class="adm-stat-label">Pharaohs</div>
+        </div>
+    </div>
+    <div class="adm-stat c-orange">
+        <div class="adm-stat-icon">🛕</div>
+        <div>
+            <div class="adm-stat-val counter" data-target="@Model.TotalTemples">0</div>
+            <div class="adm-stat-label">Temples</div>
+        </div>
+    </div>
+    <div class="adm-stat c-blue">
+        <div class="adm-stat-icon">🏛️</div>
+        <div>
+            <div class="adm-stat-val counter" data-target="@Model.TotalMuseums">0</div>
+            <div class="adm-stat-label">Museums</div>
+        </div>
+    </div>
+    <div class="adm-stat c-teal">
+        <div class="adm-stat-icon">⚡</div>
+        <div>
+            <div class="adm-stat-val counter" data-target="@Model.TotalGods">0</div>
+            <div class="adm-stat-label">Gods</div>
+        </div>
+    </div>
+    <div class="adm-stat c-green">
+        <div class="adm-stat-icon">👥</div>
+        <div>
+            <div class="adm-stat-val counter" data-target="@Model.TotalUsers">0</div>
+            <div class="adm-stat-label">Users</div>
+        </div>
+    </div>
+    <div class="adm-stat c-purple">
+        <div class="adm-stat-icon">📅</div>
+        <div>
+            <div class="adm-stat-val counter" data-target="@Model.TotalBookings">0</div>
+            <div class="adm-stat-label">Bookings</div>
+        </div>
+    </div>
+    <div class="adm-stat c-red">
+        <div class="adm-stat-icon">𓂋</div>
+        <div>
+            <div class="adm-stat-val" id="revenueVal">0</div>
+            <div class="adm-stat-label">Revenue (EGP)</div>
+        </div>
+    </div>
+                    <div class="adm-stat c-gold">
+                        <div class="adm-stat-icon">𓏠</div>
+                        <div>
+                            <div class="adm-stat-val counter" data-target="@Model.TotalArtifacts">0</div>
+                            <div class="adm-stat-label">Artifacts</div>
+                        </div>
+                    </div>
+
+
+                    <div class="adm-stat c-blue">
+                        <div class="adm-stat-icon">⭐</div>
+                        <div>
+                            <div class="adm-stat-val counter" data-target="@Model.TotalReviews">0</div>
+                            <div class="adm-stat-label">Reviews</div>
+                        </div>
+                    </div>
+
+                    <div class="adm-stat c-teal">
+                        <div class="adm-stat-icon">𓋹</div>
+                        <div>
+                            <div class="adm-stat-val counter" data-target="@Model.TotalHistoricalEvents">0</div>
+                            <div class="adm-stat-label">Historical Events</div>
+                        </div>
+                    </div>
+</div>
+
+            <!-- Recent Bookings preview -->
+            <div class="adm-sec-head">
+                <div class="adm-sec-title">Recent Bookings</div>
+                <button class="adm-btn adm-btn-add" onclick="switchPanel('bookings',null)" style="font-size:12px; padding:7px 16px;">View All</button>
+            </div>
+            <div class="adm-table-wrap">
+                <table class="adm-table">
+                    <thead><tr>
+                        <th>User</th><th>Place</th><th>Visit Date</th>
+                        <th>Tickets</th><th>Amount</th><th>Status</th>
+                    </tr></thead>
+                    <tbody>
+                    @foreach (var b in Model.Bookings.Take(8))
+                    {
+                        <tr>
+                            <td>@b.UserEmail</td>
+                            <td><div class="adm-name-cell">@b.PlaceName</div>
+                                <div class="adm-sub-cell">@b.PlaceType</div></td>
+                            <td>@b.VisitDate.ToString("MMM dd, yyyy")</td>
+                            <td>@b.NumberOfTickets 🎫</td>
+                            <td style="color:#c9a227; font-weight:600;">@b.TotalPrice.ToString("N0") EGP</td>
+                            <td><span class="adm-badge @b.Status">@b.Status</span></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!--  PHARAOHS  -->
+        <div id="panel-pharaohs" class="adm-panel @(activeTab=="pharaohs"?"active":"")">
+            <div class="adm-sec-head">
+                <div class="adm-sec-title">Pharaohs</div>
+                <div style="display:flex;gap:12px;align-items:center;">
+                    <div class="adm-search-wrap">
+                        <span class="adm-search-icon">🔍</span>
+                        <input class="adm-search" placeholder="Search pharaohs..."
+                               oninput="searchTable('pharaohsTable', this.value)" />
+                    </div>
+                    <button class="adm-btn adm-btn-add" onclick="openModal('modalAddPharaoh')">+ Add Pharaoh</button>
+                </div>
+            </div>
+            <div class="adm-table-wrap">
+                <table class="adm-table" id="pharaohsTable">
+                    <thead><tr>
+                        <th style="width:60px;">Image</th>
+                        <th>Name</th><th>Dynasty</th><th>Period</th><th style="width:140px;">Actions</th>
+                    </tr></thead>
+                    <tbody>
+                    @foreach (var p in Model.Pharaohs)
+{
+    <tr>
+        <td><img class="adm-thumb" src="@(p.ImageUrl ?? "/images/placeholder.jpg")"
+                 onerror="this.src='/images/placeholder.jpg'" /></td>
+        <td><div class="adm-name-cell">@p.Name</div></td>
+        <td><div class="adm-sub-cell">@p.Dynasty</div></td>
+        <td><div class="adm-sub-cell">@p.Period</div></td>
+        <td>
+            <div class="adm-actions">
+                <button class="adm-btn adm-btn-edit"
+@*                 لما الأدمن يضغط Edit...
+
+JavaScript تفتح Modal التعديل.       *@
+                data-id="@p.Id"
+                        data-name="@p.Name"
+                        data-dynasty="@p.Dynasty"
+                        data-period="@p.Period"
+                        data-img="@p.ImageUrl"
+                        data-desc="@p.Description"
+                        onclick="openEditPharaohBtn(this)">
+                    ✏ Edit
+                </button>
+                <form method="post" action="/Admin/DeletePharaoh" style="display:inline;"
+                      data-name="@p.Name" onsubmit="return false;">  
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@p.Id" />
+                    <button type="button" class="adm-btn adm-btn-del"
+                            onclick="showDeleteConfirm(this.closest('form'), '@p.Name')">🗑</button>
+                </form>
+            </div>
+        </td>
+    </tr>
+}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+            <!-- ARTIFACTS -->
+            <div id="panel-artifacts" class="adm-panel @(activeTab == "artifacts" ? "active" : "")">
+                <div class="adm-sec-head">
+                    <div class="adm-sec-title">Artifacts</div>
+                    <div style="display:flex;gap:12px;align-items:center;">
+                        <div class="adm-search-wrap">
+                            <span class="adm-search-icon">🔍</span>
+                            <input class="adm-search" placeholder="Search artifacts..."
+                                   oninput="searchTable('artifactsTable', this.value)" />
+                        </div>
+                        <button class="adm-btn adm-btn-add" onclick="openModal('modalAddArtifact')">+ Add Artifact</button>
+                    </div>
+                </div>
+                <div class="adm-table-wrap">
+                    <table class="adm-table" id="artifactsTable">
+                        <thead>
+                            <tr>
+                                <th style="width:60px;">Image</th>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Period</th>
+                                <th>Museum</th>
+                                <th style="width:140px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var a in Model.Artifacts)
+                            {
+                                <tr>
+                                    <td>
+                                        <img class="adm-thumb" src="@(a.ImageUrl ?? "/images/placeholder.jpg")"
+                                             onerror="this.src='/images/placeholder.jpg'" />
+                                    </td>
+                                    <td><div class="adm-name-cell">@a.Name</div></td>
+                                    <td><div class="adm-sub-cell">@a.Category</div></td>
+                                    <td><div class="adm-sub-cell">@a.Period</div></td>
+                                    <td><div class="adm-sub-cell">@a.Museum</div></td>
+                                    <td>
+                                        <div class="adm-actions">
+                                            <button class="adm-btn adm-btn-edit"
+                                                    data-id="@a.Id"
+                                                    data-name="@a.Name"
+                                                    data-origin="@a.Origin"
+                                                    data-period="@a.Period"
+                                                    data-category="@a.Category"
+                                                    data-museum="@a.Museum"
+                                                    data-location="@a.CurrentLocation"
+                                                    data-img="@a.ImageUrl"
+                                                    data-desc="@a.Description"
+                                                    onclick="openEditArtifactBtn(this)">
+                                                ✏ Edit
+                                            </button>
+                                            <form method="post" action="/Admin/DeleteArtifact" style="display:inline;"
+                                                  onsubmit="return false;">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@a.Id" />
+                                                <button type="button" class="adm-btn adm-btn-del"
+                                                        onclick="showDeleteConfirm(this.closest('form'), '@a.Name')">
+                                                    🗑
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        <!-- TEMPLES  -->
+       
+<div id="panel-temples" class="adm-panel @(activeTab=="temples"?"active":"")">
+    <div class="adm-sec-head">
+        <div class="adm-sec-title">Temples & Sites</div>
+        <div style="display:flex;gap:12px;align-items:center;">
+            <div class="adm-search-wrap">
+                <span class="adm-search-icon">🔍</span>
+                <input class="adm-search" placeholder="Search temples..."
+                       oninput="searchTable('templesTable', this.value)" />
+            </div>
+                        <button class="adm-btn adm-btn-add" onclick="openModal('modalAddTemple'); initAddTempleMap();">+ Add Temple</button>
+        </div>
+    </div>
+    <div class="adm-table-wrap">
+        <table class="adm-table" id="templesTable">
+            <thead><tr>
+                <th style="width:60px;">Image</th>
+                <th>Name</th><th>Location</th><th>Period</th><th style="width:140px;">Actions</th>
+            </tr></thead>
+            <tbody>
+            @foreach (var t in Model.Temples)
+            {
+                <tr>
+                    <td><img class="adm-thumb" src="@(t.ImageUrl ?? "/images/placeholder.jpg")"
+                             onerror="this.src='/images/placeholder.jpg'" /></td>
+                    <td><div class="adm-name-cell">@t.Name</div></td>
+                    <td><div class="adm-sub-cell">📍 @t.Location</div></td>
+                    <td><div class="adm-sub-cell">@t.Period</div></td>
+                    <td>
+                        <div class="adm-actions">
+                            <button class="adm-btn adm-btn-edit"
+                                   data-id="@t.Id"
+                                   data-name="@t.Name"
+                                   data-location="@t.Location"
+                                   data-period="@t.Period"
+                                   data-img="@t.ImageUrl"
+                                   data-desc="@t.Description"
+                                  data-lat="@t.Latitude"
+                                  data-lng="@t.Longitude"
+                                   onclick="openEditTempleFromBtn(this)">
+                             ✏ Edit
+                        </button>
+                            <form method="post" action="/Admin/DeleteTemple" style="display:inline;"
+                                  onsubmit="return false;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@t.Id" />
+                                <button type="button" class="adm-btn adm-btn-del"
+                                        onclick="showDeleteConfirm(this.closest('form'),'@Html.Raw(t.Name?.Replace("'","\\'")??"")')">🗑</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+        <!--  MUSEUMS -->
+        <div id="panel-museums" class="adm-panel @(activeTab=="museums"?"active":"")">
+    <div class="adm-sec-head">
+        <div class="adm-sec-title">Museums</div>
+        <div style="display:flex;gap:12px;align-items:center;">
+            <div class="adm-search-wrap">
+                <span class="adm-search-icon">🔍</span>
+                <input class="adm-search" placeholder="Search museums..."
+                       oninput="searchTable('museumsTable', this.value)" />
+            </div>
+                        <button class="adm-btn adm-btn-add" onclick="openModal('modalAddMuseum'); initAddMuseumMap();">+ Add Museum</button>
+        </div>
+    </div>
+    <div class="adm-table-wrap">
+        <table class="adm-table" id="museumsTable">
+            <thead><tr>
+                <th style="width:60px;">Image</th>
+                <th>Name</th><th>Location</th><th>Founded</th><th>Category</th><th style="width:140px;">Actions</th>
+            </tr></thead>
+            <tbody>
+            @foreach (var m in Model.Museums)
+            {
+                <tr>
+                    <td><img class="adm-thumb" src="@(m.ImageUrl ?? "/images/placeholder.jpg")"
+                             onerror="this.src='/images/placeholder.jpg'" /></td>
+                    <td><div class="adm-name-cell">@m.Name</div></td>
+                    <td><div class="adm-sub-cell">📍 @m.Location</div></td>
+                    <td><div class="adm-sub-cell">@m.Founded</div></td>
+                    <td><div class="adm-sub-cell">@m.Category</div></td>
+                    <td>
+                        <div class="adm-actions">
+                            <button class="adm-btn adm-btn-edit"
+                                   data-id="@m.Id"
+                                   data-name="@m.Name"
+                                   data-location="@m.Location"
+                                   data-founded="@m.Founded"
+                                   data-category="@m.Category"
+                                   data-img="@m.ImageUrl"
+                                   data-desc="@m.Description"
+                                   data-lat="@m.Latitude"
+                                   data-lng="@m.Longitude"
+                                onclick="openEditMuseumFromBtn(this)">
+                                 ✏ Edit
+                            </button>
+                            <form method="post" action="/Admin/DeleteMuseum" style="display:inline;"
+                                  onsubmit="return false;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@m.Id" />
+                                <button type="button" class="adm-btn adm-btn-del"
+                                        onclick="showDeleteConfirm(this.closest('form'),'@Html.Raw(m.Name?.Replace("'","\\'")??"")')">🗑</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+        <!-- GODS -->
+        <div id="panel-gods" class="adm-panel @(activeTab=="gods"?"active":"")">
+            <div class="adm-sec-head">
+                <div class="adm-sec-title">Gods</div>
+                <div style="display:flex;gap:12px;align-items:center;">
+                    <div class="adm-search-wrap">
+                        <span class="adm-search-icon">🔍</span>
+                        <input class="adm-search" placeholder="Search gods..."
+                               oninput="searchTable('godsTable',this.value)" />
+                    </div>
+                    <button class="adm-btn adm-btn-add" onclick="openModal('modalAddGod')">+ Add God</button>
+                </div>
+            </div>
+            <div class="adm-table-wrap">
+                <table class="adm-table" id="godsTable">
+                    <thead><tr>
+                        <th style="width:60px;">Image</th>
+                        <th>Name</th><th>Role</th><th>Symbol</th><th style="width:140px;">Actions</th>
+                    </tr></thead>
+                    <tbody>
+                    @foreach (var g in Model.Gods)
+                    {
+                        <tr>
+                            <td><img class="adm-thumb" src="@(g.ImageUrl ?? "/images/placeholder.jpg")"
+                                     onerror="this.src='/images/placeholder.jpg'" /></td>
+                            <td><div class="adm-name-cell">@g.Name</div></td>
+                            <td><div class="adm-sub-cell">@g.Role</div></td>
+                            <td><div class="adm-sub-cell">@g.Symbol</div></td>
+                            <td>
+                                <div class="adm-actions">
+                                    
+                                    <button class="adm-btn adm-btn-edit"
+                                            data-id="@g.Id"
+                                            data-name="@g.Name"
+                                            data-role="@g.Role"
+                                            data-symbol="@g.Symbol"
+                                            data-img="@g.ImageUrl"
+                                            data-desc="@g.Description"
+                                            onclick="openEditGodBtn(this)">
+                                        ✏ Edit
+                                    </button>
+                                    <form method="post" action="/Admin/DeleteGod" style="display:inline;" onsubmit="return false;">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@g.Id" />
+                                        <button type="button" class="adm-btn adm-btn-del"
+                                                onclick="showDeleteConfirm(this.closest('form'),'@Html.Raw(g.Name?.Replace("'","\\'")??"")' )">🗑</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- USERS  -->
+        <div id="panel-users" class="adm-panel @(activeTab=="users"?"active":"")">
+            <div class="adm-sec-head">
+                <div class="adm-sec-title">All Users</div>
+                <div class="adm-search-wrap">
+                    <span class="adm-search-icon">🔍</span>
+                    <input class="adm-search" placeholder="Search users..."
+                           oninput="searchTable('usersTable', this.value)" />
+                </div>
+            </div>
+            <div class="adm-table-wrap">
+                <table class="adm-table" id="usersTable">
+                    <thead><tr>
+                        <th>#</th><th>Name</th><th>Email</th><th>Actions</th>
+                    </tr></thead>
+                    <tbody>
+                    @{ int uIdx = 1; }
+                    @foreach (var u in Model.Users)
+                    {
+                        <tr>
+                            <td style="color:var(--text-muted);">@uIdx</td>
+                            <td><div class="adm-name-cell">@u.Name</div></td>
+                            <td><div class="adm-sub-cell">@u.Email</div></td>
+                            <td style="width:120px;">
+                                <form method="post" action="/Admin/DeleteUser" style="display:inline;" onsubmit="return false;">
+                                    @* لحماية الـ forms من هجمات CSRF. *@
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@u.Id" />
+                                    <button type="button" class="adm-btn adm-btn-del"
+                                            onclick="showDeleteConfirm(this.closest('form'),'@Html.Raw(u.Name?.Replace("'","\\'")??"")' )">🗑</button>
+                                </form>
+                            </td>
+                        </tr>
+                        uIdx++;
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+            <div id="panel-reviews" class="adm-panel @(activeTab == "reviews" ? "active" : "")">
+                <div class="adm-sec-head">
+                    <div class="adm-sec-title">All Reviews</div>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                        <select id="filterRating" onchange="filterReviews()"
+                                style="background:#1a0a00; color:#d4af37; border:1px solid rgba(212,175,55,0.3); padding:7px 12px; border-radius:6px; cursor:pointer;">
+                            <option value="">⭐ All Ratings</option>
+                            <option value="5">★★★★★ 5</option>
+                            <option value="4">★★★★☆ 4</option>
+                            <option value="3">★★★☆☆ 3</option>
+                            <option value="2">★★☆☆☆ 2</option>
+                            <option value="1">★☆☆☆☆ 1</option>
+                        </select>
+                        <select id="filterType" onchange="filterReviews()"
+                                style="background:#1a0a00; color:#d4af37; border:1px solid rgba(212,175,55,0.3); padding:7px 12px; border-radius:6px; cursor:pointer;">
+                            <option value="">📋 All Types</option>
+                            <option value="pharaoh">👑 Pharaoh</option>
+                            <option value="temple">🛕 Temple</option>
+                            <option value="museum">🏛️ Museum</option>
+                            <option value="god">⚡ God</option>
+                            <option value="artifact">𓏠 Artifact</option>
+                        </select>
+                        <select id="filterDate" onchange="filterReviews()"
+                                style="background:#1a0a00; color:#d4af37; border:1px solid rgba(212,175,55,0.3); padding:7px 12px; border-radius:6px; cursor:pointer;">
+                            <option value="">📅 All Time</option>
+                            <option value="today">Today</option>
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                        </select>
+                        <button onclick="resetReviewFilters()"
+                                style="background:transparent; border:1px solid rgba(212,175,55,0.3); color:#d4af37; padding:7px 14px; border-radius:6px; cursor:pointer;">
+                            ↺ Reset
+                        </button>
+                    </div>
+                </div>
+                <div class="adm-table-wrap">
+                    <table class="adm-table" id="reviewsTable">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Type</th>
+                                <th>Item ID</th>
+                                <th>Rating</th>
+                                <th>Comment</th>
+                                <th>Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var r in Model.Reviews)
+                            {
+                                <tr id="adm-review-@r.Id"
+                                    data-rating="@r.Rating"
+                                    data-type="@r.Type"
+                                    data-date="@r.CreatedAt.ToString("yyyy-MM-dd")">
+                                    <td>@r.UserName<br /><small style="color:#8a7055">@r.UserEmail</small></td>
+                                    <td><span class="adm-badge Confirmed">@r.Type</span></td>
+                                    <td>
+                                        @{
+                                            var detailsUrl = r.Type switch
+                                            {
+                                                "temple" => $"/Temple/Details/{r.ItemId}",
+                                                "museum" => $"/Museum/Details/{r.ItemId}",
+                                                "pharaoh" => $"/Pharaoh/Details/{r.ItemId}",
+                                                "god" => $"/God/Details/{r.ItemId}",
+                                                "artifact" => $"/Artifact/Details/{r.ItemId}",
+                                                _ => "#"
+                                            };
+                                        }
+                                        <a href="@detailsUrl" target="_blank" style="color:#d4af37; text-decoration:none;">
+                                            @r.ItemId ↗
+                                        </a>
+                                    </td>
+                                    <td style="color:#c9a227">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            <span>@(i <= r.Rating ? "★" : "☆")</span>
+                                        }
+                                    </td>
+                                    <td style="max-width:250px">@r.Comment</td>
+                                    <td>@r.CreatedAt.ToString("MMM dd, yyyy")</td>
+                                    <td>
+                                        <form method="post" action="/Review/DeleteAdmin" style="display:inline;" onsubmit="return false;">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@r.Id" />
+                                            <button type="button" class="adm-btn adm-btn-del"
+                                                    onclick="showDeleteConfirm(this.closest('form'), '@r.UserName - @r.Type')">
+                                                🗑️
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- DYNASTIES -->
+            <div id="panel-dynasties" class="adm-panel @(activeTab == "dynasties" ? "active" : "")">
+                <div class="adm-sec-head">
+                    <div class="adm-sec-title">Dynasties</div>
+                    <div style="display:flex;gap:12px;align-items:center;">
+                        <div class="adm-search-wrap">
+                            <span class="adm-search-icon">🔍</span>
+                            <input class="adm-search" placeholder="Search dynasties..."
+                                   oninput="searchTable('dynastiesTable', this.value)" />
+                        </div>
+                        <button class="adm-btn adm-btn-add" onclick="openModal('modalAddDynasty')">+ Add Dynasty</button>
+                    </div>
+                </div>
+                <div class="adm-table-wrap">
+                    <table class="adm-table" id="dynastiesTable">
+                        <thead>
+                            <tr>
+                                <th style="width:60px;">Image</th>
+                                <th>Name</th>
+                                <th>Era</th>
+                                <th>Period</th>
+                                <th>Capital</th>
+                                <th style="width:140px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var d in Model.Dynasties)
+                            {
+                                string startY = d.StartYear < 0 ? $"{Math.Abs(d.StartYear)} BC" : $"{d.StartYear} AD";
+                                string endY = d.EndYear < 0 ? $"{Math.Abs(d.EndYear)} BC" : $"{d.EndYear} AD";
+                                <tr>
+                                    <td>
+                                        <img class="adm-thumb" src="@(d.ImageUrl ?? "/images/placeholder.jpg")"
+                                             onerror="this.src='/images/placeholder.jpg'" />
+                                    </td>
+                                    <td><div class="adm-name-cell">@d.Name</div></td>
+                                    <td><div class="adm-sub-cell">@d.Era</div></td>
+                                    <td><div class="adm-sub-cell">@startY – @endY</div></td>
+                                    <td><div class="adm-sub-cell">@d.CapitalCity</div></td>
+                                    <td>
+                                        <div class="adm-actions">
+                                            <button class="adm-btn adm-btn-edit"
+                                                    data-id="@d.Id"
+                                                    data-name="@d.Name"
+                                                    data-era="@d.Era"
+                                                    data-startyear="@d.StartYear"
+                                                    data-endyear="@d.EndYear"
+                                                    data-capital="@d.CapitalCity"
+                                                    data-img="@d.ImageUrl"
+                                                    data-desc="@d.Description"
+                                                    data-achievements="@d.Achievements"
+                                                    onclick="openEditDynastyBtn(this)">
+                                                ✏ Edit
+                                            </button>
+                                            <form method="post" action="/Admin/DeleteDynasty" style="display:inline;"
+                                                  onsubmit="return false;">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@d.Id" />
+                                                <button type="button" class="adm-btn adm-btn-del"
+                                                        onclick="showDeleteConfirm(this.closest('form'), '@d.Name')">
+                                                    🗑
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- EVENTS -->
+            <div id="panel-events" class="adm-panel @(activeTab == "events" ? "active" : "")">
+                <div class="adm-sec-head">
+                    <div class="adm-sec-title">Historical Events</div>
+                    <div style="display:flex;gap:12px;align-items:center;">
+                        <div class="adm-search-wrap">
+                            <span class="adm-search-icon">🔍</span>
+                            <input class="adm-search" placeholder="Search events..."
+                                   oninput="searchTable('eventsTable', this.value)" />
+                        </div>
+                        <button class="adm-btn adm-btn-add" onclick="openModal('modalAddEvent')">+ Add Event</button>
+                    </div>
+                </div>
+                <div class="adm-table-wrap">
+                    <table class="adm-table" id="eventsTable">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Year</th>
+                                <th>Category</th>
+                                <th>Dynasty</th>
+                                <th>Pharaoh</th>
+                                <th style="width:140px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var ev in Model.HistoricalEvents)
+                            {
+                                <tr>
+                                    <td><div class="adm-name-cell">@ev.Title</div></td>
+                                    <td><div class="adm-sub-cell">@ev.YearLabel</div></td>
+                                    <td><div class="adm-sub-cell">@ev.Category</div></td>
+                                    <td><div class="adm-sub-cell">@(ev.DynastyTag ?? "—")</div></td>
+                                    <td><div class="adm-sub-cell">@(ev.PharaohTag ?? "—")</div></td>
+                                    <td>
+                                        <div class="adm-actions">
+                                            <button class="adm-btn adm-btn-edit"
+                                                    data-id="@ev.Id"
+                                                    data-title="@ev.Title"
+                                                    data-year="@ev.Year"
+                                                    data-category="@ev.Category"
+                                                    data-description="@ev.Description"
+                                                    data-imageurl="@ev.ImageUrl"
+                                                    data-dynastytag="@(ev.DynastyTag ?? "")"
+                                                    data-pharaohtag="@(ev.PharaohTag ?? "")"
+                                                    onclick="openEditEvent(this)">
+                                                ✏ Edit
+                                            </button>
+                                            <form method="post" action="/Admin/DeleteHistoricalEvent" style="display:inline;"
+                                                  onsubmit="return false;">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@ev.Id" />
+                                                <button type="button" class="adm-btn adm-btn-del"
+                                                        onclick="showDeleteConfirm(this.closest('form'), '@ev.Title')">
+                                                    🗑
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ADD EVENT -->
+            <div class="adm-overlay" id="modalAddEvent">
+                <div class="adm-modal">
+                    <div class="adm-modal-head">
+                        <div class="adm-modal-title">𓋹 Add Historical Event</div>
+                        <div class="adm-modal-close" onclick="closeModal('modalAddEvent')">✕</div>
+                    </div>
+                    <form method="post" action="/Admin/AddHistoricalEvent">
+                        @Html.AntiForgeryToken()
+                        <div class="adm-modal-body">
+                            <div class="adm-form-row">
+                                <label class="adm-label">Title *</label>
+                                <input class="adm-input" name="Title" required placeholder="e.g. Battle of Kadesh" />
+                            </div>
+                            <div class="adm-form-row-2">
+                                <div>
+                                    <label class="adm-label">Year * (سالب = BC)</label>
+                                    <input class="adm-input" name="Year" type="number" required placeholder="e.g. -1274" />
+                                </div>
+                                <div>
+                                    <label class="adm-label">Category *</label>
+                                    <select class="adm-input" name="Category" required>
+                                        <option value="Political">Political</option>
+                                        <option value="Military">Military</option>
+                                        <option value="Religious">Religious</option>
+                                        <option value="Cultural">Cultural</option>
+                                        <option value="Scientific">Scientific</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="adm-form-row-2">
+                                <div>
+                                    <label class="adm-label">Dynasty Tag</label>
+                                    <input class="adm-input" name="DynastyTag" placeholder="e.g. Fourth Dynasty" />
+                                </div>
+                                <div>
+                                    <label class="adm-label">Pharaoh Tag</label>
+                                    <input class="adm-input" name="PharaohTag" placeholder="e.g. Ramesses II" />
+                                </div>
+                            </div>
+                            <div class="adm-form-row">
+                                <label class="adm-label">Image URL</label>
+                                <input class="adm-input" name="ImageUrl" id="addEventImgUrl"
+                                       oninput="previewImg('addEventImgUrl','addEventImgPreview')" placeholder="https://..." />
+                                <img id="addEventImgPreview" class="adm-img-preview" style="display:none;" />
+                            </div>
+                            <div class="adm-form-row">
+                                <label class="adm-label">Description *</label>
+                                <textarea class="adm-textarea" name="Description" required placeholder="About this event..."></textarea>
+                            </div>
+                        </div>
+                        <div class="adm-modal-foot">
+                            <button type="button" class="adm-btn adm-btn-del" onclick="closeModal('modalAddEvent')">Cancel</button>
+                            <button type="submit" class="adm-btn adm-btn-add">Save Event</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- EDIT EVENT -->
+            <div class="adm-overlay" id="modalEditEvent">
+                <div class="adm-modal">
+                    <div class="adm-modal-head">
+                        <div class="adm-modal-title">✏ Edit Historical Event</div>
+                        <div class="adm-modal-close" onclick="closeModal('modalEditEvent')">✕</div>
+                    </div>
+                    <form method="post" action="/Admin/EditHistoricalEvent">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="Id" id="editEventId" />
+                        <div class="adm-modal-body">
+                            <div class="adm-form-row">
+                                <label class="adm-label">Title *</label>
+                                <input class="adm-input" name="Title" id="editEventTitle" required />
+                            </div>
+                            <div class="adm-form-row-2">
+                                <div>
+                                    <label class="adm-label">Year * (سالب = BC)</label>
+                                    <input class="adm-input" name="Year" id="editEventYear" type="number" required />
+                                </div>
+                                <div>
+                                    <label class="adm-label">Category *</label>
+                                    <select class="adm-input" name="Category" id="editEventCategory">
+                                        <option value="Political">Political</option>
+                                        <option value="Military">Military</option>
+                                        <option value="Religious">Religious</option>
+                                        <option value="Cultural">Cultural</option>
+                                        <option value="Scientific">Scientific</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="adm-form-row-2">
+                                <div>
+                                    <label class="adm-label">Dynasty Tag</label>
+                                    <input class="adm-input" name="DynastyTag" id="editEventDynastyTag" />
+                                </div>
+                                <div>
+                                    <label class="adm-label">Pharaoh Tag</label>
+                                    <input class="adm-input" name="PharaohTag" id="editEventPharaohTag" />
+                                </div>
+                            </div>
+                            <div class="adm-form-row">
+                                <label class="adm-label">Image URL</label>
+                                <input class="adm-input" name="ImageUrl" id="editEventImageUrl"
+                                       oninput="previewImg('editEventImageUrl','editEventImgPreview')" />
+                                <img id="editEventImgPreview" class="adm-img-preview" />
+                            </div>
+                            <div class="adm-form-row">
+                                <label class="adm-label">Description *</label>
+                                <textarea class="adm-textarea" name="Description" id="editEventDescription" required></textarea>
+                            </div>
+                        </div>
+                        <div class="adm-modal-foot">
+                            <button type="button" class="adm-btn adm-btn-del" onclick="closeModal('modalEditEvent')">Cancel</button>
+                            <button type="submit" class="adm-btn adm-btn-add">Update Event</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- REPORTS -->
+            <div id="panel-reports" class="adm-panel @(activeTab == "reports" ? "active" : "")">
+                <h2 class="adm-panel-title">🚩 Reported Reviews</h2>
+
+                @if (!Model.Reports.Any())
+                {
+                    <p class="adm-empty">No reports yet.</p>
+                }
+                else
+                {
+                    <table class="adm-table">
+                        <thead>
+                            <tr>
+                                <th>Reporter</th>
+                                <th>Review</th>
+                                <th>Reason</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var rep in Model.Reports)
+                            {
+                                var review = Model.Reviews.FirstOrDefault(r => r.Id == rep.ReviewId);
+                                <tr class="@(rep.IsResolved ? "resolved-row" : "")">
+                                    <td>@rep.ReporterEmail</td>
+                                    <td>@(review?.Comment ?? "Deleted")</td>
+                                    <td>@rep.Reason</td>
+                                    <td>@rep.CreatedAt.ToString("MMM dd, yyyy")</td>
+                                    <td>
+                                        @if (rep.IsResolved)
+                                        {
+                                            <span class="badge-resolved">✅ Resolved</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge-pending">🔴 Pending</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (!rep.IsResolved)
+                                        {
+                                            <button class="adm-btn-resolve"
+                                                    onclick="resolveReport(@rep.Id, this)">
+                                                ✅ Resolve
+                                            </button>
+                                        }
+                                        @if (review != null)
+                                        {
+                                            <form method="post" action="/Review/DeleteAdmin?returnTab=reports">
+                                                <input type="hidden" name="id" value="@review.Id" />
+                                                <button type="button" class="adm-btn adm-btn-del"
+                                                        onclick="showDeleteConfirm(this.closest('form'), '@(review?.Comment?.Length > 20 ? review.Comment.Substring(0, 20) + "..." : review?.Comment)')">
+                                                    🗑️
+                                                </button>
+                                            </form>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+
+
+
+        <!--BOOKINGS  -->
+        <div id="panel-bookings" class="adm-panel @(activeTab=="bookings"?"active":"")">
+                <div class="adm-sec-head">
+                    <div class="adm-sec-title">All Bookings</div>
+                    <div class="adm-search-wrap">
+                        <span class="adm-search-icon">🔍</span>
+                        <input class="adm-search" placeholder="Search bookings..."
+                               oninput="searchTable('bookingsTable', this.value)" />
+                    </div>
+                </div>
+
+                <div class="adm-filter-bar" style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; margin-top:16px;">
+                    <button onclick="filterAdminBookings('All', this)" style="background:rgba(201,168,76,0.12); border:1px solid #c9a84c; color:#f0c96e; padding:8px 18px; border-radius:25px; font-size:13px; cursor:pointer;">All</button>
+                    <button onclick="filterAdminBookings('Confirmed', this)" style="background:transparent; border:1px solid rgba(201,168,76,0.18); color:#9e8e70; padding:8px 18px; border-radius:25px; font-size:13px; cursor:pointer;">✅ Confirmed</button>
+                    <button onclick="filterAdminBookings('Visited', this)" style="background:transparent; border:1px solid rgba(201,168,76,0.18); color:#9e8e70; padding:8px 18px; border-radius:25px; font-size:13px; cursor:pointer;">🏛️ Visited</button>
+                    <button onclick="filterAdminBookings('Cancelled', this)" style="background:transparent; border:1px solid rgba(201,168,76,0.18); color:#9e8e70; padding:8px 18px; border-radius:25px; font-size:13px; cursor:pointer;">✖ Cancelled</button>
+                    <button onclick="filterAdminBookings('Refunded', this)" style="background:transparent; border:1px solid rgba(201,168,76,0.18); color:#9e8e70; padding:8px 18px; border-radius:25px; font-size:13px; cursor:pointer;">💙 Refunded</button>
+                </div>
+            <div class="adm-table-wrap">
+                <table class="adm-table" id="bookingsTable">
+                    <thead><tr>
+                        <th>User</th><th>Place</th><th>Type</th>
+                        <th>Visit Date</th><th>Tickets</th><th>Amount</th><th>Status</th><th>Actions</th>
+                    </tr></thead>
+                    <tbody>
+                    @foreach (var b in Model.Bookings)
+                    {
+                        <tr>
+                            <td>@b.UserEmail</td>
+                            <td><div class="adm-name-cell">@b.PlaceName</div></td>
+                            <td><div class="adm-sub-cell">@(b.PlaceType == "temple" ? "🛕 Temple" : "🏛️ Museum")</div></td>
+                            <td>@b.VisitDate.ToString("MMM dd, yyyy")</td>
+                            <td>@b.NumberOfTickets 🎫</td>
+                            <td style="color:#c9a227; font-weight:600;">@b.TotalPrice.ToString("N0") EGP</td>
+                            <td><span class="adm-badge @b.Status">@b.Status</span></td>
+                            <td>
+                                <button class="adm-btn adm-btn-edit"
+                                        onclick="openBookingStatus(@b.Id,'@Html.Raw(b.PlaceName?.Replace("'","\\'")??"")','@b.Status')">
+                                    ✏ Status
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<!-- MODALS-->
+
+<!-- CUSTOM CONFIRM DELETE -->
+<div class="adm-overlay" id="modalConfirmDelete">
+  <div class="adm-modal" style="max-width:400px;">
+    <div class="adm-modal-head">
+      <div class="adm-modal-title">🗑 Confirm Delete</div>
+      <div class="adm-modal-close" onclick="closeModal('modalConfirmDelete')">✕</div>
+    </div>
+    <div class="adm-modal-body" style="text-align:center; padding:28px;">
+      <div style="font-size:48px; margin-bottom:16px;">⚠️</div>
+      <div style="font-size:16px; color:#e8d5b0; margin-bottom:8px;" id="confirmDeleteMsg">
+        Are you sure you want to delete this item?
+      </div>
+      <div style="font-size:13px; color:var(--text-muted);">This action cannot be undone.</div>
+    </div>
+    <div class="adm-modal-foot" style="justify-content:center; gap:16px;">
+      <button class="adm-btn adm-btn-edit" onclick="closeModal('modalConfirmDelete')">Cancel</button>
+      <button class="adm-btn adm-btn-del" id="confirmDeleteBtn" style="padding:9px 24px;">🗑 Delete</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="adm-overlay" id="modalBookingStatus">
+  <div class="adm-modal" style="max-width:440px; padding:0; overflow:hidden;">
+
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#1a1200,#2d1f00); padding:24px 28px 20px; border-bottom:1px solid rgba(212,175,55,0.2); position:relative;">
+      <div style="font-family:'Cinzel',serif; font-size:17px; color:#c9a227; letter-spacing:1px;">
+        ✏ Change Booking Status
+      </div>
+      <div style="font-size:12px; color:var(--text-dim); margin-top:4px;">
+        Update the status for: <span id="bookingStatusName" style="color:var(--gold-light); font-weight:600;"></span>
+      </div>
+      <div class="adm-modal-close" onclick="closeModal('modalBookingStatus')"
+           style="position:absolute; top:18px; right:18px; width:30px; height:30px; border-radius:50%; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; cursor:pointer; color:#aaa; font-size:14px; transition:.2s;"
+           onmouseover="this.style.background='rgba(212,175,55,0.15)'; this.style.color='#c9a227'"
+           onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.color='#aaa'">✕</div>
+    </div>
+
+    <form method="post" action="/Admin/ChangeBookingStatus">
+      @Html.AntiForgeryToken()
+      <input type="hidden" name="id" id="bookingStatusId" />
+
+      <div style="padding:24px 28px;">
+
+        <!-- Status Options -->
+        <label style="font-size:12px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; display:block; margin-bottom:12px;">Select New Status</label>
+
+        <div style="display:flex; flex-direction:column; gap:10px;" id="statusOptions">
+
+          <label id="opt-Confirmed" onclick="selectStatus('Confirmed')"
+                 style="display:flex; align-items:center; gap:14px; padding:14px 16px; border-radius:10px; border:1.5px solid rgba(212,175,55,0.15); background:rgba(212,175,55,0.04); cursor:pointer; transition:.2s;">
+            <div style="width:36px; height:36px; border-radius:50%; background:rgba(39,174,96,0.15); display:flex; align-items:center; justify-content:center; font-size:16px;">✅</div>
+            <div>
+              <div style="color:#2ecc71; font-weight:600; font-size:14px;">Confirmed</div>
+              <div style="color:var(--text-dim); font-size:11px; margin-top:2px;">Booking is active and confirmed</div>
+            </div>
+          </label>
+
+          <label id="opt-Cancelled" onclick="selectStatus('Cancelled')"
+                 style="display:flex; align-items:center; gap:14px; padding:14px 16px; border-radius:10px; border:1.5px solid rgba(212,175,55,0.15); background:rgba(212,175,55,0.04); cursor:pointer; transition:.2s;">
+            <div style="width:36px; height:36px; border-radius:50%; background:rgba(231,76,60,0.15); display:flex; align-items:center; justify-content:center; font-size:16px;">✖</div>
+            <div>
+              <div style="color:#e74c3c; font-weight:600; font-size:14px;">Cancelled</div>
+              <div style="color:var(--text-dim); font-size:11px; margin-top:2px;">Booking has been cancelled</div>
+            </div>
+          </label>
+
+          <label id="opt-Refunded" onclick="selectStatus('Refunded')"
+                 style="display:flex; align-items:center; gap:14px; padding:14px 16px; border-radius:10px; border:1.5px solid rgba(212,175,55,0.15); background:rgba(212,175,55,0.04); cursor:pointer; transition:.2s;">
+            <div style="width:36px; height:36px; border-radius:50%; background:rgba(52,152,219,0.15); display:flex; align-items:center; justify-content:center; font-size:16px;">💙</div>
+            <div>
+              <div style="color:#3498db; font-weight:600; font-size:14px;">Refunded</div>
+              <div style="color:var(--text-dim); font-size:11px; margin-top:2px;">Payment has been refunded</div>
+            </div>
+          </label>
+
+        </div>
+
+        <input type="hidden" name="status" id="bookingStatusSelect" />
+      </div>
+
+      <!-- Footer -->
+      <div style="padding:16px 28px 24px; display:flex; gap:10px; justify-content:flex-end; border-top:1px solid rgba(212,175,55,0.1);">
+        <button type="button" onclick="closeModal('modalBookingStatus')"
+                style="padding:10px 22px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:#aaa; cursor:pointer; font-size:13px; transition:.2s;"
+                onmouseover="this.style.background='rgba(255,255,255,0.1)'"
+                onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+          Discard
+        </button>
+        <button type="submit"
+                style="padding:10px 24px; border-radius:8px; border:none; background:linear-gradient(135deg,#c9a227,#b8860b); color:#000; font-weight:700; font-size:13px; cursor:pointer; font-family:'Cinzel',serif; letter-spacing:.5px; transition:.2s;"
+                onmouseover="this.style.opacity='.85'"
+                onmouseout="this.style.opacity='1'">
+          Update Status
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ADD GOD -->
+<div class="adm-overlay" id="modalAddGod">
+  <div class="adm-modal">
+    <div class="adm-modal-head">
+      <div class="adm-modal-title">𓂀 Add New God</div>
+      <div class="adm-modal-close" onclick="closeModal('modalAddGod')">✕</div>
+    </div>
+    <form method="post" action="/Admin/AddGod">
+      @Html.AntiForgeryToken()
+      <div class="adm-modal-body">
+        <div class="adm-form-row-2">
+          <div><label class="adm-label">Name *</label><input class="adm-input" name="Name" required placeholder="e.g. Ra" /></div>
+          <div><label class="adm-label">Symbol</label><input class="adm-input" name="Symbol" placeholder="e.g. Sun Disk" /></div>
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Role / Domains *</label>
+          <input class="adm-input" name="Role" required placeholder="e.g. Sun, Creation, Light" />
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Image URL</label>
+          <input class="adm-input" name="ImageUrl" id="addGodImgUrl"
+                 oninput="previewImg('addGodImgUrl','addGodImgPreview')" placeholder="https://..." />
+          <img id="addGodImgPreview" class="adm-img-preview" style="display:none;" />
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Description *</label>
+          <textarea class="adm-textarea" name="Description" required placeholder="About this deity..."></textarea>
+        </div>
+      </div>
+      <div class="adm-modal-foot">
+        <button type="button" class="adm-btn adm-btn-del" onclick="closeModal('modalAddGod')">Cancel</button>
+        <button type="submit" class="adm-btn adm-btn-add">Save God</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- EDIT GOD -->
+<div class="adm-overlay" id="modalEditGod">
+  <div class="adm-modal">
+    <div class="adm-modal-head">
+      <div class="adm-modal-title">✏ Edit God</div>
+      <div class="adm-modal-close" onclick="closeModal('modalEditGod')">✕</div>
+    </div>
+    <form method="post" action="/Admin/EditGod">
+      @Html.AntiForgeryToken()
+      <input type="hidden" name="Id" id="editGodId" />
+      <div class="adm-modal-body">
+        <div class="adm-form-row-2">
+          <div><label class="adm-label">Name *</label><input class="adm-input" name="Name" id="editGodName" required /></div>
+          <div><label class="adm-label">Symbol</label><input class="adm-input" name="Symbol" id="editGodSymbol" /></div>
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Role / Domains *</label>
+          <input class="adm-input" name="Role" id="editGodRole" required />
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Image URL</label>
+          <input class="adm-input" name="ImageUrl" id="editGodImg"
+                 oninput="previewImg('editGodImg','editGodImgPreview')" />
+          <img id="editGodImgPreview" class="adm-img-preview" />
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Description *</label>
+          <textarea class="adm-textarea" name="Description" id="editGodDesc" required></textarea>
+        </div>
+      </div>
+      <div class="adm-modal-foot">
+        <button type="button" class="adm-btn adm-btn-del" onclick="closeModal('modalEditGod')">Cancel</button>
+        <button type="submit" class="adm-btn adm-btn-add">Update</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ADD PHARAOH -->
+<div class="adm-overlay" id="modalAddPharaoh">
+  <div class="adm-modal">
+    <div class="adm-modal-head">
+      <div class="adm-modal-title">👑 Add New Pharaoh</div>
+      <div class="adm-modal-close" onclick="closeModal('modalAddPharaoh')">✕</div>
+    </div>
+    <form method="post" action="/Admin/AddPharaoh">
+      @Html.AntiForgeryToken()
+      <div class="adm-modal-body">
+        <div class="adm-form-row-2">
+          <div>
+            <label class="adm-label">Name *</label>
+            <input class="adm-input" name="Name" required placeholder="e.g. Ramesses II" />
+          </div>
+          <div>
+            <label class="adm-label">Dynasty</label>
+            <input class="adm-input" name="Dynasty" placeholder="e.g. 19th Dynasty" />
+          </div>
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Period</label>
+          <input class="adm-input" name="Period" placeholder="e.g. 1279–1213 BC" />
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Image URL</label>
+          <input class="adm-input" name="ImageUrl" id="addPharImgUrl"
+                 placeholder="https://..." oninput="previewImg('addPharImgUrl','addPharImgPreview')" />
+          <img id="addPharImgPreview" class="adm-img-preview" src="" style="display:none;" />
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Description</label>
+          <textarea class="adm-textarea" name="Description" required placeholder="Historical overview..."></textarea>
+        </div>
+      </div>
+      <div class="adm-modal-foot">
+        <button type="button" class="adm-btn adm-btn-del" onclick="closeModal('modalAddPharaoh')">Cancel</button>
+        <button type="submit" class="adm-btn adm-btn-add">Save Pharaoh</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- EDIT PHARAOH -->
+<div class="adm-overlay" id="modalEditPharaoh">
+  <div class="adm-modal">
+    <div class="adm-modal-head">
+      <div class="adm-modal-title">✏ Edit Pharaoh</div>
+      <div class="adm-modal-close" onclick="closeModal('modalEditPharaoh')">✕</div>
+    </div>
+    <form method="post" action="/Admin/EditPharaoh">
+      @Html.AntiForgeryToken()
+      <input type="hidden" name="Id" id="editPharId" />
+      <div class="adm-modal-body">
+        <div class="adm-form-row-2">
+          <div>
+            <label class="adm-label">Name *</label>
+            <input class="adm-input" name="Name" id="editPharName" required />
+          </div>
+          <div>
+            <label class="adm-label">Dynasty</label>
+            <input class="adm-input" name="Dynasty" id="editPharDynasty" />
+          </div>
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Period</label>
+          <input class="adm-input" name="Period" id="editPharPeriod" />
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Image URL</label>
+          <input class="adm-input" name="ImageUrl" id="editPharImg"
+                 oninput="previewImg('editPharImg','editPharImgPreview')" />
+          <img id="editPharImgPreview" class="adm-img-preview" />
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Description</label>
+          <textarea class="adm-textarea" name="Description" id="editPharDesc"></textarea>
+        </div>
+      </div>
+      <div class="adm-modal-foot">
+        <button type="button" class="adm-btn adm-btn-del" onclick="closeModal('modalEditPharaoh')">Cancel</button>
+        <button type="submit" class="adm-btn adm-btn-add">Update</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ADD DYNASTY -->
+<div class="adm-overlay" id="modalAddDynasty">
+  <div class="adm-modal">
+    <div class="adm-modal-head">
+      <div class="adm-modal-title">𓂀 Add New Dynasty</div>
+      <div class="adm-modal-close" onclick="closeModal('modalAddDynasty')">✕</div>
+    </div>
+    <form method="post" action="/Admin/AddDynasty">
+      @Html.AntiForgeryToken()
+      <div class="adm-modal-body">
+        <div class="adm-form-row-2">
+          <div>
+            <label class="adm-label">Name *</label>
+            <input class="adm-input" name="Name" required placeholder="e.g. First Dynasty" />
+          </div>
+          <div>
+            <label class="adm-label">Era *</label>
+            <input class="adm-input" name="Era" required placeholder="e.g. Old Kingdom" />
+          </div>
+        </div>
+        <div class="adm-form-row-2">
+          <div>
+            <label class="adm-label">Start Year (negative = BC)</label>
+            <input class="adm-input" name="StartYear" type="number" placeholder="-3100" required />
+          </div>
+          <div>
+            <label class="adm-label">End Year</label>
+            <input class="adm-input" name="EndYear" type="number" placeholder="-2890" required />
+          </div>
+        </div>
+        <div class="adm-form-row-2">
+          <div>
+            <label class="adm-label">Capital City</label>
+            <input class="adm-input" name="CapitalCity" placeholder="e.g. Memphis" />
+          </div>
+          <div>
+            <label class="adm-label">Image URL</label>
+            <input class="adm-input" name="ImageUrl" id="addDynImgUrl"
+                   placeholder="https://..." oninput="previewImg('addDynImgUrl','addDynImgPreview')" />
+          </div>
+        </div>
+        <img id="addDynImgPreview" class="adm-img-preview" src="" style="display:none;" />
+        <div class="adm-form-row">
+          <label class="adm-label">Description *</label>
+          <textarea class="adm-textarea" name="Description" required placeholder="Historical overview..."></textarea>
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Achievements</label>
+          <textarea class="adm-textarea" name="Achievements" placeholder="Notable achievements..."></textarea>
+        </div>
+      </div>
+      <div class="adm-modal-foot">
+        <button type="button" class="adm-btn adm-btn-del" onclick="closeModal('modalAddDynasty')">Cancel</button>
+        <button type="submit" class="adm-btn adm-btn-add">Save Dynasty</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- EDIT DYNASTY -->
+<div class="adm-overlay" id="modalEditDynasty">
+  <div class="adm-modal">
+    <div class="adm-modal-head">
+      <div class="adm-modal-title">✏ Edit Dynasty</div>
+      <div class="adm-modal-close" onclick="closeModal('modalEditDynasty')">✕</div>
+    </div>
+    <form method="post" action="/Admin/EditDynasty">
+      @Html.AntiForgeryToken()
+      <input type="hidden" name="Id" id="editDynId" />
+      <div class="adm-modal-body">
+        <div class="adm-form-row-2">
+          <div>
+            <label class="adm-label">Name *</label>
+            <input class="adm-input" name="Name" id="editDynName" required />
+          </div>
+          <div>
+            <label class="adm-label">Era *</label>
+            <input class="adm-input" name="Era" id="editDynEra" required />
+          </div>
+        </div>
+        <div class="adm-form-row-2">
+          <div>
+            <label class="adm-label">Start Year</label>
+            <input class="adm-input" name="StartYear" id="editDynStart" type="number" required />
+          </div>
+          <div>
+            <label class="adm-label">End Year</label>
+            <input class="adm-input" name="EndYear" id="editDynEnd" type="number" required />
+          </div>
+        </div>
+        <div class="adm-form-row-2">
+          <div>
+            <label class="adm-label">Capital City</label>
+            <input class="adm-input" name="CapitalCity" id="editDynCapital" />
+          </div>
+          <div>
+            <label class="adm-label">Image URL</label>
+            <input class="adm-input" name="ImageUrl" id="editDynImg"
+                   oninput="previewImg('editDynImg','editDynImgPreview')" />
+          </div>
+        </div>
+        <img id="editDynImgPreview" class="adm-img-preview" />
+        <div class="adm-form-row">
+          <label class="adm-label">Description *</label>
+          <textarea class="adm-textarea" name="Description" id="editDynDesc" required></textarea>
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Achievements</label>
+          <textarea class="adm-textarea" name="Achievements" id="editDynAchievements"></textarea>
+        </div>
+      </div>
+      <div class="adm-modal-foot">
+        <button type="button" class="adm-btn adm-btn-del" onclick="closeModal('modalEditDynasty')">Cancel</button>
+        <button type="submit" class="adm-btn adm-btn-add">Update</button>
+      </div>
+    </form>
+  </div>
+</div>
+    <!-- ADD TEMPLE -->
+    <div class="adm-overlay" id="modalAddTemple">
+        <div class="adm-modal">
+            <div class="adm-modal-head">
+                <div class="adm-modal-title">🛕 Add New Temple</div>
+                <div class="adm-modal-close" onclick="closeModal('modalAddTemple')">✕</div>
+            </div>
+            <form method="post" action="/Admin/AddTemple">
+                @Html.AntiForgeryToken()
+                <div class="adm-modal-body">
+                    <div class="adm-form-row-2">
+                        <div>
+                            <label class="adm-label">Name *</label>
+                            <input class="adm-input" name="Name" required placeholder="e.g. Karnak Temple" />
+                        </div>
+                        <div>
+                            <label class="adm-label">Location</label>
+                            <input class="adm-input" name="Location" placeholder="e.g. Luxor" />
+                        </div>
+                    </div>
+                    <div class="adm-form-row-2">
+                        <div>
+                            <label class="adm-label">Period</label>
+                            <input class="adm-input" name="Period" placeholder="e.g. New Kingdom" />
+                        </div>
+                    </div>
+
+                    <!-- MAP PICKER -->
+                    <div class="adm-form-row">
+                        <label class="adm-label">📍 Pick Location on Map</label>
+                        <div id="addTempleMap" style="height:220px; border-radius:8px; border:1px solid #3d2a15; margin-bottom:.5rem;"></div>
+                        <div style="display:flex; gap:1rem;">
+                            <div style="flex:1;">
+                                <label class="adm-label">Latitude</label>
+                                <input class="adm-input" name="Latitude" id="addTmpLat" placeholder="Auto" readonly />
+                            </div>
+                            <div style="flex:1;">
+                                <label class="adm-label">Longitude</label>
+                                <input class="adm-input" name="Longitude" id="addTmpLng" placeholder="Auto" readonly />
+                            </div>
+                        </div>
+                        <small style="color:#8a7055; font-style:italic;">Click on the map to locate the site</small>
+                    </div>
+
+                    <div class="adm-form-row">
+                        <label class="adm-label">Image URL</label>
+                        <input class="adm-input" name="ImageUrl" id="addTmpImgUrl"
+                               oninput="previewImg('addTmpImgUrl','addTmpImgPreview')" placeholder="https://..." />
+                        <img id="addTmpImgPreview" class="adm-img-preview" style="display:none;" />
+                    </div>
+                    <div class="adm-form-row">
+                        <label class="adm-label">Description *</label>
+                        <textarea class="adm-textarea" name="Description" required placeholder="Temple history..."></textarea>
+                    </div>
+                </div>
+                <div class="adm-modal-foot">
+                    <button type="button" class="adm-btn adm-btn-del" onclick="closeModal('modalAddTemple')">Cancel</button>
+                    <button type="submit" class="adm-btn adm-btn-add">Save Temple</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- EDIT TEMPLE -->
+    <div class="adm-overlay" id="modalEditTemple" style="display:none">
+        <div class="adm-modal">
+            <div class="adm-modal-head">
+                <div class="adm-modal-title">✏ Edit Temple</div>
+                <div class="adm-modal-close" onclick="closeModal('modalEditTemple')">✕</div>
+            </div>
+            <form method="post" action="/Admin/EditTemple">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="editTmpId" />
+                <div class="adm-modal-body">
+                    <div class="adm-form-row-2">
+                        <div>
+                            <label class="adm-label">Name *</label>
+                            <input class="adm-input" name="Name" id="editTmpName" required />
+                        </div>
+                        <div>
+                            <label class="adm-label">Location</label>
+                            <input class="adm-input" name="Location" id="editTmpLocation" />
+                        </div>
+                    </div>
+                    <div class="adm-form-row-2">
+                        <div>
+                            <label class="adm-label">Period</label>
+                            <input class="adm-input" name="Period" id="editTmpPeriod" />
+                        </div>
+                    </div>
+
+                    <!-- MAP PICKER -->
+                    <div class="adm-form-row">
+                        <label class="adm-label">📍 Pick Location on Map</label>
+                        <div id="editTempleMap" style="height:220px; border-radius:8px; border:1px solid #3d2a15; margin-bottom:.5rem;"></div>
+                        <div style="display:flex; gap:1rem;">
+                            <div style="flex:1;">
+                                <label class="adm-label">Latitude</label>
+                                <input class="adm-input" name="Latitude" id="editTmpLat" readonly />
+                            </div>
+                            <div style="flex:1;">
+                                <label class="adm-label">Longitude</label>
+                                <input class="adm-input" name="Longitude" id="editTmpLng" readonly />
+                            </div>
+                        </div>
+                        <small style="color:#8a7055; font-style:italic;">Click on the map to locate the site</small>
+                    </div>
+
+                    <div class="adm-form-row">
+                        <label class="adm-label">Image URL</label>
+                        <input class="adm-input" name="ImageUrl" id="editTmpImg"
+                               oninput="previewImg('editTmpImg','editTmpImgPreview')" />
+                        <img id="editTmpImgPreview" class="adm-img-preview" />
+                    </div>
+                    <div class="adm-form-row">
+                        <label class="adm-label">Description</label>
+                        <textarea class="adm-textarea" name="Description" id="editTmpDesc"></textarea>
+                    </div>
+                </div>
+                <div class="adm-modal-foot">
+                    <button type="button" class="adm-btn adm-btn-del" onclick="closeModal('modalEditTemple')">Cancel</button>
+                    <button type="submit" class="adm-btn adm-btn-add">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADD MUSEUM -->
+    <div class="adm-overlay" id="modalAddMuseum">
+        <div class="adm-modal">
+            <div class="adm-modal-head">
+                <div class="adm-modal-title">🏛️ Add New Museum</div>
+                <div class="adm-modal-close" onclick="closeModal('modalAddMuseum')">✕</div>
+            </div>
+            <form method="post" action="/Admin/AddMuseum">
+                @Html.AntiForgeryToken()
+                <div class="adm-modal-body">
+                    <div class="adm-form-row-2">
+                        <div>
+                            <label class="adm-label">Name *</label>
+                            <input class="adm-input" name="Name" required placeholder="e.g. Egyptian Museum" />
+                        </div>
+                        <div>
+                            <label class="adm-label">Location</label>
+                            <input class="adm-input" name="Location" placeholder="e.g. Cairo" />
+                        </div>
+                    </div>
+                    <div class="adm-form-row-2">
+                        <div>
+                            <label class="adm-label">Founded</label>
+                            <input class="adm-input" name="Founded" placeholder="e.g. 1902" />
+                        </div>
+                        <div>
+                            <label class="adm-label">Category</label>
+                            <select class="adm-select" name="Category">
+                                <option value="Egyptian">Egyptian</option>
+                                <option value="International">International</option>
+                                <option value="Modern">Modern</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- MAP PICKER -->
+                    <div class="adm-form-row">
+                        <label class="adm-label">📍 Pick Location on Map</label>
+                        <div id="addMuseumMap" style="height:220px; border-radius:8px; border:1px solid #3d2a15; margin-bottom:.5rem;"></div>
+                        <div style="display:flex; gap:1rem;">
+                            <div style="flex:1;">
+                                <label class="adm-label">Latitude</label>
+                                <input class="adm-input" name="Latitude" id="addMusLat" placeholder="Auto" readonly />
+                            </div>
+                            <div style="flex:1;">
+                                <label class="adm-label">Longitude</label>
+                                <input class="adm-input" name="Longitude" id="addMusLng" placeholder="Auto" readonly />
+                            </div>
+                        </div>
+                        <small style="color:#8a7055; font-style:italic;">Click on the map to locate the site</small>
+                    </div>
+
+                    <div class="adm-form-row">
+                        <label class="adm-label">Image URL</label>
+                        <input class="adm-input" name="ImageUrl" id="addMusImgUrl"
+                               oninput="previewImg('addMusImgUrl','addMusImgPreview')" placeholder="https://..." />
+                        <img id="addMusImgPreview" class="adm-img-preview" style="display:none;" />
+                    </div>
+                    <div class="adm-form-row">
+                        <label class="adm-label">Description *</label>
+                        <textarea class="adm-textarea" name="Description" required placeholder="Museum overview..."></textarea>
+                    </div>
+                </div>
+                <div class="adm-modal-foot">
+                    <button type="button" class="adm-btn adm-btn-del" onclick="closeModal('modalAddMuseum')">Cancel</button>
+                    <button type="submit" class="adm-btn adm-btn-add">Save Museum</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- EDIT MUSEUM -->
+    <div class="adm-overlay" id="modalEditMuseum">
+        <div class="adm-modal">
+            <div class="adm-modal-head">
+                <div class="adm-modal-title">✏ Edit Museum</div>
+                <div class="adm-modal-close" onclick="closeModal('modalEditMuseum')">✕</div>
+            </div>
+            <form method="post" action="/Admin/EditMuseum">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="editMusId" />
+                <div class="adm-modal-body">
+                    <div class="adm-form-row-2">
+                        <div>
+                            <label class="adm-label">Name *</label>
+                            <input class="adm-input" name="Name" id="editMusName" required />
+                        </div>
+                        <div>
+                            <label class="adm-label">Location</label>
+                            <input class="adm-input" name="Location" id="editMusLocation" />
+                        </div>
+                    </div>
+                    <div class="adm-form-row-2">
+                        <div>
+                            <label class="adm-label">Founded</label>
+                            <input class="adm-input" name="Founded" id="editMusFounded" />
+                        </div>
+                        <div>
+                            <label class="adm-label">Category</label>
+                            <select class="adm-select" name="Category" id="editMusCategory">
+                                <option value="Egyptian">Egyptian</option>
+                                <option value="International">International</option>
+                                <option value="Modern">Modern</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- MAP PICKER -->
+                    <div class="adm-form-row">
+                        <label class="adm-label">📍 Pick Location on Map</label>
+                        <div id="editMuseumMap" style="height:220px; border-radius:8px; border:1px solid #3d2a15; margin-bottom:.5rem;"></div>
+                        <div style="display:flex; gap:1rem;">
+                            <div style="flex:1;">
+                                <label class="adm-label">Latitude</label>
+                                <input class="adm-input" name="Latitude" id="editMusLat" readonly />
+                            </div>
+                            <div style="flex:1;">
+                                <label class="adm-label">Longitude</label>
+                                <input class="adm-input" name="Longitude" id="editMusLng" readonly />
+                            </div>
+                        </div>
+                        <small style="color:#8a7055; font-style:italic;">Click on the map to locate the site</small>
+                    </div>
+
+                    <div class="adm-form-row">
+                        <label class="adm-label">Image URL</label>
+                        <input class="adm-input" name="ImageUrl" id="editMusImg"
+                               oninput="previewImg('editMusImg','editMusImgPreview')" />
+                        <img id="editMusImgPreview" class="adm-img-preview" />
+                    </div>
+                    <div class="adm-form-row">
+                        <label class="adm-label">Description</label>
+                        <textarea class="adm-textarea" name="Description" id="editMusDesc"></textarea>
+                    </div>
+                </div>
+                <div class="adm-modal-foot">
+                    <button type="button" class="adm-btn adm-btn-del" onclick="closeModal('modalEditMuseum')">Cancel</button>
+                    <button type="submit" class="adm-btn adm-btn-add">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADD ARTIFACT -->
+    <div class="adm-overlay" id="modalAddArtifact">
+        <div class="adm-modal">
+            <div class="adm-modal-head">
+                <div class="adm-modal-title">𓏠 Add New Artifact</div>
+                <div class="adm-modal-close" onclick="closeModal('modalAddArtifact')">✕</div>
+            </div>
+            <form method="post" action="/Admin/AddArtifact">
+                @Html.AntiForgeryToken()
+                <div class="adm-modal-body">
+                    <div class="adm-form-row-2">
+                        <div>
+                            <label class="adm-label">Name *</label>
+                            <input class="adm-input" name="Name" required placeholder="e.g. Golden Mask of Tutankhamun" />
+                        </div>
+                        <div>
+                            <label class="adm-label">Category</label>
+                            <select class="adm-input" name="Category">
+                                <option>Statue</option>
+                                <option>Jewelry</option>
+                                <option>Papyrus</option>
+                                <option>Mummy</option>
+                                <option>Tomb Object</option>
+                                <option>Weapon</option>
+                                <option>Pottery</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="adm-form-row-2">
+                        <div>
+                            <label class="adm-label">Origin</label>
+                            <input class="adm-input" name="Origin" placeholder="e.g. Luxor, Egypt" />
+                        </div>
+                        <div>
+                            <label class="adm-label">Period</label>
+                            <input class="adm-input" name="Period" placeholder="e.g. 1323 BC" />
+                        </div>
+                    </div>
+                    <div class="adm-form-row-2">
+                        <div>
+                            <label class="adm-label">Museum</label>
+                            <input class="adm-input" name="Museum" placeholder="e.g. Egyptian Museum" />
+                        </div>
+                        <div>
+                            <label class="adm-label">Current Location</label>
+                            <input class="adm-input" name="CurrentLocation" placeholder="e.g. Cairo, Egypt" />
+                        </div>
+                    </div>
+                    <div class="adm-form-row">
+                        <label class="adm-label">Image URL</label>
+                        <input class="adm-input" name="ImageUrl" id="addArtImgUrl"
+                               placeholder="https://..." oninput="previewImg('addArtImgUrl','addArtImgPreview')" />
+                        <img id="addArtImgPreview" class="adm-img-preview" src="" style="display:none;" />
+                    </div>
+                    <div class="adm-form-row">
+                        <label class="adm-label">Description</label>
+                        <textarea class="adm-textarea" name="Description" placeholder="Historical overview..."></textarea>
+                    </div>
+                </div>
+                <div class="adm-modal-foot">
+                    <button type="button" class="adm-btn adm-btn-del" onclick="closeModal('modalAddArtifact')">Cancel</button>
+                    <button type="submit" class="adm-btn adm-btn-add">Save Artifact</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- EDIT ARTIFACT -->
+    <div class="adm-overlay" id="modalEditArtifact">
+        <div class="adm-modal">
+            <div class="adm-modal-head">
+                <div class="adm-modal-title">✏ Edit Artifact</div>
+                <div class="adm-modal-close" onclick="closeModal('modalEditArtifact')">✕</div>
+            </div>
+            <form method="post" action="/Admin/EditArtifact">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="editArtifactId" />
+                <div class="adm-modal-body">
+                    <div class="adm-form-row-2">
+                        <div>
+                            <label class="adm-label">Name *</label>
+                            <input class="adm-input" name="Name" id="editArtifactName" required />
+                        </div>
+                        <div>
+                            <label class="adm-label">Category</label>
+                            <select class="adm-input" name="Category" id="editArtifactCategory">
+                                <option>Statue</option>
+                                <option>Jewelry</option>
+                                <option>Papyrus</option>
+                                <option>Mummy</option>
+                                <option>Tomb Object</option>
+                                <option>Weapon</option>
+                                <option>Pottery</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="adm-form-row-2">
+                        <div>
+                            <label class="adm-label">Origin</label>
+                            <input class="adm-input" name="Origin" id="editArtifactOrigin" />
+                        </div>
+                        <div>
+                            <label class="adm-label">Period</label>
+                            <input class="adm-input" name="Period" id="editArtifactPeriod" />
+                        </div>
+                    </div>
+                    <div class="adm-form-row-2">
+                        <div>
+                            <label class="adm-label">Museum</label>
+                            <input class="adm-input" name="Museum" id="editArtifactMuseum" />
+                        </div>
+                        <div>
+                            <label class="adm-label">Current Location</label>
+                            <input class="adm-input" name="CurrentLocation" id="editArtifactLocation" />
+                        </div>
+                    </div>
+                    <div class="adm-form-row">
+                        <label class="adm-label">Image URL</label>
+                        <input class="adm-input" name="ImageUrl" id="editArtifactImg"
+                               oninput="previewImg('editArtifactImg','editArtImgPreview')" />
+                        <img id="editArtImgPreview" class="adm-img-preview" />
+                    </div>
+                    <div class="adm-form-row">
+                        <label class="adm-label">Description</label>
+                        <textarea class="adm-textarea" name="Description" id="editArtifactDesc"></textarea>
+                    </div>
+                </div>
+                <div class="adm-modal-foot">
+                    <button type="button" class="adm-btn adm-btn-del" onclick="closeModal('modalEditArtifact')">Cancel</button>
+                    <button type="submit" class="adm-btn adm-btn-add">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+<script>
+          function openEditEvent(btn) {
+        document.getElementById('editEventId').value = btn.dataset.id;
+        document.getElementById('editEventTitle').value = btn.dataset.title;
+        document.getElementById('editEventYear').value = btn.dataset.year;
+        document.getElementById('editEventCategory').value = btn.dataset.category;
+        document.getElementById('editEventDescription').value = btn.dataset.description;
+        document.getElementById('editEventImageUrl').value = btn.dataset.imageurl;
+        document.getElementById('editEventDynastyTag').value = btn.dataset.dynastytag || '';
+        document.getElementById('editEventPharaohTag').value = btn.dataset.pharaohtag || '';
+        document.getElementById('modalEditEvent').style.display = 'flex';
+        }
+    
+    
+    
+    
+    function resolveReport(reportId, btn) {
+        fetch('/Review/ResolveReport', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `id=${reportId}`
+        })
+        .then(r => r.json())
+        .then(data => {
+        if (data.success) {
+        const row = btn.closest('tr');
+        row.classList.add('resolved-row');
+        btn.remove();
+        const statusCell = row.querySelector('td:nth-child(5)');
+        if (statusCell) {
+        statusCell.innerHTML = '<span class="badge-resolved">✅ Resolved</span>';
+        }
+        }
+        });
+        }
+
+    
+    function filterReviews() {
+        const rating = document.getElementById('filterRating').value;
+        const type   = document.getElementById('filterType').value;
+        const date   = document.getElementById('filterDate').value;
+
+        const now   = new Date();
+        const rows  = document.querySelectorAll('#reviewsTable tr[data-rating]');
+
+        rows.forEach(row => {
+        const r    = row.dataset.rating;
+        const t    = row.dataset.type;
+        const d    = new Date(row.dataset.date);
+
+        let show = true;
+
+        if (rating && r !== rating) show = false;
+        if (type   && t !== type)   show = false;
+
+        if (date === 'today') {
+        if (d.toDateString() !== now.toDateString()) show = false;
+        } else if (date === 'week') {
+        const week = new Date(now); week.setDate(now.getDate() - 7);
+        if (d < week) show = false;
+        } else if (date === 'month') {
+        if (d.getMonth() !== now.getMonth() ||
+        d.getFullYear() !== now.getFullYear()) show = false;
+        }
+
+        row.style.display = show ? '' : 'none';
+        });
+        }
+
+        function resetReviewFilters() {
+        document.getElementById('filterRating').value = '';
+        document.getElementById('filterType').value   = '';
+        document.getElementById('filterDate').value   = '';
+        filterReviews();
+        }
+
+
+
+        function adminDeleteReview(id) {
+        if (!confirm('Delete this review?')) return;
+        fetch('/Review/Delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `id=${id}`
+        })
+        .then(r => r.json())
+        .then(data => {
+        if (data.success)
+        document.getElementById('adm-review-' + id).remove();
+        });
+        }
+    
+    
+    
+    function filterAdminBookings(status, btn) {
+    document.querySelectorAll('.adm-filter-bar .db-filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('#bookingsTable tbody tr').forEach(row => {
+        const rowStatus = row.querySelector('.adm-badge')?.textContent.trim();
+        row.style.display = (status === 'All' || rowStatus === status) ? '' : 'none';
+    });
+}    
+    
+    
+    // ===== MUSEUM MAP PICKERS =====
+        var addMuseumMap, editMuseumMap;
+        var addMuseumMarker, editMuseumMarker;
+
+        function initAddMuseumMap() {
+        setTimeout(function() {
+        if (addMuseumMap) { addMuseumMap.remove(); addMuseumMap = null; }
+        addMuseumMap = L.map('addMuseumMap').setView([26.5, 30.0], 5);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: ''
+        }).addTo(addMuseumMap);
+        addMuseumMap.attributionControl.remove();
+
+        addMuseumMap.on('click', function(e) {
+        var lat = e.latlng.lat.toFixed(6);
+        var lng = e.latlng.lng.toFixed(6);
+        document.getElementById('addMusLat').value = lat;
+        document.getElementById('addMusLng').value = lng;
+        if (addMuseumMarker) addMuseumMap.removeLayer(addMuseumMarker);
+        addMuseumMarker = L.marker([lat, lng]).addTo(addMuseumMap);
+        });
+        }, 300);
+        }
+
+        function openEditMuseumMap(lat, lng) {
+        setTimeout(function() {
+        if (editMuseumMap) { editMuseumMap.remove(); editMuseumMap = null; }
+        var center = (lat && lng) ? [lat, lng] : [26.5, 30.0];
+        editMuseumMap = L.map('editMuseumMap').setView(center, lat ? 8 : 5);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: ''
+        }).addTo(editMuseumMap);
+        editMuseumMap.attributionControl.remove();
+
+        if (lat && lng) {
+        editMuseumMarker = L.marker([lat, lng]).addTo(editMuseumMap);
+        }
+
+        editMuseumMap.on('click', function(e) {
+        var lat = e.latlng.lat.toFixed(6);
+        var lng = e.latlng.lng.toFixed(6);
+        document.getElementById('editMusLat').value = lat;
+        document.getElementById('editMusLng').value = lng;
+        if (editMuseumMarker) editMuseumMap.removeLayer(editMuseumMarker);
+        editMuseumMarker = L.marker([lat, lng]).addTo(editMuseumMap);
+        });
+        }, 300);
+        }
+
+    
+// ===== MAP PICKERS =====
+var addTempleMap, editTempleMap;
+var addTempleMarker, editTempleMarker;
+
+// Add Temple Map
+function initAddTempleMap() {
+    setTimeout(function() {
+        if (addTempleMap) { addTempleMap.remove(); addTempleMap = null; }
+        addTempleMap = L.map('addTempleMap').setView([26.5, 30.0], 5);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: ''
+        }).addTo(addTempleMap);
+        addTempleMap.attributionControl.remove();
+
+        addTempleMap.on('click', function(e) {
+            var lat = e.latlng.lat.toFixed(6);
+            var lng = e.latlng.lng.toFixed(6);
+            document.getElementById('addTmpLat').value = lat;
+            document.getElementById('addTmpLng').value = lng;
+            if (addTempleMarker) addTempleMap.removeLayer(addTempleMarker);
+            addTempleMarker = L.marker([lat, lng]).addTo(addTempleMap);
+        });
+    }, 300);
+}
+
+// Edit Temple Map
+function openEditTempleMap(lat, lng) {
+    setTimeout(function() {
+        if (editTempleMap) { editTempleMap.remove(); editTempleMap = null; }
+        var center = (lat && lng) ? [lat, lng] : [26.5, 30.0];
+        editTempleMap = L.map('editTempleMap').setView(center, lat ? 8 : 5);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: ''
+        }).addTo(editTempleMap);
+        editTempleMap.attributionControl.remove();
+
+        if (lat && lng) {
+            editTempleMarker = L.marker([lat, lng]).addTo(editTempleMap);
+        }
+
+        editTempleMap.on('click', function(e) {
+            var lat = e.latlng.lat.toFixed(6);
+            var lng = e.latlng.lng.toFixed(6);
+            document.getElementById('editTmpLat').value = lat;
+            document.getElementById('editTmpLng').value = lng;
+            if (editTempleMarker) editTempleMap.removeLayer(editTempleMarker);
+            editTempleMarker = L.marker([lat, lng]).addTo(editTempleMap);
+        });
+    }, 300);
+}
+
+
+
+//  Delete Confirm 
+function showDeleteConfirm(form, name) {
+    document.getElementById('confirmDeleteMsg').textContent = 'Delete "' + name + '"?';
+    document.getElementById('confirmDeleteBtn').onclick = function() {
+        form.onsubmit = null;
+        form.submit();
+    };
+    openModal('modalConfirmDelete');
+}
+
+// Booking Status 
+function selectStatus(val) {
+    document.getElementById('bookingStatusSelect').value = val;
+    ['Confirmed','Cancelled','Refunded'].forEach(s => {
+        const el = document.getElementById('opt-' + s);
+        el.style.border = '1.5px solid rgba(212,175,55,0.15)';
+        el.style.background = 'rgba(212,175,55,0.04)';
+    });
+    const selected = document.getElementById('opt-' + val);
+    selected.style.border = '1.5px solid rgba(212,175,55,0.5)';
+    selected.style.background = 'rgba(212,175,55,0.1)';
+}
+
+function openBookingStatus(id, name, currentStatus) {
+    document.getElementById('bookingStatusId').value = id;
+    document.getElementById('bookingStatusName').textContent = name;
+    selectStatus(currentStatus);
+    openModal('modalBookingStatus');
+}
+
+//  Panel Switching 
+const panelTitles = {
+    overview: '𓋹 Dashboard Overview',
+    pharaohs: '👑 Manage Pharaohs',
+    temples:  '🛕 Manage Temples',
+    museums:  '🏛️ Manage Museums',
+    gods:     '𓂀 Manage Gods',
+    users:    '👥 Users',
+    bookings: '📅 Bookings'
+};
+function switchPanel(name, btn) {
+    document.querySelectorAll('.adm-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.adm-nav-item').forEach(b => b.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+    if (btn) btn.classList.add('active');
+    else {
+        document.querySelectorAll('.adm-nav-item').forEach(b => {
+            if (b.textContent.toLowerCase().includes(name)) b.classList.add('active');
+        });
+    }
+    document.getElementById('topbarTitle').textContent = panelTitles[name] || name;
+}
+
+// Modal 
+function openModal(id) {
+    document.getElementById(id).style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+    document.getElementById(id).style.display = 'none';
+    document.body.style.overflow = '';
+}
+document.querySelectorAll('.adm-overlay').forEach(overlay => {
+    overlay.addEventListener('click', e => {
+        if (e.target === overlay) closeModal(overlay.id);
+    });
+});
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape')
+        document.querySelectorAll('.adm-overlay.open').forEach(o => closeModal(o.id));
+});
+
+//  Edit Pharaoh 
+
+function openEditPharaohBtn(btn) {
+    const id      = btn.getAttribute('data-id');
+    const name    = btn.getAttribute('data-name');
+    const dynasty = btn.getAttribute('data-dynasty');  
+    const period  = btn.getAttribute('data-period');   
+    const img     = btn.getAttribute('data-img');
+    const desc    = btn.getAttribute('data-desc');
+    openEditPharaoh(id, name, dynasty, period, img, desc); 
+}
+
+function openEditPharaoh(id, name, dynasty, period, img, desc) {
+    document.getElementById('editPharId').value      = id;
+    document.getElementById('editPharName').value    = name;
+    document.getElementById('editPharDynasty').value = dynasty;
+    document.getElementById('editPharPeriod').value  = period;
+    document.getElementById('editPharImg').value     = img;
+    document.getElementById('editPharDesc').value    = desc;
+    const prev = document.getElementById('editPharImgPreview');
+    prev.src = img; prev.style.display = img ? 'block' : 'none';
+    openModal('modalEditPharaoh');
+}
+
+// Edit Temple
+function openEditTempleFromBtn(btn) {
+    document.getElementById('editTmpId').value       = btn.dataset.id;
+    document.getElementById('editTmpName').value     = btn.dataset.name;
+    document.getElementById('editTmpLocation').value = btn.dataset.location;
+    document.getElementById('editTmpPeriod').value   = btn.dataset.period;
+    document.getElementById('editTmpImg').value      = btn.dataset.img;
+    document.getElementById('editTmpDesc').value     = btn.dataset.desc;
+    const prev = document.getElementById('editTmpImgPreview');
+    prev.src = btn.dataset.img;
+    prev.style.display = btn.dataset.img ? 'block' : 'none';
+
+    document.getElementById('editTmpLat').value = btn.dataset.lat || '';
+    document.getElementById('editTmpLng').value = btn.dataset.lng || '';
+
+
+     openModal('modalEditTemple');
+
+     var lat = parseFloat(btn.dataset.lat) || 0;
+     var lng = parseFloat(btn.dataset.lng) || 0;
+     openEditTempleMap(lat, lng);
+}
+
+//  Edit Museum 
+function openEditMuseumFromBtn(btn) {
+    document.getElementById('editMusId').value       = btn.dataset.id;
+    document.getElementById('editMusName').value     = btn.dataset.name;
+    document.getElementById('editMusLocation').value = btn.dataset.location;
+    document.getElementById('editMusFounded').value  = btn.dataset.founded;
+    document.getElementById('editMusCategory').value = btn.dataset.category;
+    document.getElementById('editMusImg').value      = btn.dataset.img;
+    document.getElementById('editMusDesc').value     = btn.dataset.desc;
+    const prev = document.getElementById('editMusImgPreview');
+    prev.src = btn.dataset.img;
+    prev.style.display = btn.dataset.img ? 'block' : 'none';
+    openModal('modalEditMuseum');
+    document.getElementById('editMusLat').value = btn.dataset.lat || '';
+document.getElementById('editMusLng').value = btn.dataset.lng || '';
+var lat = parseFloat(btn.dataset.lat) || 0;
+var lng = parseFloat(btn.dataset.lng) || 0;
+openEditMuseumMap(lat, lng);
+
+    
+}
+//  Edit God 
+
+function openEditGodBtn(btn) {
+    const id     = btn.getAttribute('data-id');
+    const name   = btn.getAttribute('data-name');
+    const role   = btn.getAttribute('data-role');
+    const symbol = btn.getAttribute('data-symbol');
+    const img    = btn.getAttribute('data-img');
+    const desc   = btn.getAttribute('data-desc');
+    openEditGod(id, name, role, symbol, img, desc);
+}
+
+function openEditGod(id, name, role, symbol, img, desc) {
+    document.getElementById('editGodId').value     = id;
+    document.getElementById('editGodName').value   = name;
+    document.getElementById('editGodRole').value   = role;
+    document.getElementById('editGodSymbol').value = symbol;
+    document.getElementById('editGodImg').value    = img;
+    document.getElementById('editGodDesc').value   = desc;
+    const prev = document.getElementById('editGodImgPreview');
+    prev.src = img; prev.style.display = img ? 'block' : 'none';
+    openModal('modalEditGod');
+}
+
+//  Image Preview
+function previewImg(inputId, previewId) {
+    const url = document.getElementById(inputId).value;
+    const img = document.getElementById(previewId);
+    if (url) { img.src = url; img.style.display = 'block'; }
+    else { img.style.display = 'none'; }
+}
+
+// Table Search 
+function searchTable(tableId, query) {
+    const q = query.toLowerCase();
+    document.querySelectorAll('#' + tableId + ' tbody tr').forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+}
+
+//  Counter Animation 
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.counter').forEach(el => {
+        const target = parseInt(el.dataset.target) || 0;
+        let current = 0;
+        const step = Math.max(1, target / 60);
+        const timer = setInterval(() => {
+            current = Math.min(current + step, target);
+            el.textContent = Math.floor(current);
+            if (current >= target) clearInterval(timer);
+        }, 16);
+    });
+
+    // Revenue
+    const revEl = document.getElementById('revenueVal');
+    if (revEl) {
+        const target = @Model.TotalRevenue.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        let current = 0;
+        const step = Math.max(1, target / 80);
+        const timer = setInterval(() => {
+            current = Math.min(current + step, target);
+            revEl.textContent = Math.floor(current).toLocaleString();
+            if (current >= target) clearInterval(timer);
+        }, 16);
+    }
+
+    // Auto-dismiss toast
+    const toast = document.getElementById('toastMsg');
+    if (toast) setTimeout(() => toast.remove(), 4000);
+});
+
+
+        function openEditArtifactBtn(btn) {
+        document.getElementById('editArtifactId').value       = btn.dataset.id;
+        document.getElementById('editArtifactName').value     = btn.dataset.name;
+        document.getElementById('editArtifactOrigin').value   = btn.dataset.origin;
+        document.getElementById('editArtifactPeriod').value   = btn.dataset.period;
+        document.getElementById('editArtifactCategory').value = btn.dataset.category;
+        document.getElementById('editArtifactMuseum').value   = btn.dataset.museum;
+        document.getElementById('editArtifactLocation').value = btn.dataset.location;
+        document.getElementById('editArtifactImg').value      = btn.dataset.img;
+        document.getElementById('editArtifactDesc').value     = btn.dataset.desc;
+        openModal('modalEditArtifact');
+        }
+
+        function openEditDynastyBtn(btn) {
+        document.getElementById('editDynId').value           = btn.dataset.id;
+        document.getElementById('editDynName').value         = btn.dataset.name;
+        document.getElementById('editDynEra').value          = btn.dataset.era;
+        document.getElementById('editDynStart').value        = btn.dataset.startyear;
+        document.getElementById('editDynEnd').value          = btn.dataset.endyear;
+        document.getElementById('editDynCapital').value      = btn.dataset.capital;
+        document.getElementById('editDynImg').value          = btn.dataset.img;
+        document.getElementById('editDynDesc').value         = btn.dataset.desc;
+        document.getElementById('editDynAchievements').value = btn.dataset.achievements;
+
+        const preview = document.getElementById('editDynImgPreview');
+        if (btn.dataset.img) {
+        preview.src = btn.dataset.img;
+        preview.style.display = 'block';
+        } else {
+        preview.style.display = 'none';
+        }
+
+        openModal('modalEditDynasty');
+        }
+
+
+</script>
+</body>
+</html>

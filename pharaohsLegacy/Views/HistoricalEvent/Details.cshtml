@@ -1,0 +1,84 @@
+﻿@using pharaohsLegacy.Extensions
+@model pharaohsLegacy.Models.HistoricalEvent
+@{
+    ViewData["Title"] = Model.Title;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var dynasty = ViewBag.Dynasty as pharaohsLegacy.Models.Dynasty;
+    var pharaoh = ViewBag.Pharaoh as pharaohsLegacy.Models.Pharaoh;
+    var related = ViewBag.RelatedEvents as List<pharaohsLegacy.Models.HistoricalEvent> ?? new();
+}
+<link rel="stylesheet" href="~/css/events.css" />
+
+<div class="event-details-page">
+    <div class="event-details-hero" style="background-image:url('@Model.ImageUrl')">
+        <div class="event-hero-overlay">
+            <div class="event-hero-content">
+                <div class="event-year-badge large">@Model.YearLabel</div>
+                <span class="cat-badge cat-badge-@Model.Category.ToLower()">@Model.Category</span>
+                <h1>@Model.Title</h1>
+                @if (!string.IsNullOrEmpty(Model.DynastyTag))
+                {
+                    <div class="event-dynasty-tag">𓂀 @Model.DynastyTag</div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="event-details-body">
+
+        <div class="event-desc-card">
+            <h2>@Html.L("Event_AboutThisEvent")</h2>
+            <p>@Model.Description</p>
+        </div>
+
+        @if (dynasty != null || pharaoh != null)
+        {
+            <div class="event-relations-grid">
+                @if (dynasty != null)
+                {
+                    <div class="relation-card">
+                        <img src="@dynasty.ImageUrl" alt="@dynasty.Name" onerror="this.src=''" />
+                        <div class="relation-body">
+                            <span class="relation-label">@Html.L("Common_Dynasty")</span>
+                            <h3>@dynasty.Name</h3>
+                            <p>@dynasty.Era</p>
+                            <a href="@Url.Action("Details", "Dynasty", new { id = dynasty.Id })">@Html.L("Event_ViewDynasty_Link") →</a>
+                        </div>
+                    </div>
+                }
+                @if (pharaoh != null)
+                {
+                    <div class="relation-card">
+                        <img src="@pharaoh.ImageUrl" alt="@pharaoh.Name" onerror="this.src=''" />
+                        <div class="relation-body">
+                            <span class="relation-label">@Html.L("Common_Pharaoh")</span>
+                            <h3>@pharaoh.Name</h3>
+                            <p>@pharaoh.Dynasty</p>
+                            <a href="@Url.Action("Details", "Pharaoh", new { id = pharaoh.Id })">@Html.L("Event_ViewPharaoh_Link") →</a>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+        @if (related.Any())
+        {
+            <div class="related-events-section">
+                <h2>@Html.L("Event_OtherEventsIn_Prefix") @Model.DynastyTag</h2>
+                <div class="related-grid">
+                    @foreach (var re in related)
+                    {
+                        <a href="@Url.Action("Details", new { id = re.Id })" class="related-event-card">
+                            <div class="related-year">@re.YearLabel</div>
+                            <span class="cat-badge cat-badge-@re.Category.ToLower()">@re.Category</span>
+                            <h4>@re.Title</h4>
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+
+        <a href="@Url.Action("Index")" class="back-btn">← @Html.L("Event_Back_Link")</a>
+    </div>
+</div>
+<script src="~/js/events.js"></script>

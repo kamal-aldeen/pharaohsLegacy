@@ -1,0 +1,150 @@
+﻿@using pharaohsLegacy.Extensions
+@model Dictionary<string, List<pharaohsLegacy.Models.Dynasty>>
+@{
+    ViewData["Title"] = "Egyptian Dynasties";
+    string FormatYear(int y) => y < 0 ? $"{Math.Abs(y)} BC" : $"{y} AD";
+}
+
+<link rel="stylesheet" href="~/css/dynasty.css" />
+
+<div class="dynasty-page">
+
+    <!-- HERO -->
+    <section class="dynasty-hero">
+        <div class="dyn-hero-bg"></div>
+        <div class="dyn-hero-content">
+            <span class="dyn-hero-label">@Html.L("Dyn_Hero_Label")</span>
+            <h1 class="dyn-hero-title">@Html.L("Dyn_Hero_Title") <span class="gold">@Html.L("Dyn_Hero_Title_Span")</span></h1>
+            <p class="dyn-hero-sub">@Html.L("Dyn_Hero_Sub")</p>
+            <!-- Stats -->
+            <div class="dyn-stats">
+                <div class="dyn-stat"><span class="dyn-stat-num">@Model.Values.SelectMany(x => x).Count()</span><span>@Html.L("Dyn_Stat_Dynasties")</span></div>
+                <div class="dyn-stat"><span class="dyn-stat-num">@Model.Keys.Count</span><span>@Html.L("Dyn_Stat_Eras")</span></div>
+                <div class="dyn-stat"><span class="dyn-stat-num">3,000+</span><span>@Html.L("Common_Years")</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ERA FILTER -->
+    <section class="dyn-filter-bar">
+        <button class="dyn-filter-btn active" data-era="all">@Html.L("Dyn_Filter_AllEras")</button>
+        @foreach (var era in Model.Keys)
+        {
+            <button class="dyn-filter-btn" data-era="@era.Replace(" ", "-")">@era</button>
+        }
+    </section>
+
+    <!-- GRID SECTION -->
+    <section class="dyn-grid-section">
+        <div class="container">
+            @foreach (var group in Model)
+            {
+                <div class="dyn-era-block" data-era-group="@group.Key.Replace(" ", "-")">
+                    <div class="dyn-era-header">
+                        <div class="dyn-era-line"></div>
+                        <h2 class="dyn-era-title">⚱️ @group.Key</h2>
+                        <div class="dyn-era-line"></div>
+                    </div>
+
+                    <div class="dyn-cards-grid">
+                        @foreach (var d in group.Value)
+                        {
+                            <a href="/Dynasty/Details/@d.Id" class="dyn-card" data-era="@group.Key.Replace(" ", "-")">
+                                <div class="dyn-card-img-wrap">
+                                    <img src="@(string.IsNullOrEmpty(d.ImageUrl) ? "/images/dynasty-placeholder.jpg" : d.ImageUrl)"
+                                         alt="@d.Name"
+                                         onerror="this.src='/images/dynasty-placeholder.jpg'" />
+                                    <div class="dyn-card-overlay"></div>
+                                    <div class="dyn-card-period-badge">
+                                        @FormatYear(d.StartYear) — @FormatYear(d.EndYear)
+                                    </div>
+                                </div>
+                                <div class="dyn-card-body">
+                                    <h3 class="dyn-card-name">@d.Name</h3>
+                                    <p class="dyn-card-capital">🏛️ @d.CapitalCity</p>
+                                    <p class="dyn-card-desc">@(d.Description.Length > 110 ? d.Description.Substring(0, 110) + "…" : d.Description)</p>
+                                    <span class="dyn-card-link">@Html.L("Dyn_Explore_Link") →</span>
+                                </div>
+                            </a>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+
+    <!-- MINI TIMELINE -->
+    <section class="dyn-timeline-section">
+        <div class="container">
+            <h2 class="section-title">⏳ @Html.L("Dyn_Timeline_Title") <span class="gold">@Html.L("Dyn_Timeline_Title_Span")</span></h2>
+            <p class="section-sub">@Html.L("Dyn_Timeline_Sub")</p>
+
+            <div class="dyn-timeline-wrap">
+                <div class="dyn-timeline-track">
+                    @{
+                        var allDyn = Model.Values.SelectMany(x => x).OrderBy(d => d.StartYear).ToList();
+                        int globalStart = allDyn.FirstOrDefault()?.StartYear ?? -3100;
+                        int globalEnd = allDyn.LastOrDefault()?.EndYear ?? 30;
+                        int totalSpan = globalEnd - globalStart;
+
+                        string[] eraColors = { "#c9a84c", "#d4af37", "#b8902a", "#a07820", "#e8c060", "#f0d080", "#8a6010" };
+                        int colorIdx = 0;
+                        string? lastEra = null;
+                    }
+                    @foreach (var d in allDyn)
+                    {
+                        double leftPct = (double)(d.StartYear - globalStart) / totalSpan * 100;
+                        double widthPct = (double)(d.EndYear - d.StartYear) / totalSpan * 100;
+                        if (widthPct < 1) widthPct = 1;
+
+                        if (lastEra != d.Era) { colorIdx = (colorIdx + 1) % eraColors.Length; lastEra = d.Era; }
+                        string color = eraColors[colorIdx];
+
+                        <a href="/Dynasty/Details/@d.Id"
+                           class="dyn-tl-segment"
+                           style="left:@leftPct.ToString("F2")%;width:@widthPct.ToString("F2")%;background:@color"
+                           title="@d.Name (@FormatYear(d.StartYear) – @FormatYear(d.EndYear))">
+                            <span class="dyn-tl-label">@d.Name.Replace(" Dynasty", "")</span>
+                        </a>
+                    }
+                </div>
+
+                <!-- Year markers -->
+                <div class="dyn-tl-markers">
+                    @foreach (var yr in new[] { -3100, -2686, -2181, -2055, -1650, -1550, -1069, -664, -332, 30 })
+                    {
+                        if (yr >= globalStart && yr <= globalEnd)
+                        {
+                            double pos = (double)(yr - globalStart) / totalSpan * 100;
+                            <div class="dyn-tl-marker" style="left:@pos.ToString("F2")%">
+                                <span>@FormatYear(yr)</span>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+
+            <!-- Era Legend -->
+            <div class="dyn-tl-legend">
+                @{
+                    colorIdx = 0; lastEra = null;
+                }
+                @foreach (var d in allDyn)
+                {
+                    if (lastEra != d.Era)
+                    {
+                        colorIdx = (colorIdx + 1) % eraColors.Length;
+                        <div class="dyn-legend-item">
+                            <span class="dyn-legend-dot" style="background:@eraColors[colorIdx]"></span>
+                            <span>@d.Era</span>
+                        </div>
+                        lastEra = d.Era;
+                    }
+                }
+            </div>
+        </div>
+    </section>
+
+</div>
+
+<script src="~/js/dynasty.js"></script>

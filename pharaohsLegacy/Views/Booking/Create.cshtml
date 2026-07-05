@@ -1,0 +1,143 @@
+﻿@using pharaohsLegacy.Extensions
+@{
+    ViewData["Title"] = "Book a Visit";
+}
+
+<div class="details-wrap">
+    <a href="javascript:history.back()" class="btn-back">← @Html.L("Common_Back")</a>
+
+    <div class="details-card">
+        <div class="details-img">
+            <img src="@ViewBag.PlaceImage" alt="@ViewBag.PlaceName" />
+        </div>
+        <div class="details-body">
+            <span class="card-tag">@ViewBag.PlaceType</span>
+            <h1 class="details-title">@ViewBag.PlaceName</h1>
+
+            <div class="details-meta">
+                <div class="meta-item">
+                    <span class="meta-label">@Html.L("Common_TicketPrice")</span>
+                    <span class="meta-value">@ViewBag.TicketPrice @Html.L("Common_EGP") @Html.L("Booking_PerPerson")</span>
+                </div>
+            </div>
+
+            <form method="post" action="/Booking/Confirm" id="bookingForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="placeType" value="@ViewBag.PlaceType" />
+                <input type="hidden" name="placeId" value="@ViewBag.PlaceId" />
+
+                <div class="book-field">
+                    <label>@Html.L("Booking_VisitDate_Label")</label>
+                    <input type="date" name="visitDate" id="visitDate"
+                           min="@DateTime.Now.AddDays(1).ToString("yyyy-MM-dd")"
+                           max="@DateTime.Now.AddMonths(1).ToString("yyyy-MM-dd")"
+                           required />
+                </div>
+
+                <div class="book-field">
+                    <label>@Html.L("Booking_NumTickets_Label")</label>
+                    <div class="ticket-counter">
+                        <button type="button" onclick="changeTickets(-1)">−</button>
+                        <span id="ticketCount">1</span>
+                        <button type="button" onclick="changeTickets(1)">+</button>
+                    </div>
+                    <input type="hidden" name="numberOfTickets" id="numberOfTickets" value="1" />
+                </div>
+
+                <div class="book-field">
+                    <label>@Html.L("Booking_PaymentMethod_Label")</label>
+                    <div class="payment-methods">
+                        <label class="pay-option">
+                            <input type="radio" name="paymentMethod" value="Credit Card" checked />
+                            <span>💳 @Html.L("Common_CreditCard")</span>
+                        </label>
+                        <label class="pay-option">
+                            <input type="radio" name="paymentMethod" value="Debit Card" />
+                            <span>🏧 @Html.L("Common_DebitCard")</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="total-price">
+                    <span>@Html.L("Booking_Total_Label")</span>
+                    <span id="totalPrice">@ViewBag.TicketPrice @Html.L("Common_EGP")</span>
+                </div>
+
+                <button type="submit" class="btn-gold" style="width:100%; margin-top:1rem;">
+                    ✓ @Html.L("Booking_ConfirmBtn")
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .book-field { margin-bottom: 1.2rem; }
+    .book-field label {
+        display: block; font-family: 'Cinzel', serif;
+        font-size: .65rem; letter-spacing: 2px;
+        text-transform: uppercase; color: #8a7055;
+        margin-bottom: .5rem;
+    }
+    .book-field input[type="date"] {
+            width: 100%;
+            background: #0d0702;
+            border: 1px solid #3d2a15;
+            border-radius: 4px;
+        padding: .75rem 1rem; color: #e8d5b0;
+        font-family: 'Crimson Pro', serif; font-size: 1rem;
+        outline: none; transition: border-color .3s;
+    }
+    .book-field input[type="date"]:focus { border-color: #c9a227; }
+    .ticket-counter {
+        display: flex; align-items: center; gap: 1rem;
+    }
+    .ticket-counter button {
+        width: 36px; height: 36px;
+            background: #2d1a08;
+            border: 1px solid #3d2a15;
+        border-radius: 50%; color: #c9a227;
+        font-size: 1.2rem; cursor: pointer;
+        transition: all .3s; display: flex;
+        align-items: center; justify-content: center;
+    }
+    .ticket-counter button:hover { border-color: #c9a227; }
+    .ticket-counter span {
+        font-family: 'Cinzel', serif; font-size: 1.5rem;
+        color: #e8d5b0; min-width: 30px; text-align: center;
+    }
+    .payment-methods { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .pay-option {
+        display: flex; align-items: center; gap: .5rem;
+        background: #2d1a08;
+        border: 1px solid #3d2a15;
+        border-radius: 4px; padding: .75rem 1rem;
+        cursor: pointer; transition: border-color .3s;
+        font-size: .95rem;
+    }
+    .pay-option:has(input:checked) { border-color: #c9a227; }
+    .pay-option input { display: none; }
+    .total-price {
+        display: flex; justify-content: space-between;
+        align-items: center; padding: 1rem;
+        background: rgba(201,162,39,.08);
+        border: 1px solid #3d2a15;
+        border-radius: 4px;
+        font-family: 'Cinzel', serif;
+        margin-top: 1rem;
+    }
+    .total-price span:first-child { color: #8a7055; font-size: .8rem; letter-spacing: 2px; }
+    .total-price span:last-child  { color: #c9a227; font-size: 1.3rem; font-weight: 700; }
+</style>
+
+<script>
+    var ticketPrice = @ViewBag.TicketPrice;
+    var count = 1;
+
+    function changeTickets(val) {
+        count = Math.max(1, Math.min(10, count + val));
+        document.getElementById('ticketCount').textContent = count;
+        document.getElementById('numberOfTickets').value = count;
+        document.getElementById('totalPrice').textContent = (ticketPrice * count) + ' EGP';
+    }
+</script>

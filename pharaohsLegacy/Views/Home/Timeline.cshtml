@@ -1,0 +1,373 @@
+﻿@using pharaohsLegacy.Extensions
+
+@model Dictionary<string, List<pharaohsLegacy.Models.Pharaoh>>
+@{
+    ViewData["Title"] = "Timeline";
+}
+
+@section Styles {
+    <style>
+        .tl-wrap {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 3rem 2rem 5rem;
+        }
+
+        /* Hero */
+        .tl-hero {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .tl-hero-tag {
+            font-family: 'Cinzel', serif;
+            font-size: .65rem;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: #c9a227;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .tl-hero-title {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 700;
+            color: #e8d5b0;
+            margin-bottom: 1rem;
+        }
+
+        .tl-hero-line {
+            width: 80px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #c9a227, transparent);
+            margin: 0 auto;
+        }
+
+        /* Filter Buttons */
+        .tl-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 3rem;
+        }
+
+        .tl-filter-btn {
+            font-family: 'Cinzel', serif;
+            font-size: .62rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 7px 16px;
+            border-radius: 20px;
+            border: 1px solid #3d2a15;
+            background: transparent;
+            color: #8a7055;
+            cursor: pointer;
+            transition: all .25s;
+        }
+
+            .tl-filter-btn:hover,
+            .tl-filter-btn.active {
+                border-color: #c9a227;
+                color: #c9a227;
+                background: rgba(201,162,39,0.08);
+            }
+
+        /* Dynasty Group */
+        .tl-dynasty-group {
+            margin-bottom: 4rem;
+        }
+
+        .tl-dynasty-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2.5rem;
+            position: relative;
+        }
+
+            .tl-dynasty-header::before,
+            .tl-dynasty-header::after {
+                content: '';
+                flex: 1;
+                height: 1px;
+                background: linear-gradient(90deg, transparent, );
+            }
+
+            .tl-dynasty-header::after {
+                background: linear-gradient(90deg, , transparent);
+            }
+
+        .tl-dynasty-label {
+            font-family: 'Cinzel', serif;
+            font-size: .7rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #c9a227;
+            white-space: nowrap;
+            padding: 6px 16px;
+            border: 1px solid ;
+            border-radius: 20px;
+            background: #1a0e05;
+        }
+
+        /* Timeline */
+        .tl-container {
+            position: relative;
+            padding: 0;
+        }
+
+            .tl-container::before {
+                content: '';
+                position: absolute;
+                left: 50%;
+                top: 0;
+                bottom: 0;
+                width: 1px;
+                background: linear-gradient(to bottom, transparent, #c9a227, transparent);
+                transform: translateX(-50%);
+            }
+
+        /* Items */
+        .tl-item {
+            display: flex;
+            justify-content: flex-end;
+            padding-right: calc(50% + 2.5rem);
+            margin-bottom: 2.5rem;
+            position: relative;
+            opacity: 0;
+            transform: translateX(-30px);
+            transition: all .5s ease;
+        }
+
+            .tl-item.right {
+                justify-content: flex-start;
+                padding-right: 0;
+                padding-left: calc(50% + 2.5rem);
+                transform: translateX(30px);
+            }
+
+            .tl-item.visible {
+                opacity: 1;
+                transform: translateX(0);
+            }
+
+            .tl-item::after {
+                content: '𓂀';
+                position: absolute;
+                left: 50%;
+                top: 1.2rem;
+                transform: translateX(-50%);
+                font-size: .9rem;
+                color: #c9a227;
+                background: #1a0e05;
+                width: 28px;
+                height: 28px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                border: 1px solid #3d2a15;
+                z-index: 1;
+            }
+
+        /* Card */
+        .tl-card {
+            background: #2d1a08;
+            border: 1px solid #3d2a15;
+            border-radius: 12px;
+            overflow: hidden;
+            width: 100%;
+            max-width: 340px;
+            text-decoration: none;
+            transition: border-color .3s, transform .3s;
+            display: block;
+        }
+
+            .tl-card:hover {
+                border-color: #c9a227;
+                transform: translateY(-3px);
+            }
+
+        .tl-card-img {
+            height: 160px;
+            overflow: hidden;
+        }
+
+            .tl-card-img img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                filter: brightness(.7);
+                transition: filter .3s;
+            }
+
+        .tl-card:hover .tl-card-img img {
+            filter: brightness(.9);
+        }
+
+        .tl-card-body {
+            padding: 1.2rem;
+        }
+
+        .tl-card-dynasty {
+            font-family: 'Cinzel', serif;
+            font-size: .6rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #c9a227;
+            margin-bottom: .4rem;
+        }
+
+        .tl-card-name {
+            font-family: 'Cinzel', serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #e8d5b0;
+            margin-bottom: .3rem;
+        }
+
+        .tl-card-period {
+            font-size: .85rem;
+            color: #8a7055;
+        }
+
+        /* Empty state */
+        .tl-empty {
+            text-align: center;
+            padding: 3rem;
+            color: #8a7055;
+            font-family: 'Cinzel', serif;
+            font-size: .85rem;
+            letter-spacing: 2px;
+            display: none;
+        }
+
+        @@media (max-width: 700px) {
+            .tl-container::before {
+                left: 16px;
+            }
+
+            .tl-item, .tl-item.right {
+                justify-content: flex-start;
+                padding-right: 0;
+                padding-left: 3rem;
+                transform: translateX(20px);
+            }
+
+                .tl-item::after {
+                    left: 16px;
+                }
+
+            .tl-card {
+                max-width: 100%;
+            }
+
+            .tl-dynasty-header::before {
+                display: none;
+            }
+        }
+    </style>
+}
+
+<div class="tl-wrap">
+
+    <!-- Hero -->
+    <div class="tl-hero">
+        <span class="tl-hero-tag">𓋹 @Html.L("Timeline_Hero_Tag")</span>
+        <h1 class="tl-hero-title">@Html.L("Timeline_Hero_Title")</h1>
+        <div class="tl-hero-line"></div>
+    </div>
+
+    <!-- Filter Buttons -->
+    <div class="tl-filters">
+        <button class="tl-filter-btn active" onclick="filterDynasty('all', this)">@Html.L("Dyn_AllDynasties_Link")</button>
+        @foreach (var dynasty in Model.Keys)
+        {
+            <button class="tl-filter-btn" onclick="filterDynasty('@dynasty.Replace("'", "\'")', this)">@dynasty</button>
+        }
+    </div>
+
+    <!-- Empty State -->
+    <div class="tl-empty" id="tlEmpty">𓂀 @Html.L("Timeline_Empty_Text")</div>
+
+    <!-- Dynasty Groups -->
+    @{
+        int globalIndex = 0;
+    }
+    @foreach (var group in Model)
+    {
+        <div class="tl-dynasty-group" data-dynasty="@group.Key">
+
+            <!-- Dynasty Header -->
+            <div class="tl-dynasty-header">
+                <span class="tl-dynasty-label">𓋹 @group.Key</span>
+            </div>
+
+            <!-- Timeline Items -->
+            <div class="tl-container">
+                @foreach (var p in group.Value)
+                {
+                    var side = globalIndex % 2 == 0 ? "" : "right";
+                    globalIndex++;
+                    <div class="tl-item @side">
+                        <a href="/Pharaoh/Details/@p.Id" class="tl-card">
+                            <div class="tl-card-img">
+                                <img src="@p.ImageUrl" alt="@p.Name"
+                                     onerror="this.src='https://via.placeholder.com/400x200/2d1a08/c9a227?text=@p.Name'" />
+                            </div>
+                            <div class="tl-card-body">
+                                <div class="tl-card-dynasty">@p.Dynasty</div>
+                                <div class="tl-card-name">@p.Name</div>
+                                <div class="tl-card-period">@p.Period</div>
+                            </div>
+                        </a>
+                    </div>
+                }
+            </div>
+
+        </div>
+    }
+
+</div>
+
+@section Scripts {
+    <script>
+        // Scroll reveal
+        const items = document.querySelectorAll('.tl-item');
+        const obs = new IntersectionObserver((entries) => {
+            entries.forEach(e => {
+                if (e.isIntersecting) {
+                    e.target.classList.add('visible');
+                    obs.unobserve(e.target);
+                }
+            });
+        }, { threshold: 0.15 });
+        items.forEach(el => obs.observe(el));
+
+        // Filter by dynasty
+        function filterDynasty(dynasty, btn) {
+            // Update active button
+            document.querySelectorAll('.tl-filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const groups = document.querySelectorAll('.tl-dynasty-group');
+            let anyVisible = false;
+
+            groups.forEach(group => {
+                if (dynasty === 'all' || group.dataset.dynasty === dynasty) {
+                    group.style.display = '';
+                    anyVisible = true;
+                } else {
+                    group.style.display = 'none';
+                }
+            });
+
+            document.getElementById('tlEmpty').style.display = anyVisible ? 'none' : 'block';
+
+            // Re-trigger scroll reveal for visible items
+            document.querySelectorAll('.tl-item:not(.visible)').forEach(el => obs.observe(el));
+        }
+    </script>
+}

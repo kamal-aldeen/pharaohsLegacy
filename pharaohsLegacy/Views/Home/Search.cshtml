@@ -1,0 +1,136 @@
+﻿@using pharaohsLegacy.Extensions
+
+@{
+    ViewData["Title"] = "Search Results";
+    var pharaohs = ViewBag.Pharaohs as List<pharaohsLegacy.Models.Pharaoh>;
+    var temples = ViewBag.Temples as List<pharaohsLegacy.Models.Temple>;
+    var gods = ViewBag.Gods as List<pharaohsLegacy.Models.God>;
+    var museums = ViewBag.Museums as List<pharaohsLegacy.Models.Museum>;
+    var artifacts = ViewBag.Artifacts as List<pharaohsLegacy.Models.Artifact>;
+    var dynasties = ViewBag.Dynasties as List<pharaohsLegacy.Models.Dynasty>;
+}
+
+<div class="section">
+    <div class="section-header">
+        <span class="section-tag">@Html.L("Search_SectionTag")</span>
+        <h2 class="section-title">@Html.L("Search_ResultsFor_Prefix") "@ViewBag.Query"</h2>
+        <div class="section-line"></div>
+    </div>
+
+    @if (pharaohs != null && pharaohs.Count > 0)
+    {
+        <h3 style="font-family:'Cinzel',serif; color:#c9a227; margin-bottom:1rem;">@Html.L("Common_PharaohsPlural")</h3>
+        <div class="cards-grid">
+            @foreach (var p in pharaohs)
+            {
+                <a href="/Pharaoh/Details/@p.Id" class="card">
+                    <div class="card-img"><img src="@p.ImageUrl" alt="@p.Name" /></div>
+                    <div class="card-body">
+                        <span class="card-tag">@p.Dynasty</span>
+                        <h3 class="card-title">@p.Name</h3>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+
+    @if (temples != null && temples.Count > 0)
+    {
+        <h3 style="font-family:'Cinzel',serif; color:#c9a227; margin:2rem 0 1rem;">@Html.L("Common_TemplesPlural")</h3>
+        <div class="cards-grid">
+            @foreach (var t in temples)
+            {
+                <a href="/Temple/Details/@t.Id" class="card">
+                    <div class="card-img"><img src="@t.ImageUrl" alt="@t.Name" /></div>
+                    <div class="card-body">
+                        <span class="card-tag">@t.Location</span>
+                        <h3 class="card-title">@t.Name</h3>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+
+    @if (gods != null && gods.Count > 0)
+    {
+        <h3 style="font-family:'Cinzel',serif; color:#c9a227; margin:2rem 0 1rem;">@Html.L("Common_GodsPlural")</h3>
+        <div class="cards-grid">
+            @foreach (var g in gods)
+            {
+                <a href="/God/Details/@g.Id" class="card">
+                    <div class="card-img"><img src="@g.ImageUrl" alt="@g.Name" /></div>
+                    <div class="card-body">
+                        <span class="card-tag">@g.Role</span>
+                        <h3 class="card-title">@g.Name</h3>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+
+    @if (museums != null && museums.Count > 0)
+    {
+        <h3 style="font-family:'Cinzel',serif; color:#c9a227; margin:2rem 0 1rem;">@Html.L("Common_MuseumsPlural")</h3>
+        <div class="cards-grid">
+            @foreach (var m in museums)
+            {
+                <a href="/Museum/Details/@m.Id" class="card">
+                    <div class="card-img"><img src="@m.ImageUrl" alt="@m.Name" /></div>
+                    <div class="card-body">
+                        <span class="card-tag">@m.Location</span>
+                        <h3 class="card-title">@m.Name</h3>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+
+    @if (artifacts != null && artifacts.Count > 0)
+    {
+        <h3 style="font-family:'Cinzel',serif; color:#c9a227; margin:2rem 0 1rem;">@Html.L("Common_Artifacts")</h3>
+        <div class="cards-grid">
+            @foreach (var a in artifacts)
+            {
+                <a href="/Artifact/Details/@a.Id" class="card">
+                    <div class="card-img"><img src="@a.ImageUrl" alt="@a.Name" /></div>
+                    <div class="card-body">
+                        <span class="card-tag">@a.Category</span>
+                        <h3 class="card-title">@a.Name</h3>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+
+    @if (dynasties != null && dynasties.Count > 0)
+    {
+        <h3 style="font-family:'Cinzel',serif; color:#c9a227; margin:2rem 0 1rem;">@Html.L("Common_DynastiesPlural")</h3>
+        <div class="cards-grid">
+            @foreach (var d in dynasties)
+            {
+                string startY = d.StartYear < 0 ? $"{Math.Abs(d.StartYear)} BC" : $"{d.StartYear} AD";
+                string endY = d.EndYear < 0 ? $"{Math.Abs(d.EndYear)} BC" : $"{d.EndYear} AD";
+                <a href="/Dynasty/Details/@d.Id" class="card">
+                    <div class="card-img"><img src="@d.ImageUrl" alt="@d.Name" /></div>
+                    <div class="card-body">
+                        <span class="card-tag">@startY – @endY</span>
+                        <h3 class="card-title">@d.Name</h3>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+
+    @if ((pharaohs == null || pharaohs.Count == 0) &&
+         (temples == null || temples.Count == 0) &&
+         (gods == null || gods.Count == 0) &&
+         (museums == null || museums.Count == 0) &&
+         (artifacts == null || artifacts.Count == 0) &&
+         (dynasties == null || dynasties.Count == 0))
+    {
+        <div style="text-align:center; padding:3rem; color:#8a7055; font-style:italic;">
+            <p style="font-size:3rem; margin-bottom:1rem;">𓂀</p>
+            <p>@Html.L("Search_NoResults_Prefix") "@ViewBag.Query"</p>
+        </div>
+    }
+</div>

@@ -1,0 +1,75 @@
+﻿@using pharaohsLegacy.Extensions
+@model List<pharaohsLegacy.Models.HistoricalEvent>
+@{
+    ViewData["Title"] = "Historical Events";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<link rel="stylesheet" href="~/css/events.css" />
+
+<div class="events-page">
+    <div class="events-hero">
+        <h1>𓋹 @Html.L("Common_HistoricalEvents")</h1>
+        <p>@Html.L("Event_Hero_Sub")</p>
+    </div>
+
+    <div class="events-filters">
+        <a href="@Url.Action("Index")" class="filter-btn @(ViewBag.SelectedCategory == "All" ? "active" : "")">𓂀 @Html.L("Event_Filter_All")</a>
+        @foreach (var cat in ViewBag.Categories as List<string>)
+        {
+            <a href="@Url.Action("Index", new { category = cat })"
+               class="filter-btn cat-@cat.ToLower() @(ViewBag.SelectedCategory == cat ? "active" : "")">
+                @GetIcon(cat) @cat
+            </a>
+        }
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="events-empty"><p>@Html.L("Event_Empty_Text")</p></div>
+    }
+    else
+    {
+        <div class="timeline-container">
+            <div class="timeline-line"></div>
+            @for (int i = 0; i < Model.Count; i++)
+            {
+                var ev = Model[i];
+                var side = i % 2 == 0 ? "left" : "right";
+                <div class="timeline-item @side reveal">
+                    <div class="timeline-dot cat-dot-@ev.Category.ToLower()"></div>
+                    <div class="timeline-card">
+                        @if (!string.IsNullOrEmpty(ev.ImageUrl))
+                        {
+                            <img src="@ev.ImageUrl" alt="@ev.Title" class="event-card-img"
+                                 onerror="this.style.display='none'" />
+                        }
+                        <div class="event-card-body">
+                            <div class="event-year-badge">@ev.YearLabel</div>
+                            <span class="cat-badge cat-badge-@ev.Category.ToLower()">@ev.Category</span>
+                            <h3>@ev.Title</h3>
+                            <p>@(ev.Description.Length > 140 ? ev.Description[..140] + "…" : ev.Description)</p>
+                            @if (!string.IsNullOrEmpty(ev.DynastyTag))
+                            {
+                                <div class="event-dynasty-tag">𓂀 @ev.DynastyTag</div>
+                            }
+                            <a href="@Url.Action("Details", new { id = ev.Id })" class="event-details-btn">@Html.L("Event_Explore_Link") →</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@functions {
+    string GetIcon(string cat) => cat switch
+    {
+        "Political" => "𓆓",
+        "Military" => "𓀀",
+        "Religious" => "𓋴",
+        "Cultural" => "𓏏",
+        "Scientific" => "𓇋",
+        _ => "𓂀"
+    };
+}
+<script src="~/js/events.js"></script>

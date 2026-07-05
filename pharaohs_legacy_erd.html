@@ -1,0 +1,255 @@
+
+<style>
+  #erd-wrap {
+    padding: 1.5rem 0.5rem 1rem;
+    font-family: var(--font-sans);
+  }
+  #erd-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1.2rem;
+  }
+  #erd-header .badge {
+    font-size: 20px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 99px;
+    background: #FAC775;
+    color: #412402;
+    letter-spacing: 0.04em;
+	
+  }
+  #erd-header h2 {
+    font-size: 15px;
+    font-weight: 500;
+    margin: 0;
+    color: var(--color-text-primary);
+  }
+ 
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+  }
+  .legend-dot {
+    width: 10px; height: 10px; border-radius: 3px;
+  }
+  #erd { width: 100%; overflow-x: auto; }
+  #erd svg { width: 100% !important; max-width: 100%; }
+  #erd .node rect, #erd .node path { rx: 8; }
+
+  .rel-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 99px;
+    border: 1px solid var(--color-border-secondary);
+    color: var(--color-text-secondary);
+  }
+</style>
+
+<div id="erd-wrap">
+  <div id="erd-header">
+    
+	<div class="badge">𓂀 Pharaohs Legacy</div>
+	
+    
+  </div>
+
+
+
+  <div id="erd"></div>
+
+ 
+  </div>
+</div>
+
+<script type="module">
+import mermaid from 'https://esm.sh/mermaid@11/dist/mermaid.esm.min.mjs';
+
+const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+await document.fonts.ready;
+
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'base',
+  fontFamily: '"Anthropic Sans", sans-serif',
+  themeVariables: {
+    darkMode: dark,
+    fontSize: '13px',
+    fontFamily: '"Anthropic Sans", sans-serif',
+    lineColor: dark ? '#9c9a92' : '#73726c',
+    textColor: dark ? '#c2c0b6' : '#3d3d3a',
+    primaryColor: dark ? '#0C447C' : '#E6F1FB',
+    primaryTextColor: dark ? '#B5D4F4' : '#042C53',
+    primaryBorderColor: dark ? '#185FA5' : '#378ADD',
+    secondaryColor: dark ? '#27500A' : '#EAF3DE',
+    secondaryTextColor: dark ? '#C0DD97' : '#173404',
+    tertiaryColor: dark ? '#633806' : '#FAEEDA',
+    tertiaryTextColor: dark ? '#FAC775' : '#412402',
+    noteBkgColor: dark ? '#3C3489' : '#EEEDFE',
+    noteTextColor: dark ? '#CECBF6' : '#26215C',
+    edgeLabelBackground: dark ? '#2C2C2A' : '#F1EFE8',
+    attributeBackgroundColorEven: dark ? '#1a1a18' : '#fafaf8',
+    attributeBackgroundColorOdd: dark ? '#222220' : '#f3f2ee',
+  },
+  er: {
+    diagramPadding: 30,
+    layoutDirection: 'TB',
+    minEntityWidth: 120,
+    minEntityHeight: 75,
+    entityPadding: 15,
+    useMaxWidth: true,
+  }
+});
+
+const diagram = `erDiagram
+  USERS {
+    int Id PK
+    string Name
+    string Email
+    string Password
+  }
+
+  PHARAOHS {
+    int Id PK
+    string Name
+    string Dynasty
+    string Period
+    string Description
+    string ImageUrl
+  }
+
+  TEMPLES {
+    int Id PK
+    string Name
+    string Location
+    string Period
+    string Description
+    string ImageUrl
+    string TicketUrl
+  }
+
+  MUSEUMS {
+    int Id PK
+    string Name
+    string Location
+    string Founded
+    string Description
+    string ImageUrl
+    string WebsiteUrl
+    string Category
+  }
+
+  GODS {
+    int Id PK
+    string Name
+    string Role
+    string Symbol
+    string Description
+    string ImageUrl
+  }
+
+  FAVORITES {
+    int Id PK
+    string UserEmail FK
+    string Type
+    int ItemId
+  }
+
+  BOOKINGS {
+    int Id PK
+    string UserEmail FK
+    string PlaceType
+    int PlaceId FK
+    date VisitDate
+    int NumberOfTickets
+    decimal TotalPrice
+    string Status
+    datetime CreatedAt
+  }
+
+  PAYMENTS {
+    int Id PK
+    int BookingId FK
+    decimal Amount
+    datetime PaymentDate
+    string PaymentMethod
+    string Status
+  }
+
+  USERS ||--o{ FAVORITES : "saves"
+  USERS ||--o{ BOOKINGS : "creates"
+  BOOKINGS ||--|| PAYMENTS : "generates"
+  TEMPLES ||--o{ BOOKINGS : "booked via"
+  MUSEUMS ||--o{ BOOKINGS : "booked via"
+`;
+
+const { svg } = await mermaid.render('erd-svg', diagram);
+document.getElementById('erd').innerHTML = svg;
+
+// Round entity box corners
+document.querySelectorAll('#erd svg .node').forEach(node => {
+  const firstPath = node.querySelector('path[d]');
+  if (!firstPath) return;
+  const d = firstPath.getAttribute('d');
+  const nums = d.match(/-?[\d.]+/g)?.map(Number);
+  if (!nums || nums.length < 8) return;
+  const xs = [nums[0], nums[2], nums[4], nums[6]];
+  const ys = [nums[1], nums[3], nums[5], nums[7]];
+  const x = Math.min(...xs), y = Math.min(...ys);
+  const w = Math.max(...xs) - x, h = Math.max(...ys) - y;
+  const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  rect.setAttribute('x', x); rect.setAttribute('y', y);
+  rect.setAttribute('width', w); rect.setAttribute('height', h);
+  rect.setAttribute('rx', '8');
+  for (const a of ['fill', 'stroke', 'stroke-width', 'class', 'style']) {
+    if (firstPath.hasAttribute(a)) rect.setAttribute(a, firstPath.getAttribute(a));
+  }
+  firstPath.replaceWith(rect);
+});
+
+// Strip row borders
+document.querySelectorAll('#erd svg .row-rect-odd path, #erd svg .row-rect-even path').forEach(p => {
+  p.setAttribute('stroke', 'none');
+});
+
+// Color-code entity groups by category
+const colorMap = {
+  USERS:    { fill: dark ? '#0F6E56' : '#E1F5EE', stroke: dark ? '#1D9E75' : '#0F6E56' },
+  PHARAOHS: { fill: dark ? '#0C447C' : '#E6F1FB', stroke: dark ? '#378ADD' : '#185FA5' },
+  TEMPLES:  { fill: dark ? '#0C447C' : '#E6F1FB', stroke: dark ? '#378ADD' : '#185FA5' },
+  MUSEUMS:  { fill: dark ? '#0C447C' : '#E6F1FB', stroke: dark ? '#378ADD' : '#185FA5' },
+  GODS:     { fill: dark ? '#0C447C' : '#E6F1FB', stroke: dark ? '#378ADD' : '#185FA5' },
+  FAVORITES:{ fill: dark ? '#72243E' : '#FBEAF0', stroke: dark ? '#D4537E' : '#993556' },
+  BOOKINGS: { fill: dark ? '#633806' : '#FAEEDA', stroke: dark ? '#BA7517' : '#854F0B' },
+  PAYMENTS: { fill: dark ? '#633806' : '#FAEEDA', stroke: dark ? '#BA7517' : '#854F0B' },
+};
+
+document.querySelectorAll('#erd svg .label-container, #erd svg .entityBox').forEach(el => {
+  const labelEl = el.closest('.node')?.querySelector('.label text, tspan');
+  const name = labelEl?.textContent?.trim().toUpperCase();
+  const colors = colorMap[name];
+  if (!colors) return;
+  el.style.fill = colors.fill;
+  el.style.stroke = colors.stroke;
+});
+
+// Try to color-code via entity label matching on header rects
+document.querySelectorAll('#erd svg g[id]').forEach(g => {
+  const id = g.id?.toUpperCase();
+  const entity = Object.keys(colorMap).find(k => id.includes(k));
+  if (!entity) return;
+  const headerRect = g.querySelector('rect:first-of-type');
+  if (headerRect) {
+    headerRect.style.fill = colorMap[entity].fill;
+    headerRect.style.stroke = colorMap[entity].stroke;
+    headerRect.style.strokeWidth = '1.5px';
+  }
+});
+</script>

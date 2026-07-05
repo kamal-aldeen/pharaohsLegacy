@@ -1,0 +1,265 @@
+﻿@model pharaohsLegacy.Models.Dynasty
+@using pharaohsLegacy.Extensions
+
+@{
+    ViewData["Title"] = Model.Name;
+    var pharaohs = ViewBag.Pharaohs as List<pharaohsLegacy.Models.Pharaoh> ?? new();
+    var artifacts = ViewBag.Artifacts as List<pharaohsLegacy.Models.Artifact> ?? new();
+    var prev = ViewBag.PrevDynasty as pharaohsLegacy.Models.Dynasty;
+    var next = ViewBag.NextDynasty as pharaohsLegacy.Models.Dynasty;
+    var dynastyEvents = ViewBag.HistoricalEvents as List<pharaohsLegacy.Models.HistoricalEvent> ?? new();
+
+    string FormatYear(int y) => y < 0 ? $"{Math.Abs(y)} BC" : $"{y} AD";
+    int duration = Math.Abs(Model.EndYear - Model.StartYear);
+}
+
+<link rel="stylesheet" href="~/css/dynasty.css" />
+
+<style>
+    .dynasty-events-section {
+        margin-top: 40px;
+        margin-bottom: 40px;
+    }
+
+        .dynasty-events-section h2 {
+            color: #d4a017;
+            font-family: 'Cinzel', serif;
+            margin-bottom: 16px;
+            font-size: 1.4rem;
+        }
+
+    .dynasty-events-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .dynasty-event-item {
+        display: flex !important;
+        align-items: center !important;
+        gap: 14px !important;
+        background: #111 !important;
+        border: 0.5px solid #2a2a2a !important;
+        border-left: 3px solid #8b6914 !important;
+        border-radius: 0 8px 8px 0 !important;
+        padding: 10px 16px !important;
+        text-decoration: none !important;
+        transition: background 0.3s;
+    }
+
+        .dynasty-event-item:hover {
+            background: #1a1a1a !important;
+        }
+
+        .dynasty-event-item.cat-political {
+            border-left-color: #8b2020 !important;
+        }
+
+        .dynasty-event-item.cat-military {
+            border-left-color: #2d5a27 !important;
+        }
+
+        .dynasty-event-item.cat-religious {
+            border-left-color: #6b3d8b !important;
+        }
+
+        .dynasty-event-item.cat-cultural {
+            border-left-color: #2d5a7a !important;
+        }
+
+        .dynasty-event-item.cat-scientific {
+            border-left-color: #7a5a2d !important;
+        }
+
+    .dynasty-event-year {
+        color: #a0856a !important;
+        font-size: 0.8rem !important;
+        font-weight: 600 !important;
+        min-width: 65px !important;
+    }
+
+    .dynasty-event-badge {
+        font-size: 0.72rem !important;
+        font-weight: 600 !important;
+        padding: 3px 10px !important;
+        border-radius: 20px !important;
+        white-space: nowrap !important;
+        color: #fff !important;
+    }
+
+        .dynasty-event-badge.cat-political {
+            background: #8b2020 !important;
+        }
+
+        .dynasty-event-badge.cat-military {
+            background: #2d5a27 !important;
+        }
+
+        .dynasty-event-badge.cat-religious {
+            background: #6b3d8b !important;
+        }
+
+        .dynasty-event-badge.cat-cultural {
+            background: #2d5a7a !important;
+        }
+
+        .dynasty-event-badge.cat-scientific {
+            background: #7a5a2d !important;
+        }
+
+    .dynasty-event-title {
+        color: #e8d5a3 !important;
+        font-size: 0.85rem !important;
+        flex: 1 !important;
+    }
+
+    .dynasty-event-arrow {
+        color: #8b6914 !important;
+        font-size: 0.85rem !important;
+    }
+</style>
+
+<div class="dyn-details-page">
+
+    <!-- HERO -->
+    <div class="dyn-det-hero" style="background-image:url('@(string.IsNullOrEmpty(Model.ImageUrl) ? "/images/dynasty-placeholder.jpg" : Model.ImageUrl)')">
+        <div class="dyn-det-hero-overlay"></div>
+        <div class="dyn-det-hero-content">
+            <a asp-controller="Dynasty" asp-action="Index" class="dyn-back-btn">← @Html.L("Dyn_AllDynasties_Link")</a>
+            <span class="dyn-det-era-badge">@Model.Era</span>
+            <h1>@Model.Name</h1>
+            <div class="dyn-det-hero-meta">
+                <span>📅 @FormatYear(Model.StartYear) – @FormatYear(Model.EndYear)</span>
+                <span>⏱ @duration @Html.L("Common_Years")</span>
+                <span>🏛️ @Model.CapitalCity</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="container dyn-det-body">
+
+        <!-- INFO GRID -->
+        <div class="dyn-det-grid">
+
+            <!-- Description -->
+            <div class="dyn-det-card dyn-det-wide">
+                <h3>📜 @Html.L("Dyn_AboutThisDynasty")</h3>
+                <p>@Model.Description</p>
+            </div>
+
+            <!-- Key Facts -->
+            <div class="dyn-det-card">
+                <h3>🔑 @Html.L("Common_KeyFacts")</h3>
+                <ul class="dyn-facts-list">
+                    <li><span>@Html.L("Common_Period")</span><strong>@Model.Era</strong></li>
+                    <li><span>@Html.L("Dyn_Facts_Start")</span><strong>@FormatYear(Model.StartYear)</strong></li>
+                    <li><span>@Html.L("Dyn_Facts_End")</span><strong>@FormatYear(Model.EndYear)</strong></li>
+                    <li><span>@Html.L("Common_Duration")</span><strong>~@duration @Html.L("Common_Years")</strong></li>
+                    <li><span>@Html.L("Common_Capital")</span><strong>@Model.CapitalCity</strong></li>
+                    <li><span>@Html.L("Common_Pharaohs")</span><strong>@pharaohs.Count @Html.L("Dyn_Facts_Known")</strong></li>
+                </ul>
+            </div>
+
+            <!-- Achievements -->
+            @if (!string.IsNullOrEmpty(Model.Achievements))
+            {
+                <div class="dyn-det-card">
+                    <h3>🏆 @Html.L("Dyn_Achievements_Title")</h3>
+                    <p>@Model.Achievements</p>
+                </div>
+            }
+        </div>
+
+        <!-- PHARAOHS -->
+        <section class="dyn-related-section">
+            <h2 class="section-title">👑 @Html.L("Dyn_PharaohsOf_Title") <span class="gold">@Model.Name</span></h2>
+            @if (pharaohs.Any())
+            {
+                <div class="dyn-related-grid">
+                    @foreach (var p in pharaohs)
+                    {
+                        <a href="/Pharaoh/Details/@p.Id" class="dyn-related-card">
+                            <img src="@p.ImageUrl" alt="@p.Name" onerror="this.src='/images/pharaoh-placeholder.jpg'" />
+                            <div class="dyn-related-info">
+                                <h4>@p.Name</h4>
+                                <p>@p.Period</p>
+                            </div>
+                        </a>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="dyn-empty-state">
+                    <span>𓂀</span>
+                    <p>@Html.L("Dyn_NoPharaohs_Text")</p>
+                </div>
+            }
+        </section>
+
+        <!-- ARTIFACTS -->
+        @if (artifacts.Any())
+        {
+            <section class="dyn-related-section">
+                <h2 class="section-title">⚱️ @Html.L("Dyn_Related_Prefix") <span class="gold">@Html.L("Common_Artifacts")</span></h2>
+                <div class="dyn-related-grid">
+                    @foreach (var a in artifacts)
+                    {
+                        <a href="/Artifact/Details/@a.Id" class="dyn-related-card">
+                            <img src="@a.ImageUrl" alt="@a.Name" onerror="this.src='/images/artifact-placeholder.jpg'" />
+                            <div class="dyn-related-info">
+                                <h4>@a.Name</h4>
+                                <p>@a.Category</p>
+                            </div>
+                        </a>
+                    }
+                </div>
+            </section>
+        }
+
+        <!-- HISTORICAL EVENTS -->
+        @if (dynastyEvents.Any())
+        {
+            <div class="dynasty-events-section">
+                <h2>𓋹 @Html.L("Common_HistoricalEvents")</h2>
+                <div class="dynasty-events-list">
+                    @foreach (var ev in dynastyEvents)
+                    {
+                        <a href="@Url.Action("Details", "HistoricalEvent", new { id = ev.Id })"
+                           class="dynasty-event-item cat-@ev.Category.ToLower()">
+                            <span class="dynasty-event-year">@ev.YearLabel</span>
+                            <span class="dynasty-event-badge cat-@ev.Category.ToLower()">@ev.Category</span>
+                            <span class="dynasty-event-title">@ev.Title</span>
+                            <span class="dynasty-event-arrow">→</span>
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- PREV / NEXT NAVIGATION -->
+        <div class="dyn-nav-buttons">
+            @if (prev != null)
+            {
+                <a href="/Dynasty/Details/@prev.Id" class="dyn-nav-btn dyn-nav-prev">
+                    <span>← @Html.L("Common_Previous")</span>
+                    <strong>@prev.Name</strong>
+                </a>
+            }
+            else
+            {
+                <div></div>
+            }
+            @if (next != null)
+            {
+                <a href="/Dynasty/Details/@next.Id" class="dyn-nav-btn dyn-nav-next">
+                    <span>@Html.L("Common_Next") →</span>
+                    <strong>@next.Name</strong>
+                </a>
+            }
+        </div>
+
+    </div>
+</div>
+
+<script src="~/js/dynasty.js"></script>

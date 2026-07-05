@@ -1,0 +1,553 @@
+@using pharaohsLegacy.Extensions
+
+@{
+    ViewData["Title"] = "Hieroglyphics Translator";
+}
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Egyptian+Hieroglyphs&family=Cinzel:wght@400;600;700&display=swap');
+
+    :root {
+        --gold: #d4af37;
+        --gold-light: #f0d060;
+        --gold-dim: #a08040;
+        --dark: #1a1208;
+        --dark-card: #221a08;
+        --dark-border: #3a2e10;
+    }
+
+    .hiero-page {
+        min-height: 100vh;
+        background: radial-gradient(ellipse at top, #2a1f08 0%, #110d04 60%, #0a0804 100%);
+        padding: 40px 20px 80px;
+        font-family: 'Cinzel', serif;
+        color: #c9a227;
+    }
+
+    /* ─── Header ─── */
+    .hiero-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .hiero-header .subtitle {
+        font-size: 0.8rem;
+        letter-spacing: 6px;
+        color: var(--gold-dim);
+        text-transform: uppercase;
+        margin-bottom: 10px;
+    }
+
+    .hiero-header h1 {
+        font-size: clamp(1.8rem, 4vw, 2.8rem);
+        font-weight: 700;
+        color: var(--gold-light);
+        text-shadow: 0 0 30px rgba(212,175,55,0.4);
+        letter-spacing: 4px;
+        margin: 0 0 8px;
+    }
+
+    .hiero-header .divider {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        margin-top: 14px;
+    }
+
+    .hiero-header .divider span {
+        height: 1px;
+        width: 80px;
+        background: linear-gradient(to right, transparent, var(--gold-dim));
+    }
+
+    .hiero-header .divider span:last-child {
+        background: linear-gradient(to left, transparent, var(--gold-dim));
+    }
+
+    /* ─── Card ─── */
+    .hiero-card {
+        background: linear-gradient(135deg, #2a1f08 0%, #1a1208 100%);
+        border: 1px solid var(--dark-border);
+        border-radius: 16px;
+        padding: 32px;
+        max-width: 750px;
+        margin: 0 auto 32px;
+        box-shadow: 0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(212,175,55,0.1);
+    }
+
+    /* ─── Input ─── */
+    .input-wrapper {
+        position: relative;
+        margin-bottom: 8px;
+    }
+
+    .hiero-input {
+        width: 100%;
+        background: rgba(0,0,0,0.35);
+        border: 1px solid var(--dark-border);
+        border-radius: 10px;
+        padding: 16px 20px;
+        font-family: 'Cinzel', serif;
+        font-size: 1.1rem;
+        color: var(--gold-light);
+        letter-spacing: 3px;
+        text-align: center;
+        outline: none;
+        transition: border-color 0.3s, box-shadow 0.3s;
+        box-sizing: border-box;
+    }
+
+    .hiero-input::placeholder { color: #5a4820; letter-spacing: 2px; }
+    .hiero-input:focus {
+        border-color: var(--gold-dim);
+        box-shadow: 0 0 0 3px rgba(212,175,55,0.1);
+    }
+
+    .char-count {
+        text-align: right;
+        font-size: 0.72rem;
+        color: var(--gold-dim);
+        margin-bottom: 20px;
+        font-family: 'Cinzel', serif;
+        letter-spacing: 1px;
+    }
+
+    /* ─── Output ─── */
+    .output-box {
+        background: rgba(0,0,0,0.3);
+        border: 1px solid var(--dark-border);
+        border-radius: 10px;
+        min-height: 130px;
+        padding: 24px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 24px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .output-box::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 40px,
+            rgba(212,175,55,0.015) 40px,
+            rgba(212,175,55,0.015) 41px
+        );
+        pointer-events: none;
+    }
+
+    .output-placeholder {
+        color: #3a2e10;
+        font-size: 0.85rem;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+    }
+
+    .glyph-item {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        animation: glyphIn 0.3s ease both;
+    }
+
+    @@keyframes glyphIn {
+        from { opacity: 0; transform: translateY(-8px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .glyph-char {
+        font-family: 'Noto Sans Egyptian Hieroglyphs', serif;
+        font-size: 2.8rem;
+        color: #c9a227;
+        line-height: 1;
+        text-shadow: 0 0 12px rgba(212,175,55,0.35);
+        transition: text-shadow 0.2s;
+    }
+
+    .glyph-char:hover { text-shadow: 0 0 20px rgba(212,175,55,0.7); }
+
+    .glyph-label {
+        font-family: 'Cinzel', serif;
+        font-size: 0.62rem;
+        color: var(--gold-dim);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* ─── Buttons ─── */
+    .btn-row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .hiero-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 11px 22px;
+        border-radius: 8px;
+        font-family: 'Cinzel', serif;
+        font-size: 0.8rem;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.25s;
+        border: none;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #d4af37, #a08028);
+        color: #1a1208;
+        font-weight: 700;
+        box-shadow: 0 4px 15px rgba(212,175,55,0.25);
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #f0d060, #c09030);
+        box-shadow: 0 6px 20px rgba(212,175,55,0.4);
+        transform: translateY(-1px);
+    }
+
+    .btn-outline {
+        background: transparent;
+        border: 1px solid var(--dark-border);
+        color: var(--gold-dim);
+    }
+
+    .btn-outline:hover {
+        border-color: var(--gold-dim);
+        color: #c9a227;
+        background: rgba(212,175,55,0.06);
+    }
+
+    /* ─── Info Cards ─── */
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        max-width: 750px;
+        margin: 0 auto 32px;
+    }
+
+    .info-card {
+        background: linear-gradient(135deg, #2a1f08, #1a1208);
+        border: 1px solid var(--dark-border);
+        border-radius: 12px;
+        padding: 24px;
+    }
+
+    .info-card h3 {
+        font-size: 0.85rem;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: #c9a227;
+        margin: 0 0 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .info-card p {
+        font-family: Georgia, serif;
+        font-size: 0.88rem;
+        color: #b09060;
+        line-height: 1.8;
+        margin: 0;
+        font-style: italic;
+    }
+
+    /* ─── Alphabet Reference ─── */
+    .alpha-section {
+        max-width: 750px;
+        margin: 0 auto;
+        background: linear-gradient(135deg, #2a1f08, #1a1208);
+        border: 1px solid var(--dark-border);
+        border-radius: 16px;
+        padding: 28px;
+    }
+
+    .alpha-section h2 {
+        text-align: center;
+        font-size: 0.85rem;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        color: var(--gold-dim);
+        margin: 0 0 24px;
+    }
+
+    .alpha-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+        gap: 8px;
+    }
+
+    .alpha-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: rgba(0,0,0,0.25);
+        border: 1px solid #2a2010;
+        border-radius: 8px;
+        padding: 10px 4px 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        gap: 4px;
+    }
+
+    .alpha-item:hover {
+        border-color: var(--gold-dim);
+        background: rgba(212,175,55,0.08);
+        transform: translateY(-2px);
+    }
+
+    .alpha-glyph {
+        font-family: 'Noto Sans Egyptian Hieroglyphs', serif;
+        font-size: 1.6rem;
+        color: #c9a227;
+        line-height: 1;
+    }
+
+    .alpha-letter {
+        font-family: 'Cinzel', serif;
+        font-size: 0.6rem;
+        color: var(--gold-dim);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* ─── Toast ─── */
+    .toast {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        background: #c9a227;
+        color: #1a1208;
+        padding: 10px 24px;
+        border-radius: 30px;
+        font-family: 'Cinzel', serif;
+        font-size: 0.8rem;
+        letter-spacing: 2px;
+        font-weight: 600;
+        opacity: 0;
+        transition: all 0.3s;
+        pointer-events: none;
+        z-index: 9999;
+    }
+
+    .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+</style>
+
+<div class="hiero-page">
+
+    <!-- Header -->
+    <div class="hiero-header">
+        <div class="subtitle">𓂀 @Html.L("Common_AncientEgypt") 𓂀</div>
+        <h1>@Html.L("Hiero_PageTitle")</h1>
+        <div class="divider">
+            <span></span>
+            𓋹
+            <span></span>
+        </div>
+    </div>
+
+    <!-- Translator Card -->
+    <div class="hiero-card">
+        <div class="input-wrapper">
+            <input type="text"
+                   id="hieroglyphInput"
+                   class="hiero-input"
+                   placeholder="@Html.L("Hiero_Input_Placeholder")"
+                   maxlength="20"
+                   autocomplete="off"
+                   oninput="onInput(this)" />
+        </div>
+        <div class="char-count"><span id="charCount">0</span> / 20</div>
+
+        <div class="output-box" id="hieroglyphOutput">
+            <span class="output-placeholder">𓂀 @Html.L("Hiero_Output_Placeholder") 𓂀</span>
+        </div>
+
+        <div class="btn-row">
+            <button class="hiero-btn btn-primary" onclick="downloadGlyphs()">⬇ @Html.L("Hiero_DownloadBtn")</button>
+            <button class="hiero-btn btn-outline" onclick="copyText()">⧉ @Html.L("Hiero_CopyBtn")</button>
+            <button class="hiero-btn btn-outline" onclick="clearAll()">✕ @Html.L("Hiero_ClearBtn")</button>
+        </div>
+    </div>
+
+    <!-- Info Cards -->
+    <div class="info-grid">
+        <div class="info-card">
+            <h3>𓆣 @Html.L("Hiero_About_Title")</h3>
+            <p>@Html.L("Hiero_About_Text")</p>
+        </div>
+        <div class="info-card">
+            <h3>𓌀 @Html.L("Hiero_HowItWorks_Title")</h3>
+            <p>@Html.L("Hiero_HowItWorks_Text")</p>
+        </div>
+    </div>
+
+    <!-- Alphabet Reference -->
+    <div class="alpha-section">
+        <h2>𓂀 @Html.L("Hiero_AlphaRef_Title")</h2>
+        <div class="alpha-grid" id="alphaGrid"></div>
+    </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script>
+    const hieroI18n = {
+        nothingToCopy: '@Html.Raw(Html.L("Hiero_Toast_NothingToCopy"))',
+        copied: '@Html.Raw(Html.L("Hiero_Toast_Copied"))',
+        typeSomething: '@Html.Raw(Html.L("Hiero_Toast_TypeSomething"))'
+    };
+    const hieroglyphMap = {
+        'a': '𓄿', 'b': '𓃀', 'c': '𓎡', 'd': '𓂧',
+        'e': '𓇋', 'f': '𓆑', 'g': '𓎼', 'h': '𓉔',
+        'i': '𓇋', 'j': '𓆓', 'k': '𓎡', 'l': '𓃭',
+        'm': '𓅓', 'n': '𓈖', 'o': '𓂝', 'p': '𓉐',
+        'q': '𓌀', 'r': '𓂋', 's': '𓋴', 't': '𓏏',
+        'u': '𓅱', 'v': '𓆑', 'w': '𓅱', 'x': '𓎡',
+        'y': '𓇌', 'z': '𓊃'
+    };
+
+    function onInput(el) {
+        document.getElementById('charCount').textContent = el.value.length;
+        translate(el.value);
+    }
+
+    function translate(input) {
+        const output = document.getElementById('hieroglyphOutput');
+        const letters = input.toLowerCase().split('').filter(c => hieroglyphMap[c]);
+
+        if (letters.length === 0) {
+            output.innerHTML = '<span class="output-placeholder">𓂀 Your hieroglyphs will appear here 𓂀</span>';
+            return;
+        }
+
+        output.innerHTML = letters.map((char, i) => `
+            <span class="glyph-item" style="animation-delay:${i * 0.05}s">
+                <span class="glyph-char">${hieroglyphMap[char]}</span>
+                <span class="glyph-label">${char}</span>
+            </span>
+        `).join('');
+    }
+
+    function clearAll() {
+        const input = document.getElementById('hieroglyphInput');
+        input.value = '';
+        document.getElementById('charCount').textContent = '0';
+        translate('');
+    }
+
+    function copyText() {
+        const input = document.getElementById('hieroglyphInput').value;
+        const glyphs = input.toLowerCase().split('').map(c => hieroglyphMap[c] || '').join(' ');
+        if (!glyphs.trim()) return showToast(hieroI18n.nothingToCopy);
+        navigator.clipboard.writeText(glyphs).then(() => showToast(hieroI18n.copied));
+    }
+
+        function downloadGlyphs() {
+        const input = document.getElementById('hieroglyphInput').value;
+        const glyphs = input.toLowerCase().split('').filter(c => hieroglyphMap[c]);
+        if (glyphs.length === 0) return showToast(hieroI18n.typeSomething);
+
+        document.fonts.ready.then(() => {
+        const itemW = 80, gap = 16, padX = 40, padY = 40;
+        const glyphSize = 72, labelSize = 13;
+        const totalW = glyphs.length * (itemW + gap) - gap + padX * 2;
+        const totalH = glyphSize + labelSize + padY * 2 + 10;
+
+        const canvas = document.createElement('canvas');
+        canvas.width  = totalW;
+        canvas.height = totalH;
+        const ctx = canvas.getContext('2d');
+
+        // خلفية
+        ctx.fillStyle = '#1a1208';
+        ctx.fillRect(0, 0, totalW, totalH);
+
+        // border
+        ctx.strokeStyle = '#3a2e10';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(2, 2, totalW - 4, totalH - 4, 12);
+        ctx.stroke();
+
+        glyphs.forEach((char, i) => {
+        const x = padX + i * (itemW + gap) + itemW / 2;
+
+        // الرمز
+        ctx.font = `${glyphSize}px "Noto Sans Egyptian Hieroglyphs"`;
+        ctx.fillStyle = '#d4af37';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText(hieroglyphMap[char], x, padY);
+
+        // الحرف تحته
+        ctx.font = `${labelSize}px "Cinzel"`;
+        ctx.fillStyle = '#a08040';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillText(char.toUpperCase(), x, padY + glyphSize + labelSize);
+        });
+
+        const link = document.createElement('a');
+        link.download = 'hieroglyphics.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        });
+        }
+
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    // Build alphabet reference grid
+    function buildAlphaGrid() {
+        const grid = document.getElementById('alphaGrid');
+        Object.entries(hieroglyphMap).forEach(([letter, glyph]) => {
+            const item = document.createElement('div');
+            item.className = 'alpha-item';
+            item.title = `Click to type ${letter.toUpperCase()}`;
+            item.innerHTML = `
+                <span class="alpha-glyph">${glyph}</span>
+                <span class="alpha-letter">${letter}</span>
+            `;
+            item.onclick = () => {
+                const input = document.getElementById('hieroglyphInput');
+                if (input.value.length < 20) {
+                    input.value += letter;
+                    document.getElementById('charCount').textContent = input.value.length;
+                    translate(input.value);
+                    input.focus();
+                }
+            };
+            grid.appendChild(item);
+        });
+    }
+
+    buildAlphaGrid();
+</script>
+}

@@ -1,0 +1,218 @@
+﻿@using pharaohsLegacy.Extensions
+@{
+    ViewData["Title"] = "Home";
+    var pharaohs = ViewBag.Pharaohs as List<pharaohsLegacy.Models.Pharaoh>;
+    var temples = ViewBag.Temples as List<pharaohsLegacy.Models.Temple>;
+}
+
+@if (TempData["Error"] != null)
+{
+    <div style="
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        background: #1a0a00;
+        border: 1px solid #c9a84c;
+        border-radius: 10px;
+        padding: 16px 24px;
+        color: #c9a84c;
+        font-size: 14px;
+        font-family: 'Cinzel', serif;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        animation: fadeOut 0.5s ease 3s forwards;">
+        ⚠️ @TempData["Error"]
+    </div>
+
+    <style>
+        @@keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+
+            to {
+                opacity: 0;
+                pointer-events: none;
+            }
+        }
+    </style>
+}
+
+
+<section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-pyramid"></div>
+    <div class="hero-pattern top">𓂀 𓃭 𓆣 𓇯 𓈖 𓉐 𓊃 𓋴 𓌀 𓍿 𓎛 𓏭</div>
+
+    <div class="hero-content">
+        <div class="hero-eyebrow">@Html.L("Home_Eyebrow")</div>
+        <h1 class="hero-title">
+            @Html.L("Home_TitleLine1")<br /><span>@Html.L("Home_TitleLine2")</span>
+        </h1>
+        <p class="hero-subtitle">
+            @Html.L("Home_Subtitle")
+        </p>
+        <div class="hero-cta">
+            <a href="#explore" class="btn-gold">@Html.L("Home_BtnExplore")</a>
+            <a href="/Pharaoh/Index" class="btn-outline">@Html.L("Home_BtnMeetPharaohs")</a>
+        </div>
+    </div>
+
+    <div class="hero-pattern bottom">𓂀 𓃭 𓆣 𓇯 𓈖 𓉐 𓊃 𓋴 𓌀 𓍿 𓎛 𓏭</div>
+    <div class="hero-scroll">@Html.L("Home_Scroll")</div>
+</section>
+
+<div class="stats-bar">
+    <div class="stat"><span class="stat-num">170+</span><span class="stat-label">@Html.L("Stat_Pharaohs")</span></div>
+    <div class="stat"><span class="stat-num">3,000</span><span class="stat-label">@Html.L("Stat_YearsHistory")</span></div>
+    <div class="stat"><span class="stat-num">50+</span><span class="stat-label">@Html.L("Stat_TemplesSites")</span></div>
+    <div class="stat"><span class="stat-num">30</span><span class="stat-label">@Html.L("Stat_Dynasties")</span></div>
+</div>
+
+
+<div id="explore">
+    <div class="section">
+        <div class="section-header">
+            <span class="section-tag">@Html.L("Home_Tag_Rulers")</span>
+            <h2 class="section-title">@Html.L("Home_SectionTitle_Pharaohs")</h2>
+            <div class="section-line"></div>
+        </div>
+        <div class="cards-grid">
+            @if (pharaohs != null)
+            {
+                @foreach (var pharaoh in pharaohs)
+                {
+                    <a href="/Pharaoh/Details/@pharaoh.Id" class="card">
+                        <div class="card-img">
+                            <img src="@pharaoh.ImageUrl" alt="@pharaoh.Name" />
+                        </div>
+                        <div class="card-body">
+                            <span class="card-tag">@pharaoh.Dynasty</span>
+                            <h3 class="card-title">@pharaoh.Name</h3>
+                            <p class="card-desc">@pharaoh.Description</p>
+                        </div>
+                        <div class="card-footer">
+                            <span>@pharaoh.Period</span>
+                            <span class="card-arrow">→</span>
+                        </div>
+                    </a>
+                }
+            }
+        </div>
+        <div class="see-all-wrap">
+            <a href="/Pharaoh/Index" class="btn-outline">@Html.L("Home_SeeAllPharaohs") →</a>
+        </div>
+    </div>
+</div>
+
+
+<div style="background: rgba(201,162,39,.03); border-top:1px solid #3d2a15; border-bottom:1px solid #3d2a15;">
+    <div class="section">
+        <div class="section-header">
+            <span class="section-tag">@Html.L("Home_Tag_SacredSites")</span>
+            <h2 class="section-title">@Html.L("Home_SectionTitle_Temples")</h2>
+            <div class="section-line"></div>
+        </div>
+        <div class="cards-grid">
+            @if (temples != null)
+            {
+                @foreach (var temple in temples)
+                {
+                    <a href="/Temple/Details/@temple.Id" class="card">
+                        <div class="card-img">
+                            <img src="@temple.ImageUrl" alt="@temple.Name" />
+                        </div>
+                        <div class="card-body">
+                            <span class="card-tag">@temple.Location</span>
+                            <h3 class="card-title">@temple.Name</h3>
+                            <p class="card-desc">@temple.Description</p>
+                        </div>
+                        <div class="card-footer">
+                            <span>@temple.Period</span>
+                            <span class="card-arrow">→</span>
+                        </div>
+                    </a>
+                }
+            }
+        </div>
+        <div class="see-all-wrap">
+            <a href="/Temple/Index" class="btn-outline">@Html.L("Home_SeeAllTemples") →</a>
+        </div>
+    </div>
+</div>
+
+
+<div style="background: rgba(201,162,39,.03); border-top:1px solid #3d2a15; border-bottom:1px solid #3d2a15;">
+    <div class="section">
+        <div class="section-header">
+            <span class="section-tag">@Html.L("Home_Tag_Collections")</span>
+            <h2 class="section-title">@Html.L("Home_SectionTitle_Museums")</h2>
+            <div class="section-line"></div>
+        </div>
+        @{
+            var museums = ViewBag.Museums as List<pharaohsLegacy.Models.Museum>;
+        }
+        <div class="cards-grid">
+            @if (museums != null)
+            {
+                @foreach (var m in museums)
+                {
+                    <a href="/Museum/Details/@m.Id" class="card">
+                        <div class="card-img">
+                            <img src="@m.ImageUrl" alt="@m.Name" />
+                        </div>
+                        <div class="card-body">
+                            <span class="card-tag">@m.Location</span>
+                            <h3 class="card-title">@m.Name</h3>
+                            <p class="card-desc">@m.Description</p>
+                        </div>
+                        <div class="card-footer">
+                            <span>@Html.L("Home_Est") @m.Founded</span>
+                            <span class="card-arrow">→</span>
+                        </div>
+                    </a>
+                }
+            }
+        </div>
+        <div class="see-all-wrap">
+            <a href="/Museum/Index" class="btn-outline">@Html.L("Home_SeeAllMuseums") →</a>
+        </div>
+    </div>
+</div>
+@{
+    var gods = ViewBag.Gods as List<pharaohsLegacy.Models.God>;
+}
+
+
+<div class="section">
+    <div class="section-header">
+        <span class="section-tag">@Html.L("Home_Tag_Mythology")</span>
+        <h2 class="section-title">@Html.L("Home_SectionTitle_Gods")</h2>
+        <div class="section-line"></div>
+    </div>
+    <div class="cards-grid">
+        @if (gods != null)
+        {
+            @foreach (var god in gods)
+            {
+                <a href="/God/Details/@god.Id" class="card">
+                    <div class="card-img">
+                        <img src="@god.ImageUrl" alt="@god.Name" />
+                    </div>
+                    <div class="card-body">
+                        <span class="card-tag">@god.Role</span>
+                        <h3 class="card-title">@god.Name</h3>
+                        <p class="card-desc">@god.Description</p>
+                    </div>
+                    <div class="card-footer">
+                        <span>@god.Symbol</span>
+                        <span class="card-arrow">→</span>
+                    </div>
+                </a>
+            }
+        }
+    </div>
+    <div class="see-all-wrap">
+        <a href="/God/Index" class="btn-outline">@Html.L("Home_SeeAllGods") →</a>
+    </div>
+</div>
