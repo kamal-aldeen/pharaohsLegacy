@@ -2,10 +2,16 @@
 @using pharaohsLegacy.Extensions
 
 @{
-    ViewData["Title"] = Model.Name;
     var isFav = (bool)(ViewBag.IsFav ?? false);
     var email = Context.Session.GetString("UserEmail");
     var isGuest = email == "guest";
+    var lang = Context.Session.GetString("Lang") ?? "en";
+    var arrowBack = lang == "ar" ? "→" : "←";
+    var godName = (lang == "ar" && !string.IsNullOrEmpty(Model.NameAr)) ? Model.NameAr : Model.Name;
+    var godRole = (lang == "ar" && !string.IsNullOrEmpty(Model.RoleAr)) ? Model.RoleAr : Model.Role;
+    var godDescription = (lang == "ar" && !string.IsNullOrEmpty(Model.DescriptionAr)) ? Model.DescriptionAr : Model.Description;
+    var godSymbol = (lang == "ar" && !string.IsNullOrEmpty(Model.SymbolAr)) ? Model.SymbolAr : Model.Symbol;
+    ViewData["Title"] = godName;
 }
 
 @section Styles {
@@ -203,22 +209,22 @@
 }
 
 <div class="god-details-wrap">
-    <a href="/God/Index" class="btn-back">← @Html.L("God_Back_Link")</a>
+    <a href="/God/Index" class="btn-back">@arrowBack @Html.L("God_Back_Link")</a>
 
     <!-- Banner -->
     <div class="god-banner">
         <img src="@(Model.ImageUrl.Length > 0 ? Model.ImageUrl : "/images/placeholder.jpg")"
-             alt="@Model.Name"
-             onerror="this.src='https://via.placeholder.com/1200x400/2d1a08/c9a227?text=@Model.Name'" />
+             alt="@godName"
+             onerror="this.src='https://via.placeholder.com/1200x400/2d1a08/c9a227?text=@godName'" />
         <div class="god-banner-overlay"></div>
         <div class="god-banner-content">
             <div>
                 <div class="god-banner-tag">𓂀 @Html.L("Common_EgyptianDeity")</div>
-                <div class="god-banner-name">@Model.Name</div>
+                <div class="god-banner-name">@godName</div>
             </div>
             @if (!string.IsNullOrEmpty(Model.Symbol))
             {
-                <div class="god-banner-symbol">@Model.Symbol</div>
+                <div class="god-banner-symbol">@godSymbol</div>
             }
         </div>
     </div>
@@ -228,14 +234,14 @@
 
         <!-- Main -->
         <div class="god-main">
-            <div class="god-section-title">@Html.L("Common_About") @Model.Name</div>
-            <p class="god-description">@Model.Description</p>
+            <div class="god-section-title">@Html.L("Common_About") @godName</div>
+            <p class="god-description">@godDescription</p>
 
             @if (!string.IsNullOrEmpty(Model.Role))
             {
                 <div class="god-section-title">@Html.L("God_DomainsOfPower")</div>
                 <div class="god-roles">
-                    @foreach (var role in Model.Role.Split(','))
+                    @foreach (var role in godRole.Split(','))
                     {
                         <span class="god-role-pill">@role.Trim()</span>
                     }
@@ -243,7 +249,7 @@
             }
 
             <div class="god-nav">
-                <a href="/God/Index" class="btn-outline">← @Html.L("God_AllGods_Link")</a>
+                <a href="/God/Index" class="btn-outline">@arrowBack @Html.L("God_AllGods_Link")</a>
 
             </div>
         </div>
@@ -258,7 +264,7 @@
                     <span class="god-info-icon">𓂀</span>
                     <div>
                         <div class="god-info-label">@Html.L("Common_Name")</div>
-                        <div class="god-info-value">@Model.Name</div>
+                        <div class="god-info-value">@godName</div>
                     </div>
                 </div>
                 @if (!string.IsNullOrEmpty(Model.Role))
@@ -267,7 +273,7 @@
                         <span class="god-info-icon">⚡</span>
                         <div>
                             <div class="god-info-label">@Html.L("Common_Domains")</div>
-                            <div class="god-info-value">@Model.Role</div>
+                            <div class="god-info-value">@godRole</div>
                         </div>
                     </div>
                 }
@@ -277,7 +283,7 @@
                         <span class="god-info-icon">𓋹</span>
                         <div>
                             <div class="god-info-label">@Html.L("Common_Symbol")</div>
-                            <div class="god-info-value">@Model.Symbol</div>
+                            <div class="god-info-value">@godSymbol</div>
                         </div>
                     </div>
                 }

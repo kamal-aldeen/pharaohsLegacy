@@ -3,6 +3,7 @@
 @model Dictionary<string, List<pharaohsLegacy.Models.Pharaoh>>
 @{
     ViewData["Title"] = "Timeline";
+    var lang = Context.Session.GetString("Lang") ?? "en";
 }
 
 @section Styles {
@@ -92,11 +93,11 @@
                 content: '';
                 flex: 1;
                 height: 1px;
-                background: linear-gradient(90deg, transparent, );
+                background: linear-gradient(90deg, transparent, #c9a227);
             }
 
             .tl-dynasty-header::after {
-                background: linear-gradient(90deg, , transparent);
+                background: linear-gradient(90deg, #c9a227, transparent);
             }
 
         .tl-dynasty-label {
@@ -107,7 +108,7 @@
             color: #c9a227;
             white-space: nowrap;
             padding: 6px 16px;
-            border: 1px solid ;
+            border: 1px solid #3d2a15;
             border-radius: 20px;
             background: #1a0e05;
         }
@@ -285,7 +286,9 @@
         <button class="tl-filter-btn active" onclick="filterDynasty('all', this)">@Html.L("Dyn_AllDynasties_Link")</button>
         @foreach (var dynasty in Model.Keys)
         {
-            <button class="tl-filter-btn" onclick="filterDynasty('@dynasty.Replace("'", "\'")', this)">@dynasty</button>
+            var dynastyAr = Model[dynasty].Select(x => x.DynastyAr).FirstOrDefault(d => !string.IsNullOrEmpty(d));
+            var dynastyDisplay = (lang == "ar" && !string.IsNullOrEmpty(dynastyAr)) ? dynastyAr : dynasty;
+            <button class="tl-filter-btn" onclick="filterDynasty('@dynasty.Replace("'", "\'")', this)">@dynastyDisplay</button>
         }
     </div>
 
@@ -301,8 +304,12 @@
         <div class="tl-dynasty-group" data-dynasty="@group.Key">
 
             <!-- Dynasty Header -->
+            @{
+                var groupDynastyAr = group.Value.Select(x => x.DynastyAr).FirstOrDefault(d => !string.IsNullOrEmpty(d));
+                var groupDynastyDisplay = (lang == "ar" && !string.IsNullOrEmpty(groupDynastyAr)) ? groupDynastyAr : group.Key;
+            }
             <div class="tl-dynasty-header">
-                <span class="tl-dynasty-label">𓋹 @group.Key</span>
+                <span class="tl-dynasty-label">𓋹 @groupDynastyDisplay</span>
             </div>
 
             <!-- Timeline Items -->
@@ -311,16 +318,19 @@
                 {
                     var side = globalIndex % 2 == 0 ? "" : "right";
                     globalIndex++;
+                    var pName = (lang == "ar" && !string.IsNullOrEmpty(p.NameAr)) ? p.NameAr : p.Name;
+                    var pDynasty = Html.Digits((lang == "ar" && !string.IsNullOrEmpty(p.DynastyAr)) ? p.DynastyAr : p.Dynasty);
+                    var pPeriod = Html.Digits((lang == "ar" && !string.IsNullOrEmpty(p.PeriodAr)) ? p.PeriodAr : p.Period);
                     <div class="tl-item @side">
                         <a href="/Pharaoh/Details/@p.Id" class="tl-card">
                             <div class="tl-card-img">
-                                <img src="@p.ImageUrl" alt="@p.Name"
-                                     onerror="this.src='https://via.placeholder.com/400x200/2d1a08/c9a227?text=@p.Name'" />
+                                <img src="@p.ImageUrl" alt="@pName"
+                                     onerror="this.src='https://via.placeholder.com/400x200/2d1a08/c9a227?text=@pName'" />
                             </div>
                             <div class="tl-card-body">
-                                <div class="tl-card-dynasty">@p.Dynasty</div>
-                                <div class="tl-card-name">@p.Name</div>
-                                <div class="tl-card-period">@p.Period</div>
+                                <div class="tl-card-dynasty">@pDynasty</div>
+                                <div class="tl-card-name">@pName</div>
+                                <div class="tl-card-period">@pPeriod</div>
                             </div>
                         </a>
                     </div>

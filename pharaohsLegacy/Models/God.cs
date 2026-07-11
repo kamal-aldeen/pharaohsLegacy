@@ -8,6 +8,7 @@
         public string Description { get; set; } = "";
         public string ImageUrl { get; set; } = "";
         public string Symbol { get; set; } = "";
+        public string? SymbolAr { get; set; }
 
         public string? NameAr { get; set; }
         public string? RoleAr { get; set; }

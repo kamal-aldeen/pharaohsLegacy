@@ -2,12 +2,18 @@
 @using pharaohsLegacy.Extensions
 
     @{
-    ViewData["Title"] = Model.Name;
     var userEmail = Context.Session.GetString("UserEmail");
     var isGuest   = userEmail == null || userEmail == "guest";
     var isFav     = !isGuest && Context.RequestServices
         .GetService<pharaohsLegacy.Models.AppDbContext>()!
         .Favorites.Any(f => f.UserEmail == userEmail && f.Type == "museum" && f.ItemId == Model.Id);
+    var lang = Context.Session.GetString("Lang") ?? "en";
+    var arrowBack = lang == "ar" ? "→" : "←";
+    var mName = (lang == "ar" && !string.IsNullOrEmpty(Model.NameAr)) ? Model.NameAr : Model.Name;
+    var mLocation = (lang == "ar" && !string.IsNullOrEmpty(Model.LocationAr)) ? Model.LocationAr : Model.Location;
+    var mDescription = (lang == "ar" && !string.IsNullOrEmpty(Model.DescriptionAr)) ? Model.DescriptionAr : Model.Description;
+    var mCategory = (lang == "ar" && !string.IsNullOrEmpty(Model.CategoryAr)) ? Model.CategoryAr : Model.Category;
+    ViewData["Title"] = mName;
 }
 
 
@@ -113,16 +119,16 @@
 }
 
 <div class="det-wrap">
-    <a href="/Museum/Index" class="btn-back">← @Html.L("Museum_Back_Link")</a>
+    <a href="/Museum/Index" class="btn-back">@arrowBack @Html.L("Museum_Back_Link")</a>
 
     <div class="det-banner">
-        <img src="@Model.ImageUrl" alt="@Model.Name"
-             onerror="this.src='https://via.placeholder.com/1200x400/2d1a08/c9a227?text=@Model.Name'" />
+        <img src="@Model.ImageUrl" alt="@mName"
+             onerror="this.src='https://via.placeholder.com/1200x400/2d1a08/c9a227?text=@mName'" />
         <div class="det-banner-overlay"></div>
         <div class="det-banner-content">
             <div>
-                <div class="det-banner-tag">🏛️ @Model.Category @Html.L("Common_Museum")</div>
-                <div class="det-banner-name">@Model.Name</div>
+                <div class="det-banner-tag">🏛️ @mCategory @Html.L("Common_Museum")</div>
+                <div class="det-banner-name">@mName</div>
             </div>
         </div>
     </div>
@@ -130,10 +136,10 @@
     <div class="det-content">
 
         <div>
-            <div class="det-section-title">@Html.L("Common_About") @Model.Name</div>
-            <p class="det-description">@Model.Description</p>
+            <div class="det-section-title">@Html.L("Common_About") @mName</div>
+            <p class="det-description">@mDescription</p>
             <div class="det-nav">
-                <a href="/Museum/Index" class="btn-outline">← @Html.L("Museum_AllMuseums_Link")</a>
+                <a href="/Museum/Index" class="btn-outline">@arrowBack @Html.L("Museum_AllMuseums_Link")</a>
             </div>
         </div>
 
@@ -142,7 +148,7 @@
             <div class="det-price-badge">
                 <div>
                     <div class="det-price-label">@Html.L("Common_TicketPrice")</div>
-                    <div class="det-price-val">100 @Html.L("Common_EGP")</div>
+                    <div class="det-price-val">@Html.Digits(100) @Html.L("Common_EGP")</div>
                 </div>
                 <span style="font-size:1.5rem;">🎟</span>
             </div>
@@ -153,28 +159,28 @@
                     <span class="det-info-icon">🏛️</span>
                     <div>
                         <div class="det-info-label">@Html.L("Common_Name")</div>
-                        <div class="det-info-value">@Model.Name</div>
+                        <div class="det-info-value">@mName</div>
                     </div>
                 </div>
                 <div class="det-info-row">
                     <span class="det-info-icon">📍</span>
                     <div>
                         <div class="det-info-label">@Html.L("Common_Location")</div>
-                        <div class="det-info-value">@Model.Location</div>
+                        <div class="det-info-value">@mLocation</div>
                     </div>
                 </div>
                 <div class="det-info-row">
                     <span class="det-info-icon">📅</span>
                     <div>
                         <div class="det-info-label">@Html.L("Museum_Founded_Label")</div>
-                        <div class="det-info-value">@Model.Founded</div>
+                        <div class="det-info-value">@Html.Digits(Model.Founded)</div>
                     </div>
                 </div>
                 <div class="det-info-row">
                     <span class="det-info-icon">🏷️</span>
                     <div>
                         <div class="det-info-label">@Html.L("Common_Category")</div>
-                        <div class="det-info-value">@Model.Category</div>
+                        <div class="det-info-value">@mCategory</div>
                     </div>
                 </div>
             </div>

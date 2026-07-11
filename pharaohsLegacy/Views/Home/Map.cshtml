@@ -4,6 +4,7 @@
     ViewData["Title"] = "Interactive Map";
     var temples = ViewBag.Temples as List<pharaohsLegacy.Models.Temple>;
     var museums = ViewBag.Museums as List<pharaohsLegacy.Models.Museum>;
+    var lang = Context.Session.GetString("Lang") ?? "en";
 }
 
 @section Styles {
@@ -228,11 +229,13 @@
 @section Scripts {
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        var mapI18n = {
-        temple: '@Html.Raw(Html.L("Common_Temple"))',
-        museum: '@Html.Raw(Html.L("Common_Museum"))',
-        viewDetails: '@Html.Raw(Html.L("Common_ViewDetails"))'
-        };
+        var mapI18n = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new
+        {
+            temple = Html.L("Common_Temple"),
+            museum = Html.L("Common_Museum"),
+            viewDetails = Html.L("Common_ViewDetails"),
+            arrow = lang == "ar" ? "←" : "→"
+        }));
         // Initialize Map centered on Egypt
         var map = L.map('map', {
         center: [26.5, 30.0],
@@ -273,9 +276,9 @@
                     temples?.Select(t => new
                     {
                         id = t.Id,
-                        name = t.Name,
-                        location = t.Location,
-                        description = t.Description,
+                        name = (lang == "ar" && !string.IsNullOrEmpty(t.NameAr)) ? t.NameAr : t.Name,
+                        location = (lang == "ar" && !string.IsNullOrEmpty(t.LocationAr)) ? t.LocationAr : t.Location,
+                        description = (lang == "ar" && !string.IsNullOrEmpty(t.DescriptionAr)) ? t.DescriptionAr : t.Description,
                         imageUrl = t.ImageUrl,
                         lat = t.Latitude,
                         lng = t.Longitude
@@ -294,7 +297,7 @@
         '<span class="popup-tag">🛕 ' + mapI18n.temple + ' &middot; ' + t.location + '</span>' +
         '<div class="popup-title">' + t.name + '</div>' +
         '<div class="popup-desc">' + t.description + '</div>' +
-        '<a class="popup-btn" href="/Temple/Details/' + t.id + '">' + mapI18n.viewDetails + ' &rarr;</a>' +
+        '<a class="popup-btn" href="/Temple/Details/' + t.id + '">' + mapI18n.viewDetails + ' ' + mapI18n.arrow + '</a>' +
         '</div>';
 
         var marker = L.marker([t.lat, t.lng], { icon: templeIcon })
@@ -310,9 +313,9 @@
                     museums?.Select(m => new
                     {
                         id = m.Id,
-                        name = m.Name,
-                        location = m.Location,
-                        description = m.Description,
+                        name = (lang == "ar" && !string.IsNullOrEmpty(m.NameAr)) ? m.NameAr : m.Name,
+                        location = (lang == "ar" && !string.IsNullOrEmpty(m.LocationAr)) ? m.LocationAr : m.Location,
+                        description = (lang == "ar" && !string.IsNullOrEmpty(m.DescriptionAr)) ? m.DescriptionAr : m.Description,
                         imageUrl = m.ImageUrl,
                         lat = m.Latitude,
                         lng = m.Longitude
@@ -331,7 +334,7 @@
         '<span class="popup-tag">🏛️ ' + mapI18n.museum + ' &middot; ' + m.location + '</span>' +
         '<div class="popup-title">' + m.name + '</div>' +
         '<div class="popup-desc">' + m.description + '</div>' +
-        '<a class="popup-btn" href="/Museum/Details/' + m.id + '">' + mapI18n.viewDetails + ' &rarr;</a>' +
+        '<a class="popup-btn" href="/Museum/Details/' + m.id + '">' + mapI18n.viewDetails + ' ' + mapI18n.arrow + '</a>' +
         '</div>';
 
         var marker = L.marker([m.lat, m.lng], { icon: museumIcon })

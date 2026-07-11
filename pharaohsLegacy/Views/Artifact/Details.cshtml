@@ -2,10 +2,19 @@
 
 @model pharaohsLegacy.Models.Artifact
 @{
-    ViewData["Title"] = Model.Name;
     var userEmail = Context.Session.GetString("UserEmail");
     var isGuest = userEmail == null || userEmail == "guest";
     var isFav = ViewBag.IsFav as bool? ?? false;
+    var lang = Context.Session.GetString("Lang") ?? "en";
+    var arrowBack = lang == "ar" ? "→" : "←";
+    var artName = Html.Digits((lang == "ar" && !string.IsNullOrEmpty(Model.NameAr)) ? Model.NameAr : Model.Name);
+    var artOrigin = Html.Digits((lang == "ar" && !string.IsNullOrEmpty(Model.OriginAr)) ? Model.OriginAr : Model.Origin);
+    var artPeriod = Html.Digits((lang == "ar" && !string.IsNullOrEmpty(Model.PeriodAr)) ? Model.PeriodAr : Model.Period);
+    var artCategory = Html.Digits((lang == "ar" && !string.IsNullOrEmpty(Model.CategoryAr)) ? Model.CategoryAr : Model.Category);
+    var artDescription = Html.Digits((lang == "ar" && !string.IsNullOrEmpty(Model.DescriptionAr)) ? Model.DescriptionAr : Model.Description);
+    var artMuseum = Html.Digits((lang == "ar" && !string.IsNullOrEmpty(Model.MuseumAr)) ? Model.MuseumAr : Model.Museum);
+    var artCurrentLocation = Html.Digits((lang == "ar" && !string.IsNullOrEmpty(Model.CurrentLocationAr)) ? Model.CurrentLocationAr : Model.CurrentLocation);
+    ViewData["Title"] = artName;
 }
 
 @section Styles {
@@ -230,17 +239,17 @@
 }
 
 <div class="det-wrap">
-    <a href="/Artifact/Index" class="btn-back">← @Html.L("Art_Back_Link")</a>
+    <a href="/Artifact/Index" class="btn-back">@arrowBack @Html.L("Art_Back_Link")</a>
 
     <!-- Banner -->
     <div class="det-banner">
-        <img src="@Model.ImageUrl" alt="@Model.Name"
-             onerror="this.src='https://via.placeholder.com/1200x400/2d1a08/c9a227?text=@Model.Name'" />
+        <img src="@Model.ImageUrl" alt="@artName"
+             onerror="this.src='https://via.placeholder.com/1200x400/2d1a08/c9a227?text=@artName'" />
         <div class="det-banner-overlay"></div>
         <div class="det-banner-content">
             <div>
-                <div class="det-banner-tag">𓏏 @Model.Category</div>
-                <div class="det-banner-name">@Model.Name</div>
+                <div class="det-banner-tag">𓏏 @artCategory</div>
+                <div class="det-banner-name">@artName</div>
             </div>
         </div>
     </div>
@@ -250,10 +259,10 @@
 
         <!-- Left: Description -->
         <div>
-            <div class="det-section-title">@Html.L("Common_About") @Model.Name</div>
-            <p class="det-description">@Model.Description</p>
+            <div class="det-section-title">@Html.L("Common_About") @artName</div>
+            <p class="det-description">@artDescription</p>
             <div class="det-nav">
-                <a href="/Artifact/Index" class="btn-outline">← @Html.L("Art_AllArtifacts_Link")</a>
+                <a href="/Artifact/Index" class="btn-outline">@arrowBack @Html.L("Art_AllArtifacts_Link")</a>
             </div>
         </div>
 
@@ -265,35 +274,35 @@
                     <span class="det-info-icon">𓏏</span>
                     <div>
                         <div class="det-info-label">@Html.L("Common_Category")</div>
-                        <div class="det-info-value">@Model.Category</div>
+                        <div class="det-info-value">@artCategory</div>
                     </div>
                 </div>
                 <div class="det-info-row">
                     <span class="det-info-icon">📅</span>
                     <div>
                         <div class="det-info-label">@Html.L("Common_Period")</div>
-                        <div class="det-info-value">@Model.Period</div>
+                        <div class="det-info-value">@artPeriod</div>
                     </div>
                 </div>
                 <div class="det-info-row">
                     <span class="det-info-icon">📍</span>
                     <div>
                         <div class="det-info-label">@Html.L("Common_Origin")</div>
-                        <div class="det-info-value">@Model.Origin</div>
+                        <div class="det-info-value">@artOrigin</div>
                     </div>
                 </div>
                 <div class="det-info-row">
                     <span class="det-info-icon">🏛️</span>
                     <div>
                         <div class="det-info-label">@Html.L("Common_Museum")</div>
-                        <div class="det-info-value">@(string.IsNullOrEmpty(Model.Museum) ? Html.L("Common_Unknown") : Model.Museum)</div>
+                        <div class="det-info-value">@(string.IsNullOrEmpty(artMuseum) ? Html.L("Common_Unknown") : artMuseum)</div>
                     </div>
                 </div>
                 <div class="det-info-row">
                     <span class="det-info-icon">🌍</span>
                     <div>
                         <div class="det-info-label">@Html.L("Common_Location")</div>
-                        <div class="det-info-value">@(string.IsNullOrEmpty(Model.CurrentLocation) ? Html.L("Common_Unknown") : Model.CurrentLocation)</div>
+                        <div class="det-info-value">@(string.IsNullOrEmpty(artCurrentLocation) ? Html.L("Common_Unknown") : artCurrentLocation)</div>
                     </div>
                 </div>
             </div>

@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = "My Bookings";
     Layout = "~/Views/Shared/_Layout.cshtml";
+    var lang = Context.Session.GetString("Lang") ?? "en";
 }
 
 @section Styles {
@@ -947,15 +948,15 @@
                         <div class="card-meta">
                             <div class="meta-item">
                                 <div class="mi-label">📅 @Html.L("Booking_VisitDate_Label")</div>
-                                <div class="mi-value">@b.VisitDate.ToString("dd MMM yyyy")</div>
+                                <div class="mi-value">@Html.DateLoc(b.VisitDate, "dd MMM yyyy")</div>
                             </div>
                             <div class="meta-item">
                                 <div class="mi-label">🎟️ @Html.L("Booking_Tickets_Label")</div>
-                                <div class="mi-value">@b.NumberOfTickets @Html.L("Booking_TicketSuffix")</div>
+                                <div class="mi-value">@Html.Digits(b.NumberOfTickets) @Html.L("Booking_TicketSuffix")</div>
                             </div>
                             <div class="meta-item price">
                                 <div class="mi-label">💰 @Html.L("Common_Total")</div>
-                                <div class="mi-value">@b.TotalPrice @Html.L("Common_EGP")</div>
+                                <div class="mi-value">@Html.Digits(b.TotalPrice) @Html.L("Common_EGP")</div>
                             </div>
                         </div>
 
@@ -1016,14 +1017,14 @@
                         </button>
                         <div class="tracking-panel" id="track-@b.Id">
                             <div class="track-header">@Html.L("Booking_TrackHeader")</div>
-                            <div class="track-id">@Html.L("Booking_TrackIdPrefix")@b.Id</div>
+                            <div class="track-id">@Html.L("Booking_TrackIdPrefix")@Html.Digits(b.Id)</div>
                             <div class="track-timeline">
                                 <div class="track-step done">
                                     <div class="step-dot"></div>
                                     <div class="step-line"></div>
                                     <div class="step-info">
                                         <div class="step-title">@Html.L("Booking_Step_Created")</div>
-                                        <div class="step-date">@b.CreatedAt.ToString("dd MMM yyyy — hh:mm tt")</div>
+                                        <div class="step-date">@Html.DateLoc(b.CreatedAt)</div>
                                     </div>
                                 </div>
                                 <div class="track-step @(b.Status == "Confirmed" || b.Status == "Refunded" ? "done" : b.Status == "Cancelled" ? "cancelled" : "pending")">
@@ -1039,7 +1040,7 @@
                                     <div class="step-line"></div>
                                     <div class="step-info">
                                         <div class="step-title">@(b.Status == "Cancelled" ? Html.L("Booking_Step_BookingCancelled") : Html.L("Booking_Step_VisitDay"))</div>
-                                        <div class="step-date">@b.VisitDate.ToString("dd MMM yyyy")</div>
+                                        <div class="step-date">@Html.DateLoc(b.VisitDate, "dd MMM yyyy")</div>
                                     </div>
                                 </div>
                                 <div class="track-step @(b.Status == "Cancelled" ? "cancelled" : DateTime.Now > b.VisitDate ? "done" : "pending")">
@@ -1099,6 +1100,22 @@
                     }) ?? Enumerable.Empty<object>()
             ));
 
+        // اللغة الحالية + ترجمة النصوص اللي بتتحدث ديناميك من الـ JS (لازم تتحول هنا مش في الـ HTML بس)
+        var currentLang = '@lang';
+        var arabicDigitsMap = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+        var cannotCancelBtnText = @Html.Raw(System.Text.Json.JsonSerializer.Serialize("⛔ " + Html.L("Booking_CannotCancelBtn")));
+        var expiredNoticeHtml = @Html.Raw(System.Text.Json.JsonSerializer.Serialize("<div class=\"expired-notice\">⏰ " + Html.L("Booking_Expired_Notice") + "</div>"));
+        var hideDetailsText = @Html.Raw(System.Text.Json.JsonSerializer.Serialize("🔼 " + Html.L("Booking_HideDetailsBtn")));
+        var showDetailsText = @Html.Raw(System.Text.Json.JsonSerializer.Serialize("📍 " + Html.L("Booking_TrackBtn")));
+        var modalConfirmPrefix = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Html.L("Booking_Modal_ConfirmFor")));
+        var modalRefundNote = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Html.L("Booking_Modal_RefundNote")));
+
+        function toLocalDigits(input) {
+            var str = String(input);
+            if (currentLang !== 'ar') return str;
+            return str.replace(/[0-9]/g, function (d) { return arabicDigitsMap[+d]; });
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 document.getElementById('skeleton-loader').style.display = 'none';
@@ -1129,7 +1146,7 @@
             const step = Math.max(1, Math.ceil(target / 40));
             const t = setInterval(() => {
                 cur = Math.min(cur + step, target);
-                el.textContent = cur.toLocaleString('en-US');
+                el.textContent = toLocalDigits(cur.toLocaleString('en-US'));
                 if (cur >= target) clearInterval(t);
             }, 30);
         }
@@ -1180,8 +1197,8 @@
                     const diff = deadline - new Date();
                     if (diff <= 0) {
                         const btn = card.querySelector('.btn-cancel');
-                        if (btn) { btn.disabled = true; btn.textContent = '⛔ Cannot Cancel'; }
-                        wrap.innerHTML = '<div class="expired-notice">⏰ Cancellation window has expired</div>';
+                        if (btn) { btn.disabled = true; btn.textContent = cannotCancelBtnText; }
+                        wrap.innerHTML = expiredNoticeHtml;
                         if (progBar) { progBar.style.width = '0%'; progBar.style.background = '#e74c3c'; }
                         return;
                     }
@@ -1208,13 +1225,13 @@
 
         function setDigit(id, val) {
             const el = document.getElementById(id);
-            if (el) el.querySelector('.digit-num').textContent = String(val).padStart(2,'0');
+            if (el) el.querySelector('.digit-num').textContent = toLocalDigits(String(val).padStart(2, '0'));
         }
 
         function toggleTracking(id, btn) {
             const panel = document.getElementById('track-' + id);
             panel.classList.toggle('open');
-            btn.textContent = panel.classList.contains('open') ? '🔼 Hide Details' : '@Html.L("Booking_TrackBtn")';
+            btn.textContent = panel.classList.contains('open') ? hideDetailsText : showDetailsText;
         }
 
 
@@ -1223,8 +1240,7 @@
         function openCancelModal(id, name) {
             pendingCancelId = id;
             document.getElementById('modal-place-text').innerHTML =
-                `Are you sure you want to cancel the booking for <strong style="color:var(--gold-light)">${name}</strong>?<br>
-                 Your refund will be processed within 3-5 business days.`;
+                `${modalConfirmPrefix} <strong style="color:var(--gold-light)">${name}</strong>?<br>${modalRefundNote}`;
             document.getElementById('cancelModal').classList.add('open');
         }
 

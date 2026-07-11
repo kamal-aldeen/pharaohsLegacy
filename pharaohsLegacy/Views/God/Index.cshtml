@@ -63,7 +63,8 @@
     background: rgba(201,162,39,.05);
             border: 1px solid #3d2a15;
     border-radius: 50px;
-    padding: .85rem 1.5rem .85rem 3rem;
+    padding-block: .85rem;
+    padding-inline: 3rem 1.5rem;
     color: #e8d5b0;
     font-family: 'Crimson Pro', serif;
     font-size: 1rem;
@@ -74,7 +75,7 @@
 .gods-search::placeholder { color: #8a7055; }
 .gods-search-icon {
     position: absolute;
-    left: 1.1rem; top: 50%;
+    inset-inline-start: 1.1rem; top: 50%;
     transform: translateY(-50%);
     color: #8a7055;
     font-size: 1rem;
@@ -232,30 +233,39 @@
     </div>
 </div>
 
-<div class="gods-count" id="godsCount">@Model.Count @Html.L("God_Count_Label")</div>
+<div class="gods-count" id="godsCount" data-unit="@Html.L("God_Count_Label")">@Html.Digits(Model.Count) @Html.L("God_Count_Label")</div>
 
 <div class="gods-grid" id="godsGrid">
+    @{
+        var lang = Context.Session.GetString("Lang") ?? "en";
+        var arrowNext = lang == "ar" ? "←" : "→";
+    }
     @foreach (var g in Model)
     {
-        <a href="/God/Details/@g.Id" class="god-card" data-name="@g.Name.ToLower()" data-role="@g.Role.ToLower()">
+        var gName = (lang == "ar" && !string.IsNullOrEmpty(g.NameAr)) ? g.NameAr : g.Name;
+        var gRole = (lang == "ar" && !string.IsNullOrEmpty(g.RoleAr)) ? g.RoleAr : g.Role;
+        var gSymbol = (lang == "ar" && !string.IsNullOrEmpty(g.SymbolAr)) ? g.SymbolAr : g.Symbol;
+        var gSearchName = $"{g.Name} {g.NameAr}".ToLower();
+        var gSearchRole = $"{g.Role} {g.RoleAr}".ToLower();
+        <a href="/God/Details/@g.Id" class="god-card" data-name="@gSearchName" data-role="@gSearchRole">
             <div class="god-card-img">
                 <img src="@(g.ImageUrl.Length > 0 ? g.ImageUrl : "/images/placeholder.jpg")"
-                     alt="@g.Name"
+                     alt="@gName"
                      onerror="this.src='https://via.placeholder.com/400x300/2d1a08/c9a227?text=@g.Name'" />
                 <div class="god-card-overlay"></div>
                 @if (!string.IsNullOrEmpty(g.Symbol))
                 {
-                    <div class="god-card-symbol">@g.Symbol</div>
+                    <div class="god-card-symbol">@gSymbol</div>
                 }
             </div>
             <div class="god-card-body">
                 <span class="god-card-tag">𓂀 @Html.L("Common_EgyptianGod")</span>
-                <div class="god-card-name">@g.Name</div>
-                <div class="god-card-role">@g.Role</div>
+                <div class="god-card-name">@gName</div>
+                <div class="god-card-role">@gRole</div>
             </div>
             <div class="god-card-footer">
-                <span>@Html.L("God_Of_Label") @g.Role.Split(',')[0].Trim()</span>
-                <span class="god-card-arrow">→</span>
+                <span>@Html.L("God_Of_Label") @gRole.Split(',')[0].Trim()</span>
+                <span class="god-card-arrow">@arrowNext</span>
             </div>
         </a>
     }
@@ -268,6 +278,14 @@
 
 @section Scripts {
 <script>
+
+var currentLang = '@lang';
+var arabicDigitsMap = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+function toLocalDigits(input) {
+    var str = String(input);
+    if (currentLang !== 'ar') return str;
+    return str.replace(/[0-9]/g, function (d) { return arabicDigitsMap[+d]; });
+}
 
 const cards = document.querySelectorAll('.god-card');
 const obs = new IntersectionObserver((entries) => {
@@ -289,7 +307,8 @@ function filterGods(q) {
         card.style.display = match ? '' : 'none';
         if (match) visible++;
     });
-    document.getElementById('godsCount').textContent = visible + ' DEITIES';
+    const godsCountEl = document.getElementById('godsCount');
+    godsCountEl.textContent = toLocalDigits(visible) + ' ' + godsCountEl.dataset.unit;
     document.getElementById('godsEmpty').style.display = visible === 0 ? 'block' : 'none';
 }
 </script>

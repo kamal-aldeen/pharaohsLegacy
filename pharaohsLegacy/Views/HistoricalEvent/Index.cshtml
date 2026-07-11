@@ -3,6 +3,9 @@
 @{
     ViewData["Title"] = "Historical Events";
     Layout = "~/Views/Shared/_Layout.cshtml";
+    var lang = Context.Session.GetString("Lang") ?? "en";
+    var arrowNext = lang == "ar" ? "←" : "→";
+    var dynastyNameMap = ViewBag.DynastyNameMap as Dictionary<string, string> ?? new();
 }
 <link rel="stylesheet" href="~/css/events.css" />
 
@@ -16,9 +19,10 @@
         <a href="@Url.Action("Index")" class="filter-btn @(ViewBag.SelectedCategory == "All" ? "active" : "")">𓂀 @Html.L("Event_Filter_All")</a>
         @foreach (var cat in ViewBag.Categories as List<string>)
         {
+            var catDisplay = Html.L("Category_" + cat);
             <a href="@Url.Action("Index", new { category = cat })"
                class="filter-btn cat-@cat.ToLower() @(ViewBag.SelectedCategory == cat ? "active" : "")">
-                @GetIcon(cat) @cat
+                @GetIcon(cat) @catDisplay
             </a>
         }
     </div>
@@ -35,24 +39,30 @@
             {
                 var ev = Model[i];
                 var side = i % 2 == 0 ? "left" : "right";
+                var evTitle = (lang == "ar" && !string.IsNullOrEmpty(ev.TitleAr)) ? ev.TitleAr : ev.Title;
+                var evCategory = (lang == "ar" && !string.IsNullOrEmpty(ev.CategoryAr)) ? ev.CategoryAr : ev.Category;
+                var evDescription = (lang == "ar" && !string.IsNullOrEmpty(ev.DescriptionAr)) ? ev.DescriptionAr : ev.Description;
+                var evDynastyTagDisplay = (!string.IsNullOrEmpty(ev.DynastyTag) && lang == "ar" && dynastyNameMap.TryGetValue(ev.DynastyTag, out var dTagAr))
+                    ? dTagAr
+                    : ev.DynastyTag;
                 <div class="timeline-item @side reveal">
                     <div class="timeline-dot cat-dot-@ev.Category.ToLower()"></div>
                     <div class="timeline-card">
                         @if (!string.IsNullOrEmpty(ev.ImageUrl))
                         {
-                            <img src="@ev.ImageUrl" alt="@ev.Title" class="event-card-img"
+                            <img src="@ev.ImageUrl" alt="@evTitle" class="event-card-img"
                                  onerror="this.style.display='none'" />
                         }
                         <div class="event-card-body">
-                            <div class="event-year-badge">@ev.YearLabel</div>
-                            <span class="cat-badge cat-badge-@ev.Category.ToLower()">@ev.Category</span>
-                            <h3>@ev.Title</h3>
-                            <p>@(ev.Description.Length > 140 ? ev.Description[..140] + "…" : ev.Description)</p>
+                            <div class="event-year-badge">@Html.YearLabel(ev.Year)</div>
+                            <span class="cat-badge cat-badge-@ev.Category.ToLower()">@evCategory</span>
+                            <h3>@evTitle</h3>
+                            <p>@(evDescription.Length > 140 ? evDescription[..140] + "…" : evDescription)</p>
                             @if (!string.IsNullOrEmpty(ev.DynastyTag))
                             {
-                                <div class="event-dynasty-tag">𓂀 @ev.DynastyTag</div>
+                                <div class="event-dynasty-tag">𓂀 @evDynastyTagDisplay</div>
                             }
-                            <a href="@Url.Action("Details", new { id = ev.Id })" class="event-details-btn">@Html.L("Event_Explore_Link") →</a>
+                            <a href="@Url.Action("Details", new { id = ev.Id })" class="event-details-btn">@Html.L("Event_Explore_Link") @arrowNext</a>
                         </div>
                     </div>
                 </div>

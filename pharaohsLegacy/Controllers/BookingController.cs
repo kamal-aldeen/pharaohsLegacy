@@ -20,17 +20,23 @@ namespace pharaohsLegacy.Controllers
                 .OrderByDescending(b => b.CreatedAt)
                 .ToListAsync();
 
+            var lang = HttpContext.Session.GetString("Lang") ?? "en";
+
             foreach (var b in bookings)
             {
                 if (b.PlaceType == "Temple")
                 {
                     var temple = await _db.Temples.FindAsync(b.PlaceId);
-                    b.PlaceName = temple?.Name ?? "معبد غير معروف";
+                    b.PlaceName = (lang == "ar" && !string.IsNullOrEmpty(temple?.NameAr))
+                        ? temple.NameAr
+                        : (temple?.Name ?? "معبد غير معروف");
                 }
                 else if (b.PlaceType == "Museum")
                 {
                     var museum = await _db.Museums.FindAsync(b.PlaceId);
-                    b.PlaceName = museum?.Name ?? "متحف غير معروف";
+                    b.PlaceName = (lang == "ar" && !string.IsNullOrEmpty(museum?.NameAr))
+                        ? museum.NameAr
+                        : (museum?.Name ?? "متحف غير معروف");
                 }
             }
 
@@ -79,17 +85,18 @@ namespace pharaohsLegacy.Controllers
 
             string? placeName = null;
             string? placeImage = null;
+            var lang = HttpContext.Session.GetString("Lang") ?? "en";
 
             if (placeType == "Temple")
             {
                 var temple = await _db.Temples.FindAsync(placeId);
-                placeName = temple?.Name;
+                placeName = (lang == "ar" && !string.IsNullOrEmpty(temple?.NameAr)) ? temple.NameAr : temple?.Name;
                 placeImage = temple?.ImageUrl;
             }
             else if (placeType == "Museum")
             {
                 var museum = await _db.Museums.FindAsync(placeId);
-                placeName = museum?.Name;
+                placeName = (lang == "ar" && !string.IsNullOrEmpty(museum?.NameAr)) ? museum.NameAr : museum?.Name;
                 placeImage = museum?.ImageUrl;
             }
 

@@ -8,6 +8,7 @@
     var museums = ViewBag.Museums as List<pharaohsLegacy.Models.Museum>;
     var artifacts = ViewBag.Artifacts as List<pharaohsLegacy.Models.Artifact>;
     var dynasties = ViewBag.Dynasties as List<pharaohsLegacy.Models.Dynasty>;
+    var lang = Context.Session.GetString("Lang") ?? "en";
 }
 
 <div class="section">
@@ -23,11 +24,13 @@
         <div class="cards-grid">
             @foreach (var p in pharaohs)
             {
+                var pName = (lang == "ar" && !string.IsNullOrEmpty(p.NameAr)) ? p.NameAr : p.Name;
+                var pDynasty = (lang == "ar" && !string.IsNullOrEmpty(p.DynastyAr)) ? p.DynastyAr : p.Dynasty;
                 <a href="/Pharaoh/Details/@p.Id" class="card">
-                    <div class="card-img"><img src="@p.ImageUrl" alt="@p.Name" /></div>
+                    <div class="card-img"><img src="@p.ImageUrl" alt="@pName" /></div>
                     <div class="card-body">
-                        <span class="card-tag">@p.Dynasty</span>
-                        <h3 class="card-title">@p.Name</h3>
+                        <span class="card-tag">@pDynasty</span>
+                        <h3 class="card-title">@pName</h3>
                     </div>
                 </a>
             }
@@ -40,11 +43,13 @@
         <div class="cards-grid">
             @foreach (var t in temples)
             {
+                var tName = (lang == "ar" && !string.IsNullOrEmpty(t.NameAr)) ? t.NameAr : t.Name;
+                var tLocation = (lang == "ar" && !string.IsNullOrEmpty(t.LocationAr)) ? t.LocationAr : t.Location;
                 <a href="/Temple/Details/@t.Id" class="card">
-                    <div class="card-img"><img src="@t.ImageUrl" alt="@t.Name" /></div>
+                    <div class="card-img"><img src="@t.ImageUrl" alt="@tName" /></div>
                     <div class="card-body">
-                        <span class="card-tag">@t.Location</span>
-                        <h3 class="card-title">@t.Name</h3>
+                        <span class="card-tag">@tLocation</span>
+                        <h3 class="card-title">@tName</h3>
                     </div>
                 </a>
             }
@@ -57,11 +62,13 @@
         <div class="cards-grid">
             @foreach (var g in gods)
             {
+                var gName = (lang == "ar" && !string.IsNullOrEmpty(g.NameAr)) ? g.NameAr : g.Name;
+                var gRole = (lang == "ar" && !string.IsNullOrEmpty(g.RoleAr)) ? g.RoleAr : g.Role;
                 <a href="/God/Details/@g.Id" class="card">
-                    <div class="card-img"><img src="@g.ImageUrl" alt="@g.Name" /></div>
+                    <div class="card-img"><img src="@g.ImageUrl" alt="@gName" /></div>
                     <div class="card-body">
-                        <span class="card-tag">@g.Role</span>
-                        <h3 class="card-title">@g.Name</h3>
+                        <span class="card-tag">@gRole</span>
+                        <h3 class="card-title">@gName</h3>
                     </div>
                 </a>
             }
@@ -74,11 +81,13 @@
         <div class="cards-grid">
             @foreach (var m in museums)
             {
+                var mName = (lang == "ar" && !string.IsNullOrEmpty(m.NameAr)) ? m.NameAr : m.Name;
+                var mLocation = (lang == "ar" && !string.IsNullOrEmpty(m.LocationAr)) ? m.LocationAr : m.Location;
                 <a href="/Museum/Details/@m.Id" class="card">
-                    <div class="card-img"><img src="@m.ImageUrl" alt="@m.Name" /></div>
+                    <div class="card-img"><img src="@m.ImageUrl" alt="@mName" /></div>
                     <div class="card-body">
-                        <span class="card-tag">@m.Location</span>
-                        <h3 class="card-title">@m.Name</h3>
+                        <span class="card-tag">@mLocation</span>
+                        <h3 class="card-title">@mName</h3>
                     </div>
                 </a>
             }
@@ -91,11 +100,13 @@
         <div class="cards-grid">
             @foreach (var a in artifacts)
             {
+                var aName = (lang == "ar" && !string.IsNullOrEmpty(a.NameAr)) ? a.NameAr : a.Name;
+                var aCategory = (lang == "ar" && !string.IsNullOrEmpty(a.CategoryAr)) ? a.CategoryAr : a.Category;
                 <a href="/Artifact/Details/@a.Id" class="card">
-                    <div class="card-img"><img src="@a.ImageUrl" alt="@a.Name" /></div>
+                    <div class="card-img"><img src="@a.ImageUrl" alt="@aName" /></div>
                     <div class="card-body">
-                        <span class="card-tag">@a.Category</span>
-                        <h3 class="card-title">@a.Name</h3>
+                        <span class="card-tag">@aCategory</span>
+                        <h3 class="card-title">@aName</h3>
                     </div>
                 </a>
             }
@@ -108,13 +119,12 @@
         <div class="cards-grid">
             @foreach (var d in dynasties)
             {
-                string startY = d.StartYear < 0 ? $"{Math.Abs(d.StartYear)} BC" : $"{d.StartYear} AD";
-                string endY = d.EndYear < 0 ? $"{Math.Abs(d.EndYear)} BC" : $"{d.EndYear} AD";
+                var dName = (lang == "ar" && !string.IsNullOrEmpty(d.NameAr)) ? d.NameAr : d.Name;
                 <a href="/Dynasty/Details/@d.Id" class="card">
-                    <div class="card-img"><img src="@d.ImageUrl" alt="@d.Name" /></div>
+                    <div class="card-img"><img src="@d.ImageUrl" alt="@dName" /></div>
                     <div class="card-body">
-                        <span class="card-tag">@startY – @endY</span>
-                        <h3 class="card-title">@d.Name</h3>
+                        <span class="card-tag">@Html.YearLabel(d.StartYear) – @Html.YearLabel(d.EndYear)</span>
+                        <h3 class="card-title">@dName</h3>
                     </div>
                 </a>
             }

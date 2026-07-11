@@ -102,42 +102,25 @@
         .nav-logout:hover { border-color: #e74c3c; color: #e74c3c; }
 
         .lang-switch {
-            position: relative;
-            display: inline-grid;
-            grid-template-columns: 1fr 1fr;
-            background: rgba(201,162,39,.06);
-            border: 1px solid #3d2a15;
-            border-radius: 20px;
-            padding: 3px;
+            display: flex; align-items: center; gap: .4rem;
+            font-family: 'Cinzel', serif; font-size: .65rem;
+            letter-spacing: 2px; text-transform: uppercase;
+            color: #c9a227; background: transparent;
+            border: 1px solid #c9a227; border-radius: 20px;
+            padding: .45rem 1.1rem; cursor: pointer;
+            transition: all .3s ease;
         }
-        .lang-switch-indicator {
-            position: absolute;
-            top: 3px; bottom: 3px;
-            width: calc(50% - 3px);
-            border-radius: 16px;
-            background: linear-gradient(135deg, #c9a227, #a07a1a);
-            box-shadow: 0 2px 10px rgba(201,162,39,.35);
-            transition: inset-inline-start .35s cubic-bezier(.4,0,.2,1);
-            z-index: 0;
+        .lang-switch:hover {
+            background: linear-gradient(135deg, #c9a227, #7a5e10);
+            color: #0d0702;
+            box-shadow: 0 0 14px rgba(201,162,39,.45);
+            transform: translateY(-1px);
         }
-        .lang-switch form { display: contents; }
-        .lang-switch-btn {
-            position: relative;
-            z-index: 1;
-            background: transparent;
-            border: none;
-            font-family: 'Cinzel', serif;
-            font-size: .62rem;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            color: #8a7055;
-            cursor: pointer;
-            padding: .42rem .95rem;
-            border-radius: 16px;
-            transition: color .3s ease;
+        .lang-switch .lang-icon {
+            font-size: .8rem;
+            transition: transform .4s ease;
         }
-        .lang-switch-btn.active { color: #0d0702; font-weight: 600; }
-        .lang-switch-btn:not(.active):hover { color: #c9a227; }
+        .lang-switch:hover .lang-icon { transform: rotate(180deg); }
 
        
         .nav-toggle {
@@ -521,17 +504,13 @@
                 <button type="submit">🔍</button>
             </form>
 
-            <div class="lang-switch">
-                <span class="lang-switch-indicator" style="inset-inline-start: @(currentLang == "en" ? "3px" : "calc(50% + 0px)");"></span>
-                <form asp-controller="Language" asp-action="SetLanguage" method="get">
-                    <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
-                    <button type="submit" name="lang" value="en" class="lang-switch-btn @(currentLang == "en" ? "active" : "")">EN</button>
-                </form>
-                <form asp-controller="Language" asp-action="SetLanguage" method="get">
-                    <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
-                    <button type="submit" name="lang" value="ar" class="lang-switch-btn @(currentLang == "ar" ? "active" : "")">AR</button>
-                </form>
-            </div>
+            <form asp-controller="Language" asp-action="SetLanguage" method="get" style="display:inline;">
+                <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                <button type="submit" name="lang" value="@(currentLang == "ar" ? "en" : "ar")" class="lang-switch">
+                    <span class="lang-icon">🌐</span>
+                    <span>@(currentLang == "ar" ? "EN" : "AR")</span>
+                </button>
+            </form>
 
             @if (Context.Session.GetString("UserEmail") != null &&
                  Context.Session.GetString("UserEmail") != "guest")

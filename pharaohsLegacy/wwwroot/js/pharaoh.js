@@ -102,12 +102,28 @@
     
     var stats = document.querySelectorAll('.stat-num');
     if (stats.length > 0) {
+        var isArabicPage = document.documentElement.lang === 'ar';
+        var arabicToEnglishMap = { '٠': '0', '١': '1', '٢': '2', '٣': '3', '٤': '4', '٥': '5', '٦': '6', '٧': '7', '٨': '8', '٩': '9' };
+        var englishDigitsMap = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+
+        function normalizeDigits(str) {
+            // بيحول أي رقم عربي-هندي (٠-٩) موجود في النص لرقم إنجليزي عادي، عشان الـ parseInt يقدر يقرأه صح
+            return str.replace(/[٠-٩]/g, function (d) { return arabicToEnglishMap[d]; });
+        }
+
+        function toLocalDigits(str) {
+            if (!isArabicPage) return str;
+            return str.replace(/[0-9]/g, function (d) { return englishDigitsMap[+d]; });
+        }
+
         var statsObserver = new IntersectionObserver(function (entries) {
             entries.forEach(function (entry) {
                 if (entry.isIntersecting) {
                     var el = entry.target;
-                    var target = parseInt(el.textContent.replace(/\D/g, ''));
-                    var suffix = el.textContent.replace(/[0-9]/g, '');
+                    var normalized = normalizeDigits(el.textContent).replace(/,/g, '');
+                    var match = normalized.match(/^(\d+)(.*)$/);
+                    var target = match ? parseInt(match[1]) : 0;
+                    var suffix = match ? match[2] : '';
                     var current = 0;
                     var step = Math.ceil(target / 50);
                     var timer = setInterval(function () {
@@ -116,7 +132,7 @@
                             current = target;
                             clearInterval(timer);
                         }
-                        el.textContent = current + suffix;
+                        el.textContent = toLocalDigits(current.toLocaleString('en-US') + suffix);
                     }, 30);
                     statsObserver.unobserve(el);
                 }

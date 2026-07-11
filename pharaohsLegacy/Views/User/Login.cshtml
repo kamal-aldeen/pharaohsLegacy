@@ -3,9 +3,11 @@
 @{
     ViewData["Title"] = "Welcome";
     Layout = null;
+    var lang = Context.Session.GetString("Lang") ?? "en";
+    var dir = lang == "ar" ? "rtl" : "ltr";
 }
 <!DOCTYPE html>
-<html lang="en">
+<html lang="@lang" dir="@dir">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -307,23 +309,24 @@
     </div>
 
 <script>
-    const loginI18n = {
-        veryWeak: '@Html.Raw(Html.L("Login_Strength_VeryWeak"))',
-        weak: '@Html.Raw(Html.L("Login_Strength_Weak"))',
-        fair: '@Html.Raw(Html.L("Login_Strength_Fair"))',
-        strong: '@Html.Raw(Html.L("Login_Strength_Strong"))',
-        veryStrong: '@Html.Raw(Html.L("Login_Strength_VeryStrong"))',
-        emailRequired: '@Html.Raw(Html.L("Login_Val_EmailRequired"))',
-        emailInvalid: '@Html.Raw(Html.L("Login_Val_EmailInvalid"))',
-        passwordRequired: '@Html.Raw(Html.L("Login_Val_PasswordRequired"))',
-        nameRequired: '@Html.Raw(Html.L("Login_Val_NameRequired"))',
-        nameMinLength: '@Html.Raw(Html.L("Login_Val_NameMinLength"))',
-        looksGood: '@Html.Raw(Html.L("Login_Val_LooksGood"))',
-        validEmail: '@Html.Raw(Html.L("Login_Val_ValidEmail"))',
-        passwordMinLength: '@Html.Raw(Html.L("Login_Val_PasswordMinLength"))',
-        passwordsMatch: '@Html.Raw(Html.L("Login_Val_PasswordsMatch"))',
-        passwordsNoMatch: '@Html.Raw(Html.L("Login_Val_PasswordsNoMatch"))'
-    };
+    const loginI18n = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new
+    {
+        veryWeak = Html.L("Login_Strength_VeryWeak"),
+        weak = Html.L("Login_Strength_Weak"),
+        fair = Html.L("Login_Strength_Fair"),
+        strong = Html.L("Login_Strength_Strong"),
+        veryStrong = Html.L("Login_Strength_VeryStrong"),
+        emailRequired = Html.L("Login_Val_EmailRequired"),
+        emailInvalid = Html.L("Login_Val_EmailInvalid"),
+        passwordRequired = Html.L("Login_Val_PasswordRequired"),
+        nameRequired = Html.L("Login_Val_NameRequired"),
+        nameMinLength = Html.L("Login_Val_NameMinLength"),
+        looksGood = Html.L("Login_Val_LooksGood"),
+        validEmail = Html.L("Login_Val_ValidEmail"),
+        passwordMinLength = Html.L("Login_Val_PasswordMinLength"),
+        passwordsMatch = Html.L("Login_Val_PasswordsMatch"),
+        passwordsNoMatch = Html.L("Login_Val_PasswordsNoMatch")
+    }));
 
     function switchTab(id, el) {
         document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });

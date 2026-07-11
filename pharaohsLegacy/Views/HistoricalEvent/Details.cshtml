@@ -1,11 +1,18 @@
 ﻿@using pharaohsLegacy.Extensions
 @model pharaohsLegacy.Models.HistoricalEvent
 @{
-    ViewData["Title"] = Model.Title;
     Layout = "~/Views/Shared/_Layout.cshtml";
     var dynasty = ViewBag.Dynasty as pharaohsLegacy.Models.Dynasty;
     var pharaoh = ViewBag.Pharaoh as pharaohsLegacy.Models.Pharaoh;
     var related = ViewBag.RelatedEvents as List<pharaohsLegacy.Models.HistoricalEvent> ?? new();
+    var lang = Context.Session.GetString("Lang") ?? "en";
+    var arrowBack = lang == "ar" ? "→" : "←";
+    var arrowNext = lang == "ar" ? "←" : "→";
+    var evTitle = (lang == "ar" && !string.IsNullOrEmpty(Model.TitleAr)) ? Model.TitleAr : Model.Title;
+    var evCategory = (lang == "ar" && !string.IsNullOrEmpty(Model.CategoryAr)) ? Model.CategoryAr : Model.Category;
+    var evDescription = (lang == "ar" && !string.IsNullOrEmpty(Model.DescriptionAr)) ? Model.DescriptionAr : Model.Description;
+    var dynastyTagDisplay = (lang == "ar" && dynasty != null && !string.IsNullOrEmpty(dynasty.NameAr)) ? dynasty.NameAr : Model.DynastyTag;
+    ViewData["Title"] = evTitle;
 }
 <link rel="stylesheet" href="~/css/events.css" />
 
@@ -13,12 +20,12 @@
     <div class="event-details-hero" style="background-image:url('@Model.ImageUrl')">
         <div class="event-hero-overlay">
             <div class="event-hero-content">
-                <div class="event-year-badge large">@Model.YearLabel</div>
-                <span class="cat-badge cat-badge-@Model.Category.ToLower()">@Model.Category</span>
-                <h1>@Model.Title</h1>
+                <div class="event-year-badge large">@Html.YearLabel(Model.Year)</div>
+                <span class="cat-badge cat-badge-@Model.Category.ToLower()">@evCategory</span>
+                <h1>@evTitle</h1>
                 @if (!string.IsNullOrEmpty(Model.DynastyTag))
                 {
-                    <div class="event-dynasty-tag">𓂀 @Model.DynastyTag</div>
+                    <div class="event-dynasty-tag">𓂀 @dynastyTagDisplay</div>
                 }
             </div>
         </div>
@@ -28,7 +35,7 @@
 
         <div class="event-desc-card">
             <h2>@Html.L("Event_AboutThisEvent")</h2>
-            <p>@Model.Description</p>
+            <p>@evDescription</p>
         </div>
 
         @if (dynasty != null || pharaoh != null)
@@ -36,25 +43,29 @@
             <div class="event-relations-grid">
                 @if (dynasty != null)
                 {
+                    var relDynastyName = (lang == "ar" && !string.IsNullOrEmpty(dynasty.NameAr)) ? dynasty.NameAr : dynasty.Name;
+                    var relDynastyEra = (lang == "ar" && !string.IsNullOrEmpty(dynasty.EraAr)) ? dynasty.EraAr : dynasty.Era;
                     <div class="relation-card">
-                        <img src="@dynasty.ImageUrl" alt="@dynasty.Name" onerror="this.src=''" />
+                        <img src="@dynasty.ImageUrl" alt="@relDynastyName" onerror="this.src=''" />
                         <div class="relation-body">
                             <span class="relation-label">@Html.L("Common_Dynasty")</span>
-                            <h3>@dynasty.Name</h3>
-                            <p>@dynasty.Era</p>
-                            <a href="@Url.Action("Details", "Dynasty", new { id = dynasty.Id })">@Html.L("Event_ViewDynasty_Link") →</a>
+                            <h3>@relDynastyName</h3>
+                            <p>@relDynastyEra</p>
+                            <a href="@Url.Action("Details", "Dynasty", new { id = dynasty.Id })">@Html.L("Event_ViewDynasty_Link") @arrowNext</a>
                         </div>
                     </div>
                 }
                 @if (pharaoh != null)
                 {
+                    var relPharaohName = (lang == "ar" && !string.IsNullOrEmpty(pharaoh.NameAr)) ? pharaoh.NameAr : pharaoh.Name;
+                    var relPharaohDynasty = (lang == "ar" && !string.IsNullOrEmpty(pharaoh.DynastyAr)) ? pharaoh.DynastyAr : pharaoh.Dynasty;
                     <div class="relation-card">
-                        <img src="@pharaoh.ImageUrl" alt="@pharaoh.Name" onerror="this.src=''" />
+                        <img src="@pharaoh.ImageUrl" alt="@relPharaohName" onerror="this.src=''" />
                         <div class="relation-body">
                             <span class="relation-label">@Html.L("Common_Pharaoh")</span>
-                            <h3>@pharaoh.Name</h3>
-                            <p>@pharaoh.Dynasty</p>
-                            <a href="@Url.Action("Details", "Pharaoh", new { id = pharaoh.Id })">@Html.L("Event_ViewPharaoh_Link") →</a>
+                            <h3>@relPharaohName</h3>
+                            <p>@relPharaohDynasty</p>
+                            <a href="@Url.Action("Details", "Pharaoh", new { id = pharaoh.Id })">@Html.L("Event_ViewPharaoh_Link") @arrowNext</a>
                         </div>
                     </div>
                 }
@@ -64,21 +75,23 @@
         @if (related.Any())
         {
             <div class="related-events-section">
-                <h2>@Html.L("Event_OtherEventsIn_Prefix") @Model.DynastyTag</h2>
+                <h2>@Html.L("Event_OtherEventsIn_Prefix") @dynastyTagDisplay</h2>
                 <div class="related-grid">
                     @foreach (var re in related)
                     {
+                        var reTitle = (lang == "ar" && !string.IsNullOrEmpty(re.TitleAr)) ? re.TitleAr : re.Title;
+                        var reCategory = (lang == "ar" && !string.IsNullOrEmpty(re.CategoryAr)) ? re.CategoryAr : re.Category;
                         <a href="@Url.Action("Details", new { id = re.Id })" class="related-event-card">
-                            <div class="related-year">@re.YearLabel</div>
-                            <span class="cat-badge cat-badge-@re.Category.ToLower()">@re.Category</span>
-                            <h4>@re.Title</h4>
+                            <div class="related-year">@Html.YearLabel(re.Year)</div>
+                            <span class="cat-badge cat-badge-@re.Category.ToLower()">@reCategory</span>
+                            <h4>@reTitle</h4>
                         </a>
                     }
                 </div>
             </div>
         }
 
-        <a href="@Url.Action("Index")" class="back-btn">← @Html.L("Event_Back_Link")</a>
+        <a href="@Url.Action("Index")" class="back-btn">@arrowBack @Html.L("Event_Back_Link")</a>
     </div>
 </div>
 <script src="~/js/events.js"></script>

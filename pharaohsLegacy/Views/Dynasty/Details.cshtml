@@ -2,15 +2,24 @@
 @using pharaohsLegacy.Extensions
 
 @{
-    ViewData["Title"] = Model.Name;
     var pharaohs = ViewBag.Pharaohs as List<pharaohsLegacy.Models.Pharaoh> ?? new();
     var artifacts = ViewBag.Artifacts as List<pharaohsLegacy.Models.Artifact> ?? new();
     var prev = ViewBag.PrevDynasty as pharaohsLegacy.Models.Dynasty;
     var next = ViewBag.NextDynasty as pharaohsLegacy.Models.Dynasty;
     var dynastyEvents = ViewBag.HistoricalEvents as List<pharaohsLegacy.Models.HistoricalEvent> ?? new();
 
-    string FormatYear(int y) => y < 0 ? $"{Math.Abs(y)} BC" : $"{y} AD";
     int duration = Math.Abs(Model.EndYear - Model.StartYear);
+    var lang = Context.Session.GetString("Lang") ?? "en";
+    var arrowBack = lang == "ar" ? "→" : "←";
+    var arrowNext = lang == "ar" ? "←" : "→";
+    var dName = (lang == "ar" && !string.IsNullOrEmpty(Model.NameAr)) ? Model.NameAr : Model.Name;
+    var dEra = (lang == "ar" && !string.IsNullOrEmpty(Model.EraAr)) ? Model.EraAr : Model.Era;
+    var dCapital = (lang == "ar" && !string.IsNullOrEmpty(Model.CapitalCityAr)) ? Model.CapitalCityAr : Model.CapitalCity;
+    var dDescription = (lang == "ar" && !string.IsNullOrEmpty(Model.DescriptionAr)) ? Model.DescriptionAr : Model.Description;
+    var dAchievements = (lang == "ar" && !string.IsNullOrEmpty(Model.AchievementsAr)) ? Model.AchievementsAr : Model.Achievements;
+    var prevName = prev == null ? null : ((lang == "ar" && !string.IsNullOrEmpty(prev.NameAr)) ? prev.NameAr : prev.Name);
+    var nextName = next == null ? null : ((lang == "ar" && !string.IsNullOrEmpty(next.NameAr)) ? next.NameAr : next.Name);
+    ViewData["Title"] = dName;
 }
 
 <link rel="stylesheet" href="~/css/dynasty.css" />
@@ -40,8 +49,9 @@
         gap: 14px !important;
         background: #111 !important;
         border: 0.5px solid #2a2a2a !important;
-        border-left: 3px solid #8b6914 !important;
-        border-radius: 0 8px 8px 0 !important;
+        border-inline-start: 3px solid #8b6914 !important;
+        border-start-end-radius: 8px !important;
+        border-end-end-radius: 8px !important;
         padding: 10px 16px !important;
         text-decoration: none !important;
         transition: background 0.3s;
@@ -52,23 +62,23 @@
         }
 
         .dynasty-event-item.cat-political {
-            border-left-color: #8b2020 !important;
+            border-inline-start-color: #8b2020 !important;
         }
 
         .dynasty-event-item.cat-military {
-            border-left-color: #2d5a27 !important;
+            border-inline-start-color: #2d5a27 !important;
         }
 
         .dynasty-event-item.cat-religious {
-            border-left-color: #6b3d8b !important;
+            border-inline-start-color: #6b3d8b !important;
         }
 
         .dynasty-event-item.cat-cultural {
-            border-left-color: #2d5a7a !important;
+            border-inline-start-color: #2d5a7a !important;
         }
 
         .dynasty-event-item.cat-scientific {
-            border-left-color: #7a5a2d !important;
+            border-inline-start-color: #7a5a2d !important;
         }
 
     .dynasty-event-year {
@@ -125,13 +135,13 @@
     <div class="dyn-det-hero" style="background-image:url('@(string.IsNullOrEmpty(Model.ImageUrl) ? "/images/dynasty-placeholder.jpg" : Model.ImageUrl)')">
         <div class="dyn-det-hero-overlay"></div>
         <div class="dyn-det-hero-content">
-            <a asp-controller="Dynasty" asp-action="Index" class="dyn-back-btn">← @Html.L("Dyn_AllDynasties_Link")</a>
-            <span class="dyn-det-era-badge">@Model.Era</span>
-            <h1>@Model.Name</h1>
+            <a asp-controller="Dynasty" asp-action="Index" class="dyn-back-btn">@arrowBack @Html.L("Dyn_AllDynasties_Link")</a>
+            <span class="dyn-det-era-badge">@dEra</span>
+            <h1>@dName</h1>
             <div class="dyn-det-hero-meta">
-                <span>📅 @FormatYear(Model.StartYear) – @FormatYear(Model.EndYear)</span>
-                <span>⏱ @duration @Html.L("Common_Years")</span>
-                <span>🏛️ @Model.CapitalCity</span>
+                <span>📅 @Html.YearLabel(Model.StartYear) – @Html.YearLabel(Model.EndYear)</span>
+                <span>⏱ @Html.Digits(duration) @Html.L("Common_Years")</span>
+                <span>🏛️ @dCapital</span>
             </div>
         </div>
     </div>
@@ -144,19 +154,19 @@
             <!-- Description -->
             <div class="dyn-det-card dyn-det-wide">
                 <h3>📜 @Html.L("Dyn_AboutThisDynasty")</h3>
-                <p>@Model.Description</p>
+                <p>@dDescription</p>
             </div>
 
             <!-- Key Facts -->
             <div class="dyn-det-card">
                 <h3>🔑 @Html.L("Common_KeyFacts")</h3>
                 <ul class="dyn-facts-list">
-                    <li><span>@Html.L("Common_Period")</span><strong>@Model.Era</strong></li>
-                    <li><span>@Html.L("Dyn_Facts_Start")</span><strong>@FormatYear(Model.StartYear)</strong></li>
-                    <li><span>@Html.L("Dyn_Facts_End")</span><strong>@FormatYear(Model.EndYear)</strong></li>
-                    <li><span>@Html.L("Common_Duration")</span><strong>~@duration @Html.L("Common_Years")</strong></li>
-                    <li><span>@Html.L("Common_Capital")</span><strong>@Model.CapitalCity</strong></li>
-                    <li><span>@Html.L("Common_Pharaohs")</span><strong>@pharaohs.Count @Html.L("Dyn_Facts_Known")</strong></li>
+                    <li><span>@Html.L("Common_Period")</span><strong>@dEra</strong></li>
+                    <li><span>@Html.L("Dyn_Facts_Start")</span><strong>@Html.YearLabel(Model.StartYear)</strong></li>
+                    <li><span>@Html.L("Dyn_Facts_End")</span><strong>@Html.YearLabel(Model.EndYear)</strong></li>
+                    <li><span>@Html.L("Common_Duration")</span><strong>~@Html.Digits(duration) @Html.L("Common_Years")</strong></li>
+                    <li><span>@Html.L("Common_Capital")</span><strong>@dCapital</strong></li>
+                    <li><span>@Html.L("Common_Pharaohs")</span><strong>@Html.Digits(pharaohs.Count) @Html.L("Dyn_Facts_Known")</strong></li>
                 </ul>
             </div>
 
@@ -165,24 +175,26 @@
             {
                 <div class="dyn-det-card">
                     <h3>🏆 @Html.L("Dyn_Achievements_Title")</h3>
-                    <p>@Model.Achievements</p>
+                    <p>@dAchievements</p>
                 </div>
             }
         </div>
 
         <!-- PHARAOHS -->
         <section class="dyn-related-section">
-            <h2 class="section-title">👑 @Html.L("Dyn_PharaohsOf_Title") <span class="gold">@Model.Name</span></h2>
+            <h2 class="section-title">👑 @Html.L("Dyn_PharaohsOf_Title") <span class="gold">@dName</span></h2>
             @if (pharaohs.Any())
             {
                 <div class="dyn-related-grid">
                     @foreach (var p in pharaohs)
                     {
+                        var pName = (lang == "ar" && !string.IsNullOrEmpty(p.NameAr)) ? p.NameAr : p.Name;
+                        var pPeriod = (lang == "ar" && !string.IsNullOrEmpty(p.PeriodAr)) ? p.PeriodAr : p.Period;
                         <a href="/Pharaoh/Details/@p.Id" class="dyn-related-card">
-                            <img src="@p.ImageUrl" alt="@p.Name" onerror="this.src='/images/pharaoh-placeholder.jpg'" />
+                            <img src="@p.ImageUrl" alt="@pName" onerror="this.src='/images/pharaoh-placeholder.jpg'" />
                             <div class="dyn-related-info">
-                                <h4>@p.Name</h4>
-                                <p>@p.Period</p>
+                                <h4>@pName</h4>
+                                <p>@pPeriod</p>
                             </div>
                         </a>
                     }
@@ -205,11 +217,13 @@
                 <div class="dyn-related-grid">
                     @foreach (var a in artifacts)
                     {
+                        var aName = (lang == "ar" && !string.IsNullOrEmpty(a.NameAr)) ? a.NameAr : a.Name;
+                        var aCategory = (lang == "ar" && !string.IsNullOrEmpty(a.CategoryAr)) ? a.CategoryAr : a.Category;
                         <a href="/Artifact/Details/@a.Id" class="dyn-related-card">
-                            <img src="@a.ImageUrl" alt="@a.Name" onerror="this.src='/images/artifact-placeholder.jpg'" />
+                            <img src="@a.ImageUrl" alt="@aName" onerror="this.src='/images/artifact-placeholder.jpg'" />
                             <div class="dyn-related-info">
-                                <h4>@a.Name</h4>
-                                <p>@a.Category</p>
+                                <h4>@aName</h4>
+                                <p>@aCategory</p>
                             </div>
                         </a>
                     }
@@ -225,12 +239,14 @@
                 <div class="dynasty-events-list">
                     @foreach (var ev in dynastyEvents)
                     {
+                        var evTitle = (lang == "ar" && !string.IsNullOrEmpty(ev.TitleAr)) ? ev.TitleAr : ev.Title;
+                        var evCategory = (lang == "ar" && !string.IsNullOrEmpty(ev.CategoryAr)) ? ev.CategoryAr : ev.Category;
                         <a href="@Url.Action("Details", "HistoricalEvent", new { id = ev.Id })"
                            class="dynasty-event-item cat-@ev.Category.ToLower()">
-                            <span class="dynasty-event-year">@ev.YearLabel</span>
-                            <span class="dynasty-event-badge cat-@ev.Category.ToLower()">@ev.Category</span>
-                            <span class="dynasty-event-title">@ev.Title</span>
-                            <span class="dynasty-event-arrow">→</span>
+                            <span class="dynasty-event-year">@Html.YearLabel(ev.Year)</span>
+                            <span class="dynasty-event-badge cat-@ev.Category.ToLower()">@evCategory</span>
+                            <span class="dynasty-event-title">@evTitle</span>
+                            <span class="dynasty-event-arrow">@arrowNext</span>
                         </a>
                     }
                 </div>
@@ -242,8 +258,8 @@
             @if (prev != null)
             {
                 <a href="/Dynasty/Details/@prev.Id" class="dyn-nav-btn dyn-nav-prev">
-                    <span>← @Html.L("Common_Previous")</span>
-                    <strong>@prev.Name</strong>
+                    <span>@arrowBack @Html.L("Common_Previous")</span>
+                    <strong>@prevName</strong>
                 </a>
             }
             else
@@ -253,8 +269,8 @@
             @if (next != null)
             {
                 <a href="/Dynasty/Details/@next.Id" class="dyn-nav-btn dyn-nav-next">
-                    <span>@Html.L("Common_Next") →</span>
-                    <strong>@next.Name</strong>
+                    <span>@Html.L("Common_Next") @arrowNext</span>
+                    <strong>@nextName</strong>
                 </a>
             }
         </div>

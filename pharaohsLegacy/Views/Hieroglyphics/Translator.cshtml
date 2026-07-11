@@ -1,7 +1,8 @@
-@using pharaohsLegacy.Extensions
+﻿@using pharaohsLegacy.Extensions
 
 @{
     ViewData["Title"] = "Hieroglyphics Translator";
+    var lang = Context.Session.GetString("Lang") ?? "en";
 }
 
 <style>
@@ -105,7 +106,7 @@
     }
 
     .char-count {
-        text-align: right;
+        text-align: end;
         font-size: 0.72rem;
         color: var(--gold-dim);
         margin-bottom: 20px;
@@ -376,7 +377,7 @@
                    autocomplete="off"
                    oninput="onInput(this)" />
         </div>
-        <div class="char-count"><span id="charCount">0</span> / 20</div>
+        <div class="char-count"><span id="charCount">@Html.Digits(0)</span> / @Html.Digits(20)</div>
 
         <div class="output-box" id="hieroglyphOutput">
             <span class="output-placeholder">𓂀 @Html.L("Hiero_Output_Placeholder") 𓂀</span>
@@ -415,11 +416,22 @@
 @section Scripts {
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
-    const hieroI18n = {
-        nothingToCopy: '@Html.Raw(Html.L("Hiero_Toast_NothingToCopy"))',
-        copied: '@Html.Raw(Html.L("Hiero_Toast_Copied"))',
-        typeSomething: '@Html.Raw(Html.L("Hiero_Toast_TypeSomething"))'
-    };
+    const currentLang = '@lang';
+    const arabicDigitsMap = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+    function toLocalDigits(input) {
+        const str = String(input);
+        if (currentLang !== 'ar') return str;
+        return str.replace(/[0-9]/g, (d) => arabicDigitsMap[+d]);
+    }
+
+    const hieroI18n = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new
+    {
+        nothingToCopy = Html.L("Hiero_Toast_NothingToCopy"),
+        copied = Html.L("Hiero_Toast_Copied"),
+        typeSomething = Html.L("Hiero_Toast_TypeSomething"),
+        placeholder = Html.L("Hiero_Output_Placeholder"),
+        clickToType = Html.L("Hiero_ClickToType")
+    }));
     const hieroglyphMap = {
         'a': '𓄿', 'b': '𓃀', 'c': '𓎡', 'd': '𓂧',
         'e': '𓇋', 'f': '𓆑', 'g': '𓎼', 'h': '𓉔',
@@ -431,7 +443,7 @@
     };
 
     function onInput(el) {
-        document.getElementById('charCount').textContent = el.value.length;
+        document.getElementById('charCount').textContent = toLocalDigits(el.value.length);
         translate(el.value);
     }
 
@@ -440,7 +452,7 @@
         const letters = input.toLowerCase().split('').filter(c => hieroglyphMap[c]);
 
         if (letters.length === 0) {
-            output.innerHTML = '<span class="output-placeholder">𓂀 Your hieroglyphs will appear here 𓂀</span>';
+            output.innerHTML = '<span class="output-placeholder">𓂀 ' + hieroI18n.placeholder + ' 𓂀</span>';
             return;
         }
 
@@ -455,7 +467,7 @@
     function clearAll() {
         const input = document.getElementById('hieroglyphInput');
         input.value = '';
-        document.getElementById('charCount').textContent = '0';
+        document.getElementById('charCount').textContent = toLocalDigits(0);
         translate('');
     }
 
@@ -530,7 +542,7 @@
         Object.entries(hieroglyphMap).forEach(([letter, glyph]) => {
             const item = document.createElement('div');
             item.className = 'alpha-item';
-            item.title = `Click to type ${letter.toUpperCase()}`;
+            item.title = `${hieroI18n.clickToType} ${letter.toUpperCase()}`;
             item.innerHTML = `
                 <span class="alpha-glyph">${glyph}</span>
                 <span class="alpha-letter">${letter}</span>
@@ -539,7 +551,7 @@
                 const input = document.getElementById('hieroglyphInput');
                 if (input.value.length < 20) {
                     input.value += letter;
-                    document.getElementById('charCount').textContent = input.value.length;
+                    document.getElementById('charCount').textContent = toLocalDigits(input.value.length);
                     translate(input.value);
                     input.focus();
                 }

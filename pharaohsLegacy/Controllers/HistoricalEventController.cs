@@ -17,6 +17,13 @@ namespace pharaohsLegacy.Controllers
 
             ViewBag.Categories = new List<string> { "Political", "Military", "Religious", "Cultural", "Scientific" };
             ViewBag.SelectedCategory = category ?? "All";
+
+            // خريطة اسم الأسرة (إنجليزي -> عربي) عشان نترجم DynastyTag في العرض بس،
+            // من غير ما نلمس القيمة الأصلية (المستخدمة كمفتاح مطابقة مع Dynasty.Name)
+            ViewBag.DynastyNameMap = _context.Dynasties
+                .Where(d => !string.IsNullOrEmpty(d.NameAr))
+                .ToDictionary(d => d.Name, d => d.NameAr);
+
             return View(events);
         }
 

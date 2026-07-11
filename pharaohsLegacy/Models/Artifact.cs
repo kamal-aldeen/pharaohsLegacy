@@ -13,6 +13,7 @@
         public string CurrentLocation { get; set; } = "";
 
         public string? NameAr { get; set; }
+        public string? MuseumAr { get; set; }
         public string? OriginAr { get; set; }
         public string? PeriodAr { get; set; }
         public string? CategoryAr { get; set; }

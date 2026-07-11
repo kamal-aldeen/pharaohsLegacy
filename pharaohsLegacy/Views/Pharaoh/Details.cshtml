@@ -2,10 +2,17 @@
 
 @model pharaohsLegacy.Models.Pharaoh
 @{
-    ViewData["Title"] = Model.Name;
     var userEmail = Context.Session.GetString("UserEmail");
     var isGuest   = userEmail == null || userEmail == "guest";
     var isFav     = ViewBag.IsFav as bool? ?? false;
+    var lang = Context.Session.GetString("Lang") ?? "en";
+    var arrowBack = lang == "ar" ? "→" : "←";
+    var arrowNext = lang == "ar" ? "←" : "→";
+    var pName = (lang == "ar" && !string.IsNullOrEmpty(Model.NameAr)) ? Model.NameAr : Model.Name;
+    var pDynasty = Html.Digits((lang == "ar" && !string.IsNullOrEmpty(Model.DynastyAr)) ? Model.DynastyAr : Model.Dynasty);
+    var pPeriod = Html.Digits((lang == "ar" && !string.IsNullOrEmpty(Model.PeriodAr)) ? Model.PeriodAr : Model.Period);
+    var pDescription = (lang == "ar" && !string.IsNullOrEmpty(Model.DescriptionAr)) ? Model.DescriptionAr : Model.Description;
+    ViewData["Title"] = pName;
 }
 <link rel="stylesheet" href="~/css/events.css" />
 
@@ -110,16 +117,16 @@
 }
 
 <div class="det-wrap">
-    <a href="/Pharaoh/Index" class="btn-back">← @Html.L("Pharaoh_Back_Link")</a>
+    <a href="/Pharaoh/Index" class="btn-back">@arrowBack @Html.L("Pharaoh_Back_Link")</a>
 
     <div class="det-banner">
-        <img src="@Model.ImageUrl" alt="@Model.Name"
-             onerror="this.src='https://via.placeholder.com/1200x400/2d1a08/c9a227?text=@Model.Name'" />
+        <img src="@Model.ImageUrl" alt="@pName"
+             onerror="this.src='https://via.placeholder.com/1200x400/2d1a08/c9a227?text=@pName'" />
         <div class="det-banner-overlay"></div>
         <div class="det-banner-content">
             <div>
-                <div class="det-banner-tag">👑 @Model.Dynasty</div>
-                <div class="det-banner-name">@Model.Name</div>
+                <div class="det-banner-tag">👑 @pDynasty</div>
+                <div class="det-banner-name">@pName</div>
             </div>
         </div>
     </div>
@@ -127,10 +134,10 @@
     <div class="det-content">
 
         <div>
-            <div class="det-section-title">@Html.L("Common_About") @Model.Name</div>
-            <p class="det-description">@Model.Description</p>
+            <div class="det-section-title">@Html.L("Common_About") @pName</div>
+            <p class="det-description">@pDescription</p>
             <div class="det-nav">
-                <a href="/Pharaoh/Index" class="btn-outline">← @Html.L("Pharaoh_AllPharaohs_Link")</a>
+                <a href="/Pharaoh/Index" class="btn-outline">@arrowBack @Html.L("Pharaoh_AllPharaohs_Link")</a>
             </div>
         </div>
 
@@ -141,21 +148,21 @@
                     <span class="det-info-icon">👑</span>
                     <div>
                         <div class="det-info-label">@Html.L("Common_Name")</div>
-                        <div class="det-info-value">@Model.Name</div>
+                        <div class="det-info-value">@pName</div>
                     </div>
                 </div>
                 <div class="det-info-row">
                     <span class="det-info-icon">𓋹</span>
                     <div>
                         <div class="det-info-label">@Html.L("Common_Dynasty")</div>
-                        <div class="det-info-value">@Model.Dynasty</div>
+                        <div class="det-info-value">@pDynasty</div>
                     </div>
                 </div>
                 <div class="det-info-row">
                     <span class="det-info-icon">📅</span>
                     <div>
                         <div class="det-info-label">@Html.L("Common_Period")</div>
-                        <div class="det-info-value">@Model.Period</div>
+                        <div class="det-info-value">@pPeriod</div>
                     </div>
                 </div>
                 <div class="det-info-row">
@@ -198,12 +205,14 @@
             <div class="dynasty-events-list">
                 @foreach (var ev in pharaohEvents)
                 {
+                    var evTitle = (lang == "ar" && !string.IsNullOrEmpty(ev.TitleAr)) ? ev.TitleAr : ev.Title;
+                    var evCategory = (lang == "ar" && !string.IsNullOrEmpty(ev.CategoryAr)) ? ev.CategoryAr : ev.Category;
                     <a href="@Url.Action("Details", "HistoricalEvent", new { id = ev.Id })"
                        class="dynasty-event-item cat-@ev.Category.ToLower()">
-                        <span class="dynasty-event-year">@ev.YearLabel</span>
-                        <span class="dynasty-event-badge cat-@ev.Category.ToLower()">@ev.Category</span>
-                        <span class="dynasty-event-title">@ev.Title</span>
-                        <span class="dynasty-event-arrow">→</span>
+                        <span class="dynasty-event-year">@Html.YearLabel(ev.Year)</span>
+                        <span class="dynasty-event-badge cat-@ev.Category.ToLower()">@evCategory</span>
+                        <span class="dynasty-event-title">@evTitle</span>
+                        <span class="dynasty-event-arrow">@arrowNext</span>
                     </a>
                 }
             </div>

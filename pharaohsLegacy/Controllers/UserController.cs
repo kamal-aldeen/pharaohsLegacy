@@ -15,6 +15,24 @@ namespace pharaohsLegacy.Controllers
             context = _context;
         }
 
+        private static string ToArabicDigits(string input)
+        {
+            var arabicDigits = new[] { '٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩' };
+            var sb = new System.Text.StringBuilder();
+            foreach (var c in input)
+                sb.Append(c >= '0' && c <= '9' ? arabicDigits[c - '0'] : c);
+            return sb.ToString();
+        }
+
+        private static string FormatVisitDate(DateTime date, string lang)
+        {
+            var culture = lang == "ar"
+                ? new System.Globalization.CultureInfo("ar-EG")
+                : new System.Globalization.CultureInfo("en-US");
+            var formatted = date.ToString("dd MMM yyyy", culture);
+            return lang == "ar" ? ToArabicDigits(formatted) : formatted;
+        }
+
         public IActionResult Index()
         {
             return View();
@@ -116,6 +134,8 @@ namespace pharaohsLegacy.Controllers
             if (user == null)
                 return RedirectToAction("Login");
 
+            var lang = HttpContext.Session.GetString("Lang") ?? "en";
+
             // ===== BOOKINGS =====
             var bookings = await context.Bookings
                 .Where(b => b.UserEmail == email && b.Status == "Confirmed")
@@ -132,13 +152,13 @@ namespace pharaohsLegacy.Controllers
                 if (b.PlaceType == "temple")
                 {
                     var temple = await context.Temples.FindAsync(b.PlaceId);
-                    placeName = temple?.Name ?? placeName;
+                    placeName = (lang == "ar" && !string.IsNullOrEmpty(temple?.NameAr)) ? temple.NameAr : (temple?.Name ?? placeName);
                     imageUrl = temple?.ImageUrl;
                 }
                 else
                 {
                     var museum = await context.Museums.FindAsync(b.PlaceId);
-                    placeName = museum?.Name ?? placeName;
+                    placeName = (lang == "ar" && !string.IsNullOrEmpty(museum?.NameAr)) ? museum.NameAr : (museum?.Name ?? placeName);
                     imageUrl = museum?.ImageUrl;
                 }
 
@@ -177,10 +197,10 @@ namespace pharaohsLegacy.Controllers
                         {
                             FavId = fav.Id,
                             ItemId = p.Id,
-                            Name = p.Name,
+                            Name = (lang == "ar" && !string.IsNullOrEmpty(p.NameAr)) ? p.NameAr : p.Name,
                             Type = "pharaoh",
                             ImageUrl = p.ImageUrl,
-                            SubTitle = p.Dynasty
+                            SubTitle = (lang == "ar" && !string.IsNullOrEmpty(p.DynastyAr)) ? p.DynastyAr : p.Dynasty
                         });
                 }
                 else if (fav.Type.ToLower() == "temple")
@@ -191,10 +211,10 @@ namespace pharaohsLegacy.Controllers
                         {
                             FavId = fav.Id,
                             ItemId = t.Id,
-                            Name = t.Name,
+                            Name = (lang == "ar" && !string.IsNullOrEmpty(t.NameAr)) ? t.NameAr : t.Name,
                             Type = "temple",
                             ImageUrl = t.ImageUrl,
-                            SubTitle = t.Location
+                            SubTitle = (lang == "ar" && !string.IsNullOrEmpty(t.LocationAr)) ? t.LocationAr : t.Location
                         });
                 }
                 else if (fav.Type.ToLower() == "god")
@@ -205,10 +225,10 @@ namespace pharaohsLegacy.Controllers
                         {
                             FavId = fav.Id,
                             ItemId = g.Id,
-                            Name = g.Name,
+                            Name = (lang == "ar" && !string.IsNullOrEmpty(g.NameAr)) ? g.NameAr : g.Name,
                             Type = "god",
                             ImageUrl = g.ImageUrl,
-                            SubTitle = g.Role
+                            SubTitle = (lang == "ar" && !string.IsNullOrEmpty(g.RoleAr)) ? g.RoleAr : g.Role
                         });
                 }
                 else if (fav.Type.ToLower() == "museum")
@@ -219,10 +239,10 @@ namespace pharaohsLegacy.Controllers
                         {
                             FavId = fav.Id,
                             ItemId = m.Id,
-                            Name = m.Name,
+                            Name = (lang == "ar" && !string.IsNullOrEmpty(m.NameAr)) ? m.NameAr : m.Name,
                             Type = "museum",
                             ImageUrl = m.ImageUrl,
-                            SubTitle = m.Location
+                            SubTitle = (lang == "ar" && !string.IsNullOrEmpty(m.LocationAr)) ? m.LocationAr : m.Location
                         });
                 }
                 // ✅ Artifacts
@@ -234,10 +254,10 @@ namespace pharaohsLegacy.Controllers
                         {
                             FavId = fav.Id,
                             ItemId = a.Id,
-                            Name = a.Name,
+                            Name = (lang == "ar" && !string.IsNullOrEmpty(a.NameAr)) ? a.NameAr : a.Name,
                             Type = "artifact",
                             ImageUrl = a.ImageUrl,
-                            SubTitle = a.Category
+                            SubTitle = (lang == "ar" && !string.IsNullOrEmpty(a.CategoryAr)) ? a.CategoryAr : a.Category
                         });
                 }
             }
@@ -280,9 +300,9 @@ namespace pharaohsLegacy.Controllers
                     if (temple == null || temple.Latitude == 0) continue;
                     lat = temple.Latitude;
                     lng = temple.Longitude;
-                    name = temple.Name;
+                    name = (lang == "ar" && !string.IsNullOrEmpty(temple.NameAr)) ? temple.NameAr : temple.Name;
                     img = temple.ImageUrl ?? "";
-                    desc = temple.Description ?? "";
+                    desc = (lang == "ar" && !string.IsNullOrEmpty(temple.DescriptionAr)) ? temple.DescriptionAr : (temple.Description ?? "");
                 }
                 else if (booking.PlaceType?.ToLower() == "museum")
                 {
@@ -290,9 +310,9 @@ namespace pharaohsLegacy.Controllers
                     if (museum == null || museum.Latitude == 0) continue;
                     lat = museum.Latitude;
                     lng = museum.Longitude;
-                    name = museum.Name;
+                    name = (lang == "ar" && !string.IsNullOrEmpty(museum.NameAr)) ? museum.NameAr : museum.Name;
                     img = museum.ImageUrl ?? "";
-                    desc = museum.Description ?? "";
+                    desc = (lang == "ar" && !string.IsNullOrEmpty(museum.DescriptionAr)) ? museum.DescriptionAr : (museum.Description ?? "");
                 }
 
                 if (journeyPins.Any(p => p.ItemId == booking.PlaceId
@@ -309,7 +329,7 @@ namespace pharaohsLegacy.Controllers
                     Longitude = lng,
                     ImageUrl = img,
                     Description = desc.Length > 100 ? desc[..100] + "..." : desc,
-                    VisitDate = booking.VisitDate.ToString("dd MMM yyyy"),
+                    VisitDate = FormatVisitDate(booking.VisitDate, lang),
                     Status = booking.Status ?? ""
                 });
             }
@@ -328,9 +348,9 @@ namespace pharaohsLegacy.Controllers
                     if (temple == null || temple.Latitude == 0) continue;
                     lat = temple.Latitude;
                     lng = temple.Longitude;
-                    name = temple.Name;
+                    name = (lang == "ar" && !string.IsNullOrEmpty(temple.NameAr)) ? temple.NameAr : temple.Name;
                     img = temple.ImageUrl ?? "";
-                    desc = temple.Description ?? "";
+                    desc = (lang == "ar" && !string.IsNullOrEmpty(temple.DescriptionAr)) ? temple.DescriptionAr : (temple.Description ?? "");
                 }
                 else if (fav.Type.ToLower() == "museum")
                 {
@@ -338,9 +358,9 @@ namespace pharaohsLegacy.Controllers
                     if (museum == null || museum.Latitude == 0) continue;
                     lat = museum.Latitude;
                     lng = museum.Longitude;
-                    name = museum.Name;
+                    name = (lang == "ar" && !string.IsNullOrEmpty(museum.NameAr)) ? museum.NameAr : museum.Name;
                     img = museum.ImageUrl ?? "";
-                    desc = museum.Description ?? "";
+                    desc = (lang == "ar" && !string.IsNullOrEmpty(museum.DescriptionAr)) ? museum.DescriptionAr : (museum.Description ?? "");
                 }
 
                 journeyPins.Add(new JourneyPin

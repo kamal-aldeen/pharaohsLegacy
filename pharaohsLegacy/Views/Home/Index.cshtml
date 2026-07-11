@@ -3,6 +3,8 @@
     ViewData["Title"] = "Home";
     var pharaohs = ViewBag.Pharaohs as List<pharaohsLegacy.Models.Pharaoh>;
     var temples = ViewBag.Temples as List<pharaohsLegacy.Models.Temple>;
+    var lang = Context.Session.GetString("Lang") ?? "en";
+    var arrowNext = lang == "ar" ? "←" : "→";
 }
 
 @if (TempData["Error"] != null)
@@ -63,10 +65,10 @@
 </section>
 
 <div class="stats-bar">
-    <div class="stat"><span class="stat-num">170+</span><span class="stat-label">@Html.L("Stat_Pharaohs")</span></div>
-    <div class="stat"><span class="stat-num">3,000</span><span class="stat-label">@Html.L("Stat_YearsHistory")</span></div>
-    <div class="stat"><span class="stat-num">50+</span><span class="stat-label">@Html.L("Stat_TemplesSites")</span></div>
-    <div class="stat"><span class="stat-num">30</span><span class="stat-label">@Html.L("Stat_Dynasties")</span></div>
+    <div class="stat"><span class="stat-num">@Html.Digits("170+")</span><span class="stat-label">@Html.L("Stat_Pharaohs")</span></div>
+    <div class="stat"><span class="stat-num">@Html.Digits("3,000")</span><span class="stat-label">@Html.L("Stat_YearsHistory")</span></div>
+    <div class="stat"><span class="stat-num">@Html.Digits("50+")</span><span class="stat-label">@Html.L("Stat_TemplesSites")</span></div>
+    <div class="stat"><span class="stat-num">@Html.Digits("30")</span><span class="stat-label">@Html.L("Stat_Dynasties")</span></div>
 </div>
 
 
@@ -82,25 +84,29 @@
             {
                 @foreach (var pharaoh in pharaohs)
                 {
+                    var phName = (lang == "ar" && !string.IsNullOrEmpty(pharaoh.NameAr)) ? pharaoh.NameAr : pharaoh.Name;
+                    var phDynasty = Html.Digits((lang == "ar" && !string.IsNullOrEmpty(pharaoh.DynastyAr)) ? pharaoh.DynastyAr : pharaoh.Dynasty);
+                    var phPeriod = Html.Digits((lang == "ar" && !string.IsNullOrEmpty(pharaoh.PeriodAr)) ? pharaoh.PeriodAr : pharaoh.Period);
+                    var phDescription = (lang == "ar" && !string.IsNullOrEmpty(pharaoh.DescriptionAr)) ? pharaoh.DescriptionAr : pharaoh.Description;
                     <a href="/Pharaoh/Details/@pharaoh.Id" class="card">
                         <div class="card-img">
-                            <img src="@pharaoh.ImageUrl" alt="@pharaoh.Name" />
+                            <img src="@pharaoh.ImageUrl" alt="@phName" />
                         </div>
                         <div class="card-body">
-                            <span class="card-tag">@pharaoh.Dynasty</span>
-                            <h3 class="card-title">@pharaoh.Name</h3>
-                            <p class="card-desc">@pharaoh.Description</p>
+                            <span class="card-tag">@phDynasty</span>
+                            <h3 class="card-title">@phName</h3>
+                            <p class="card-desc">@phDescription</p>
                         </div>
                         <div class="card-footer">
-                            <span>@pharaoh.Period</span>
-                            <span class="card-arrow">→</span>
+                            <span>@phPeriod</span>
+                            <span class="card-arrow">@arrowNext</span>
                         </div>
                     </a>
                 }
             }
         </div>
         <div class="see-all-wrap">
-            <a href="/Pharaoh/Index" class="btn-outline">@Html.L("Home_SeeAllPharaohs") →</a>
+            <a href="/Pharaoh/Index" class="btn-outline">@Html.L("Home_SeeAllPharaohs") @arrowNext</a>
         </div>
     </div>
 </div>
@@ -118,25 +124,29 @@
             {
                 @foreach (var temple in temples)
                 {
+                    var tpName = (lang == "ar" && !string.IsNullOrEmpty(temple.NameAr)) ? temple.NameAr : temple.Name;
+                    var tpLocation = (lang == "ar" && !string.IsNullOrEmpty(temple.LocationAr)) ? temple.LocationAr : temple.Location;
+                    var tpPeriod = Html.Digits((lang == "ar" && !string.IsNullOrEmpty(temple.PeriodAr)) ? temple.PeriodAr : temple.Period);
+                    var tpDescription = (lang == "ar" && !string.IsNullOrEmpty(temple.DescriptionAr)) ? temple.DescriptionAr : temple.Description;
                     <a href="/Temple/Details/@temple.Id" class="card">
                         <div class="card-img">
-                            <img src="@temple.ImageUrl" alt="@temple.Name" />
+                            <img src="@temple.ImageUrl" alt="@tpName" />
                         </div>
                         <div class="card-body">
-                            <span class="card-tag">@temple.Location</span>
-                            <h3 class="card-title">@temple.Name</h3>
-                            <p class="card-desc">@temple.Description</p>
+                            <span class="card-tag">@tpLocation</span>
+                            <h3 class="card-title">@tpName</h3>
+                            <p class="card-desc">@tpDescription</p>
                         </div>
                         <div class="card-footer">
-                            <span>@temple.Period</span>
-                            <span class="card-arrow">→</span>
+                            <span>@tpPeriod</span>
+                            <span class="card-arrow">@arrowNext</span>
                         </div>
                     </a>
                 }
             }
         </div>
         <div class="see-all-wrap">
-            <a href="/Temple/Index" class="btn-outline">@Html.L("Home_SeeAllTemples") →</a>
+            <a href="/Temple/Index" class="btn-outline">@Html.L("Home_SeeAllTemples") @arrowNext</a>
         </div>
     </div>
 </div>
@@ -157,25 +167,28 @@
             {
                 @foreach (var m in museums)
                 {
+                    var muName = (lang == "ar" && !string.IsNullOrEmpty(m.NameAr)) ? m.NameAr : m.Name;
+                    var muLocation = (lang == "ar" && !string.IsNullOrEmpty(m.LocationAr)) ? m.LocationAr : m.Location;
+                    var muDescription = (lang == "ar" && !string.IsNullOrEmpty(m.DescriptionAr)) ? m.DescriptionAr : m.Description;
                     <a href="/Museum/Details/@m.Id" class="card">
                         <div class="card-img">
-                            <img src="@m.ImageUrl" alt="@m.Name" />
+                            <img src="@m.ImageUrl" alt="@muName" />
                         </div>
                         <div class="card-body">
-                            <span class="card-tag">@m.Location</span>
-                            <h3 class="card-title">@m.Name</h3>
-                            <p class="card-desc">@m.Description</p>
+                            <span class="card-tag">@muLocation</span>
+                            <h3 class="card-title">@muName</h3>
+                            <p class="card-desc">@muDescription</p>
                         </div>
                         <div class="card-footer">
-                            <span>@Html.L("Home_Est") @m.Founded</span>
-                            <span class="card-arrow">→</span>
+                            <span>@Html.L("Home_Est") @Html.Digits(m.Founded)</span>
+                            <span class="card-arrow">@arrowNext</span>
                         </div>
                     </a>
                 }
             }
         </div>
         <div class="see-all-wrap">
-            <a href="/Museum/Index" class="btn-outline">@Html.L("Home_SeeAllMuseums") →</a>
+            <a href="/Museum/Index" class="btn-outline">@Html.L("Home_SeeAllMuseums") @arrowNext</a>
         </div>
     </div>
 </div>
@@ -195,24 +208,28 @@
         {
             @foreach (var god in gods)
             {
+                var gdName = (lang == "ar" && !string.IsNullOrEmpty(god.NameAr)) ? god.NameAr : god.Name;
+                var gdRole = (lang == "ar" && !string.IsNullOrEmpty(god.RoleAr)) ? god.RoleAr : god.Role;
+                var gdDescription = (lang == "ar" && !string.IsNullOrEmpty(god.DescriptionAr)) ? god.DescriptionAr : god.Description;
+                var gdSymbol = (lang == "ar" && !string.IsNullOrEmpty(god.SymbolAr)) ? god.SymbolAr : god.Symbol;
                 <a href="/God/Details/@god.Id" class="card">
                     <div class="card-img">
-                        <img src="@god.ImageUrl" alt="@god.Name" />
+                        <img src="@god.ImageUrl" alt="@gdName" />
                     </div>
                     <div class="card-body">
-                        <span class="card-tag">@god.Role</span>
-                        <h3 class="card-title">@god.Name</h3>
-                        <p class="card-desc">@god.Description</p>
+                        <span class="card-tag">@gdRole</span>
+                        <h3 class="card-title">@gdName</h3>
+                        <p class="card-desc">@gdDescription</p>
                     </div>
                     <div class="card-footer">
-                        <span>@god.Symbol</span>
-                        <span class="card-arrow">→</span>
+                        <span>@gdSymbol</span>
+                        <span class="card-arrow">@arrowNext</span>
                     </div>
                 </a>
             }
         }
     </div>
     <div class="see-all-wrap">
-        <a href="/God/Index" class="btn-outline">@Html.L("Home_SeeAllGods") →</a>
+        <a href="/God/Index" class="btn-outline">@Html.L("Home_SeeAllGods") @arrowNext</a>
     </div>
 </div>

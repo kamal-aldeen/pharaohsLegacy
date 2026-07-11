@@ -1,23 +1,27 @@
 ﻿@using pharaohsLegacy.Extensions
 @{
     ViewData["Title"] = "Book a Visit";
+    var lang = Context.Session.GetString("Lang") ?? "en";
+    var arrowBack = lang == "ar" ? "→" : "←";
+    string placeTypeStr = (string)ViewBag.PlaceType;
+    var placeTypeLabel = Html.L("Common_" + placeTypeStr);
 }
 
 <div class="details-wrap">
-    <a href="javascript:history.back()" class="btn-back">← @Html.L("Common_Back")</a>
+    <a href="javascript:history.back()" class="btn-back">@arrowBack @Html.L("Common_Back")</a>
 
     <div class="details-card">
         <div class="details-img">
             <img src="@ViewBag.PlaceImage" alt="@ViewBag.PlaceName" />
         </div>
         <div class="details-body">
-            <span class="card-tag">@ViewBag.PlaceType</span>
+            <span class="card-tag">@placeTypeLabel</span>
             <h1 class="details-title">@ViewBag.PlaceName</h1>
 
             <div class="details-meta">
                 <div class="meta-item">
                     <span class="meta-label">@Html.L("Common_TicketPrice")</span>
-                    <span class="meta-value">@ViewBag.TicketPrice @Html.L("Common_EGP") @Html.L("Booking_PerPerson")</span>
+                    <span class="meta-value">@Html.Digits((object)ViewBag.TicketPrice) @Html.L("Common_EGP") @Html.L("Booking_PerPerson")</span>
                 </div>
             </div>
 
@@ -38,7 +42,7 @@
                     <label>@Html.L("Booking_NumTickets_Label")</label>
                     <div class="ticket-counter">
                         <button type="button" onclick="changeTickets(-1)">−</button>
-                        <span id="ticketCount">1</span>
+                        <span id="ticketCount">@Html.Digits(1)</span>
                         <button type="button" onclick="changeTickets(1)">+</button>
                     </div>
                     <input type="hidden" name="numberOfTickets" id="numberOfTickets" value="1" />
@@ -60,7 +64,7 @@
 
                 <div class="total-price">
                     <span>@Html.L("Booking_Total_Label")</span>
-                    <span id="totalPrice">@ViewBag.TicketPrice @Html.L("Common_EGP")</span>
+                    <span id="totalPrice">@Html.Digits((object)ViewBag.TicketPrice) @Html.L("Common_EGP")</span>
                 </div>
 
                 <button type="submit" class="btn-gold" style="width:100%; margin-top:1rem;">
@@ -133,11 +137,20 @@
 <script>
     var ticketPrice = @ViewBag.TicketPrice;
     var count = 1;
+    var currentLang = '@lang';
+    var currencyLabel = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Html.L("Common_EGP")));
+    var arabicDigitsMap = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+
+    function toLocalDigits(num) {
+        var str = String(num);
+        if (currentLang !== 'ar') return str;
+        return str.replace(/[0-9]/g, function (d) { return arabicDigitsMap[+d]; });
+    }
 
     function changeTickets(val) {
         count = Math.max(1, Math.min(10, count + val));
-        document.getElementById('ticketCount').textContent = count;
+        document.getElementById('ticketCount').textContent = toLocalDigits(count);
         document.getElementById('numberOfTickets').value = count;
-        document.getElementById('totalPrice').textContent = (ticketPrice * count) + ' EGP';
+        document.getElementById('totalPrice').textContent = toLocalDigits(ticketPrice * count) + ' ' + currencyLabel;
     }
 </script>

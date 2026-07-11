@@ -50,27 +50,41 @@ namespace pharaohsLegacy.Controllers
                 return RedirectToAction("Index");
 
             var pharaohs = _context.Pharaohs
-                .Where(p => p.Name.Contains(q) || p.Dynasty.Contains(q))
+                .Where(p => p.Name.Contains(q) || p.Dynasty.Contains(q)
+                         || (p.NameAr != null && p.NameAr.Contains(q))
+                         || (p.DynastyAr != null && p.DynastyAr.Contains(q)))
                 .ToList();
 
             var temples = _context.Temples
-                .Where(t => t.Name.Contains(q) || t.Location.Contains(q))
+                .Where(t => t.Name.Contains(q) || t.Location.Contains(q)
+                         || (t.NameAr != null && t.NameAr.Contains(q))
+                         || (t.LocationAr != null && t.LocationAr.Contains(q)))
                 .ToList();
 
             var gods = _context.Gods
-                .Where(g => g.Name.Contains(q) || g.Role.Contains(q))
+                .Where(g => g.Name.Contains(q) || g.Role.Contains(q)
+                         || (g.NameAr != null && g.NameAr.Contains(q))
+                         || (g.RoleAr != null && g.RoleAr.Contains(q)))
                 .ToList();
 
             var museums = _context.Museums
-                .Where(m => m.Name.Contains(q) || m.Location.Contains(q))
+                .Where(m => m.Name.Contains(q) || m.Location.Contains(q)
+                         || (m.NameAr != null && m.NameAr.Contains(q))
+                         || (m.LocationAr != null && m.LocationAr.Contains(q)))
                 .ToList();
 
             var artifacts = _context.Artifacts
-                .Where(a => a.Name.Contains(q) || a.Category.Contains(q) || a.Origin.Contains(q))
+                .Where(a => a.Name.Contains(q) || a.Category.Contains(q) || a.Origin.Contains(q)
+                         || (a.NameAr != null && a.NameAr.Contains(q))
+                         || (a.CategoryAr != null && a.CategoryAr.Contains(q))
+                         || (a.OriginAr != null && a.OriginAr.Contains(q)))
                 .ToList();
 
             var dynasties = _context.Dynasties
-                .Where(d => d.Name.Contains(q) || d.Era.Contains(q) || d.CapitalCity.Contains(q))
+                .Where(d => d.Name.Contains(q) || d.Era.Contains(q) || d.CapitalCity.Contains(q)
+                         || (d.NameAr != null && d.NameAr.Contains(q))
+                         || (d.EraAr != null && d.EraAr.Contains(q))
+                         || (d.CapitalCityAr != null && d.CapitalCityAr.Contains(q)))
                 .ToList();
 
             ViewBag.Query = q;

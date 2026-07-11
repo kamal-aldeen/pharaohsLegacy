@@ -6,6 +6,9 @@
     var temples = ViewBag.Temples as List<pharaohsLegacy.Models.Temple>;
     var gods = ViewBag.Gods as List<pharaohsLegacy.Models.God>;
     var museums = ViewBag.Museums as List<pharaohsLegacy.Models.Museum>;
+
+    var lang = Context.Session.GetString("Lang") ?? "en";
+    var arrowNext = lang == "ar" ? "←" : "→";
 }
 
 <div class="section">
@@ -34,24 +37,27 @@
     @if (pharaohs != null && pharaohs.Count > 0)
     {
         <h3 style="font-family:'Cinzel',serif; color:#c9a227; margin-bottom:1.5rem;">
-            ❤️ @Html.L("Common_PharaohsPlural") (@pharaohs.Count)
+            ❤️ @Html.L("Common_PharaohsPlural") (@Html.Digits(pharaohs.Count))
         </h3>
 
         <div class="cards-grid">
             @foreach (var p in pharaohs)
             {
+                var pName = (lang == "ar" && !string.IsNullOrEmpty(p.NameAr)) ? p.NameAr : p.Name;
+                var pDynasty = (lang == "ar" && !string.IsNullOrEmpty(p.DynastyAr)) ? p.DynastyAr : p.Dynasty;
+                var pPeriod = (lang == "ar" && !string.IsNullOrEmpty(p.PeriodAr)) ? p.PeriodAr : p.Period;
                 <a href="/Pharaoh/Details/@p.Id" class="card">
                     <div class="card-img">
-                        <img src="@p.ImageUrl" alt="@p.Name" />
+                        <img src="@p.ImageUrl" alt="@pName" />
                     </div>
                     <div class="card-body">
-                        <span class="card-tag">@p.Dynasty</span>
-                        <h3 class="card-title">@p.Name</h3>
-                        <p class="card-desc">@p.Period</p>
+                        <span class="card-tag">@pDynasty</span>
+                        <h3 class="card-title">@pName</h3>
+                        <p class="card-desc">@pPeriod</p>
                     </div>
                     <div class="card-footer">
                         <span>@Html.L("Common_ViewDetails")</span>
-                        <span class="card-arrow">→</span>
+                        <span class="card-arrow">@arrowNext</span>
                     </div>
                 </a>
             }
@@ -62,24 +68,27 @@
     @if (temples != null && temples.Count > 0)
     {
         <h3 style="font-family:'Cinzel',serif; color:#c9a227; margin:3rem 0 1.5rem;">
-            ❤️ @Html.L("Common_TemplesPlural") (@temples.Count)
+            ❤️ @Html.L("Common_TemplesPlural") (@Html.Digits(temples.Count))
         </h3>
 
         <div class="cards-grid">
             @foreach (var t in temples)
             {
+                var tName = (lang == "ar" && !string.IsNullOrEmpty(t.NameAr)) ? t.NameAr : t.Name;
+                var tLocation = (lang == "ar" && !string.IsNullOrEmpty(t.LocationAr)) ? t.LocationAr : t.Location;
+                var tPeriod = (lang == "ar" && !string.IsNullOrEmpty(t.PeriodAr)) ? t.PeriodAr : t.Period;
                 <a href="/Temple/Details/@t.Id" class="card">
                     <div class="card-img">
-                        <img src="@t.ImageUrl" alt="@t.Name" />
+                        <img src="@t.ImageUrl" alt="@tName" />
                     </div>
                     <div class="card-body">
-                        <span class="card-tag">@t.Location</span>
-                        <h3 class="card-title">@t.Name</h3>
-                        <p class="card-desc">@t.Period</p>
+                        <span class="card-tag">@tLocation</span>
+                        <h3 class="card-title">@tName</h3>
+                        <p class="card-desc">@tPeriod</p>
                     </div>
                     <div class="card-footer">
                         <span>@Html.L("Common_ViewDetails")</span>
-                        <span class="card-arrow">→</span>
+                        <span class="card-arrow">@arrowNext</span>
                     </div>
                 </a>
             }
@@ -90,24 +99,26 @@
     @if (gods != null && gods.Count > 0)
     {
         <h3 style="font-family:'Cinzel',serif; color:#c9a227; margin:3rem 0 1.5rem;">
-            ❤️ @Html.L("Common_GodsPlural") (@gods.Count)
+            ❤️ @Html.L("Common_GodsPlural") (@Html.Digits(gods.Count))
         </h3>
 
         <div class="cards-grid">
             @foreach (var g in gods)
             {
+                var gName = (lang == "ar" && !string.IsNullOrEmpty(g.NameAr)) ? g.NameAr : g.Name;
+                var gRole = (lang == "ar" && !string.IsNullOrEmpty(g.RoleAr)) ? g.RoleAr : g.Role;
                 <a href="/God/Details/@g.Id" class="card">
                     <div class="card-img">
-                        <img src="@g.ImageUrl" alt="@g.Name" />
+                        <img src="@g.ImageUrl" alt="@gName" />
                     </div>
                     <div class="card-body">
                         <span class="card-tag">@g.Symbol</span>
-                        <h3 class="card-title">@g.Name</h3>
-                        <p class="card-desc">@g.Role</p>
+                        <h3 class="card-title">@gName</h3>
+                        <p class="card-desc">@gRole</p>
                     </div>
                     <div class="card-footer">
                         <span>@Html.L("Common_ViewDetails")</span>
-                        <span class="card-arrow">→</span>
+                        <span class="card-arrow">@arrowNext</span>
                     </div>
                 </a>
             }
@@ -118,24 +129,27 @@
     @if (museums != null && museums.Count > 0)
     {
         <h3 style="font-family:'Cinzel',serif; color:#c9a227; margin:3rem 0 1.5rem;">
-            ❤️ @Html.L("Common_MuseumsPlural") (@museums.Count)
+            ❤️ @Html.L("Common_MuseumsPlural") (@Html.Digits(museums.Count))
         </h3>
 
         <div class="cards-grid">
             @foreach (var m in museums)
             {
+                var mName = (lang == "ar" && !string.IsNullOrEmpty(m.NameAr)) ? m.NameAr : m.Name;
+                var mLocation = (lang == "ar" && !string.IsNullOrEmpty(m.LocationAr)) ? m.LocationAr : m.Location;
+                var mDescription = (lang == "ar" && !string.IsNullOrEmpty(m.DescriptionAr)) ? m.DescriptionAr : m.Description;
                 <a href="/Museum/Details/@m.Id" class="card">
                     <div class="card-img">
-                        <img src="@m.ImageUrl" alt="@m.Name" />
+                        <img src="@m.ImageUrl" alt="@mName" />
                     </div>
                     <div class="card-body">
-                        <span class="card-tag">@m.Location</span>
-                        <h3 class="card-title">@m.Name</h3>
-                        <p class="card-desc">@m.Description</p>
+                        <span class="card-tag">@mLocation</span>
+                        <h3 class="card-title">@mName</h3>
+                        <p class="card-desc">@mDescription</p>
                     </div>
                     <div class="card-footer">
                         <span>@Html.L("Common_ViewDetails")</span>
-                        <span class="card-arrow">→</span>
+                        <span class="card-arrow">@arrowNext</span>
                     </div>
                 </a>
             }

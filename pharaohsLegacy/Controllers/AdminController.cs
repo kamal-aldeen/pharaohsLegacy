@@ -10,9 +10,9 @@ namespace pharaohsLegacy.Controllers
     {
         private readonly AppDbContext _context;
 
-       
+
         private const string AdminEmail = "kamalabdlbast89@gmail.com";
-        
+
         public AdminController(AppDbContext context)
         {
             _context = context;
@@ -24,7 +24,7 @@ namespace pharaohsLegacy.Controllers
             return email == AdminEmail;
         }
 
-      
+
         public async Task<IActionResult> Index()
         {
             if (!IsAdmin()) return RedirectToAction("Login", "User");
@@ -84,16 +84,16 @@ namespace pharaohsLegacy.Controllers
 
 
 
-                
-                
+
+
             };
 
-           
-            
+
+
             return View(vm);
         }
 
-        
+
         [HttpPost]
         public async Task<IActionResult> AddPharaoh(Pharaoh model)
         {
@@ -126,6 +126,10 @@ namespace pharaohsLegacy.Controllers
             existing.Period = model.Period;
             existing.Description = model.Description;
             existing.ImageUrl = model.ImageUrl;
+            existing.NameAr = model.NameAr;
+            existing.DynastyAr = model.DynastyAr;
+            existing.PeriodAr = model.PeriodAr;
+            existing.DescriptionAr = model.DescriptionAr;
 
             await _context.SaveChangesAsync();
             TempData["Success"] = "Pharaoh updated successfully!";
@@ -142,7 +146,7 @@ namespace pharaohsLegacy.Controllers
             return RedirectToAction("Index", new { tab = "pharaohs" });
         }
 
-      
+
         [HttpPost]
         public async Task<IActionResult> AddTemple(Temple model)
         {
@@ -175,7 +179,11 @@ namespace pharaohsLegacy.Controllers
             existing.Period = model.Period;
             existing.Description = model.Description;
             existing.ImageUrl = model.ImageUrl;
-            
+            existing.NameAr = model.NameAr;
+            existing.LocationAr = model.LocationAr;
+            existing.PeriodAr = model.PeriodAr;
+            existing.DescriptionAr = model.DescriptionAr;
+
 
             await _context.SaveChangesAsync();
             TempData["Success"] = "Temple updated successfully!";
@@ -192,7 +200,7 @@ namespace pharaohsLegacy.Controllers
             return RedirectToAction("Index", new { tab = "temples" });
         }
 
-        
+
         [HttpPost]
         public async Task<IActionResult> AddMuseum(Museum model)
         {
@@ -225,8 +233,12 @@ namespace pharaohsLegacy.Controllers
             existing.Founded = model.Founded;
             existing.Description = model.Description;
             existing.ImageUrl = model.ImageUrl;
-            
+
             existing.Category = model.Category;
+            existing.NameAr = model.NameAr;
+            existing.LocationAr = model.LocationAr;
+            existing.DescriptionAr = model.DescriptionAr;
+            existing.CategoryAr = model.CategoryAr;
 
             await _context.SaveChangesAsync();
             TempData["Success"] = "Museum updated successfully!";
@@ -275,6 +287,12 @@ namespace pharaohsLegacy.Controllers
             existing.ImageUrl = model.ImageUrl ?? "";
             existing.Museum = model.Museum ?? "";
             existing.CurrentLocation = model.CurrentLocation ?? "";
+            existing.NameAr = model.NameAr;
+            existing.OriginAr = model.OriginAr;
+            existing.PeriodAr = model.PeriodAr;
+            existing.CategoryAr = model.CategoryAr;
+            existing.DescriptionAr = model.DescriptionAr;
+            existing.CurrentLocationAr = model.CurrentLocationAr;
             await _context.SaveChangesAsync();
             TempData["Success"] = "Artifact updated successfully!";
             return RedirectToAction("Index", new { tab = "artifacts" });
@@ -291,7 +309,7 @@ namespace pharaohsLegacy.Controllers
         }
 
         [HttpPost]
-        
+
         public async Task<IActionResult> ChangeBookingStatus(int id, string status)
         {
             if (!IsAdmin()) return Unauthorized();
@@ -328,15 +346,15 @@ namespace pharaohsLegacy.Controllers
             return RedirectToAction("Index", new { tab = "users" });
         }
 
-      
+
         [HttpPost]
         public async Task<IActionResult> AddGod(God model)
         {
             if (!IsAdmin()) return Unauthorized();
             //Null Exception
 
- 
-             model.Description = model.Description ?? "";
+
+            model.Description = model.Description ?? "";
             model.Symbol = model.Symbol ?? "";
             model.Role = model.Role ?? "";
             model.ImageUrl = model.ImageUrl ?? "";
@@ -362,6 +380,10 @@ namespace pharaohsLegacy.Controllers
             existing.Description = model.Description;
             existing.ImageUrl = model.ImageUrl;
             existing.Symbol = model.Symbol;
+            existing.NameAr = model.NameAr;
+            existing.RoleAr = model.RoleAr;
+            existing.DescriptionAr = model.DescriptionAr;
+            existing.SymbolAr = model.SymbolAr;
 
             await _context.SaveChangesAsync();
             TempData["Success"] = "God updated successfully!";
@@ -416,14 +438,28 @@ namespace pharaohsLegacy.Controllers
         public IActionResult EditDynasty(Dynasty dynasty)
         {
             if (!IsAdmin()) return RedirectToAction("Login", "User");
-            if (ModelState.IsValid)
-            {
-                _context.Dynasties.Update(dynasty);
-                _context.SaveChanges();
-                TempData["Success"] = "Dynasty updated successfully!";
-                return RedirectToAction("Index", new { tab = "dynasties" });
-            }
-            return View(dynasty);
+
+            var existing = _context.Dynasties.Find(dynasty.Id);
+            if (existing == null) return NotFound();
+
+            existing.Name = dynasty.Name;
+            existing.Era = dynasty.Era;
+            existing.StartYear = dynasty.StartYear;
+            existing.EndYear = dynasty.EndYear;
+            existing.Description = dynasty.Description;
+            existing.Achievements = dynasty.Achievements;
+            existing.CapitalCity = dynasty.CapitalCity;
+            existing.ImageUrl = dynasty.ImageUrl;
+            existing.PharaohTag = dynasty.PharaohTag;
+            existing.NameAr = dynasty.NameAr;
+            existing.EraAr = dynasty.EraAr;
+            existing.DescriptionAr = dynasty.DescriptionAr;
+            existing.AchievementsAr = dynasty.AchievementsAr;
+            existing.CapitalCityAr = dynasty.CapitalCityAr;
+
+            _context.SaveChanges();
+            TempData["Success"] = "Dynasty updated successfully!";
+            return RedirectToAction("Index", new { tab = "dynasties" });
         }
 
         [HttpPost]
@@ -443,14 +479,17 @@ namespace pharaohsLegacy.Controllers
         [HttpPost]
         public IActionResult AddHistoricalEvent(HistoricalEvent model)
         {
+            if (!IsAdmin()) return Unauthorized();
             _context.HistoricalEvents.Add(model);
             _context.SaveChanges();
-            return RedirectToAction("Index");
+            TempData["Success"] = "Historical Event added successfully!";
+            return RedirectToAction("Index", new { tab = "events" });
         }
 
         [HttpPost]
         public IActionResult EditHistoricalEvent(HistoricalEvent model)
         {
+            if (!IsAdmin()) return Unauthorized();
             var ev = _context.HistoricalEvents.Find(model.Id);
             if (ev == null) return NotFound();
             ev.Title = model.Title;
@@ -460,16 +499,22 @@ namespace pharaohsLegacy.Controllers
             ev.ImageUrl = model.ImageUrl;
             ev.DynastyTag = model.DynastyTag;
             ev.PharaohTag = model.PharaohTag;
+            ev.TitleAr = model.TitleAr;
+            ev.CategoryAr = model.CategoryAr;
+            ev.DescriptionAr = model.DescriptionAr;
             _context.SaveChanges();
-            return RedirectToAction("Index");
+            TempData["Success"] = "Historical Event updated successfully!";
+            return RedirectToAction("Index", new { tab = "events" });
         }
 
         [HttpPost]
         public IActionResult DeleteHistoricalEvent(int id)
         {
+            if (!IsAdmin()) return Unauthorized();
             var ev = _context.HistoricalEvents.Find(id);
             if (ev != null) { _context.HistoricalEvents.Remove(ev); _context.SaveChanges(); }
-            return RedirectToAction("Index");
+            TempData["Success"] = "Historical Event deleted.";
+            return RedirectToAction("Index", new { tab = "events" });
         }
 
 

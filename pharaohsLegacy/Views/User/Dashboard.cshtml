@@ -5,6 +5,8 @@
     ViewData["Title"] = "My Dashboard";
     var initials = string.Join("", Model.UserName.Split(' ').Take(2).Select(w => w[0]));
     var activeTab = ViewBag.ActiveTab as string ?? "overview";
+    var lang = Context.Session.GetString("Lang") ?? "en";
+    var arrowNext = lang == "ar" ? "←" : "→";
 }
 
 @section Styles {
@@ -1145,7 +1147,7 @@
             padding: 2px 8px;
             border-radius: 10px;
             font-size: 0.7rem;
-            margin-left: 6px;
+            margin-inline-start: 6px;
         }
 
             .jp-status.confirmed {
@@ -1468,21 +1470,21 @@
                 📅 @Html.L("Dash_Tab_Bookings")
                 @if (Model.TotalBookings > 0)
                 {
-                    <span class="tab-badge">@Model.TotalBookings</span>
+                    <span class="tab-badge">@Html.Digits(Model.TotalBookings)</span>
                 }
             </button>
             <button class="db-tab" onclick="switchTab('favorites', this)">
                 𓆣 @Html.L("Dash_Tab_Favorites")
                 @if (Model.TotalFavorites > 0)
                 {
-                    <span class="tab-badge">@Model.TotalFavorites</span>
+                    <span class="tab-badge">@Html.Digits(Model.TotalFavorites)</span>
                 }
             </button>
             <button class="db-tab" onclick="switchTab('journey', this)">
                 🗺️ @Html.L("Dash_Tab_Journey")
                 @if (ViewBag.JourneyCount > 0)
                 {
-                    <span class="tab-badge">@ViewBag.JourneyCount</span>
+                    <span class="tab-badge">@Html.Digits((object)ViewBag.JourneyCount)</span>
                 }
             </button>
             <button class="db-tab" onclick="switchTab('profile', this)">𓁹 @Html.L("Dash_Tab_Profile")</button>
@@ -1535,7 +1537,7 @@
                 <div>
                     <div class="db-section-head">
                         <div class="db-section-title">@Html.L("Dash_RecentBookings")</div>
-                        <a class="db-see-all" href="#" onclick="switchTab('bookings', document.querySelectorAll('.db-tab')[1]); return false;">@Html.L("Dash_ViewAll") →</a>
+                        <a class="db-see-all" href="#" onclick="switchTab('bookings', document.querySelectorAll('.db-tab')[1]); return false;">@Html.L("Dash_ViewAll") @arrowNext</a>
                     </div>
                     <div class="db-booking-list">
                         @if (!Model.Bookings.Any())
@@ -1554,12 +1556,12 @@
                                     <div class="db-booking-info">
                                         <div class="db-booking-name">@b.PlaceName</div>
                                         <div class="db-booking-meta">
-                                            <span>📅 @b.VisitDate.ToString("MMM dd, yyyy")</span>
-                                            <span>🎫 @b.NumberOfTickets @Html.L("Dash_Tickets")</span>
+                                            <span>📅 @Html.DateLoc(b.VisitDate, "MMM dd, yyyy")</span>
+                                            <span>🎫 @Html.Digits(b.NumberOfTickets) @Html.L("Dash_Tickets")</span>
                                         </div>
                                     </div>
                                     <div>
-                                        <div class="db-booking-price">@b.TotalPrice.ToString("N0") @Html.L("Dash_EGP")</div>
+                                        <div class="db-booking-price">@Html.Digits(b.TotalPrice.ToString("N0")) @Html.L("Dash_EGP")</div>
                                         <span class="status-badge @b.Status">@Html.L("Status_" + b.Status)</span>
                                     </div>
                                 </div>
@@ -1571,7 +1573,7 @@
                 <div>
                     <div class="db-section-head">
                         <div class="db-section-title">@Html.L("Dash_Saved")</div>
-                        <a class="db-see-all" href="#" onclick="switchTab('favorites', document.querySelectorAll('.db-tab')[2]); return false;">@Html.L("Dash_ViewAll") →</a>
+                        <a class="db-see-all" href="#" onclick="switchTab('favorites', document.querySelectorAll('.db-tab')[2]); return false;">@Html.L("Dash_ViewAll") @arrowNext</a>
                     </div>
                     @{
                         var allFavs = Model.FavoritePharaohs.Concat(Model.FavoriteTemples).Take(6).ToList();
@@ -1619,8 +1621,8 @@
                     <div class="db-empty-icon">📅</div>
                     <div class="db-empty-text">@Html.L("Dash_NoBookingsMade")</div>
                     <br />
-                    <a href="/Temple/Index" class="btn-gold" style="margin-top:16px; margin-left:8px;">🛕 @Html.L("Dash_ExploreTemples")</a>
-                    <a href="/Museum/Index" class="btn-gold" style="margin-top:16px; margin-left:8px;">🏛️ @Html.L("Dash_ExploreMuseums")</a>
+                    <a href="/Temple/Index" class="btn-gold" style="margin-top:16px; margin-inline-end:8px;">🛕 @Html.L("Dash_ExploreTemples")</a>
+                    <a href="/Museum/Index" class="btn-gold" style="margin-top:16px; margin-inline-end:8px;">🏛️ @Html.L("Dash_ExploreMuseums")</a>
                 </div>
             }
             else
@@ -1641,19 +1643,19 @@
                                 <div class="db-bcard-meta">
                                     <div class="db-bcard-field">
                                         <div class="db-bcard-field-label">@Html.L("Dash_VisitDate")</div>
-                                        <div class="db-bcard-field-val">@b.VisitDate.ToString("MMM dd, yyyy")</div>
+                                        <div class="db-bcard-field-val">@Html.DateLoc(b.VisitDate, "MMM dd, yyyy")</div>
                                     </div>
                                     <div class="db-bcard-field">
                                         <div class="db-bcard-field-label">@Html.L("Dash_Tickets")</div>
-                                        <div class="db-bcard-field-val">@b.NumberOfTickets 🎫</div>
+                                        <div class="db-bcard-field-val">@Html.Digits(b.NumberOfTickets) 🎫</div>
                                     </div>
                                     <div class="db-bcard-field">
                                         <div class="db-bcard-field-label">@Html.L("Dash_BookedOn")</div>
-                                        <div class="db-bcard-field-val">@b.CreatedAt.ToString("MMM dd, yyyy")</div>
+                                        <div class="db-bcard-field-val">@Html.DateLoc(b.CreatedAt, "MMM dd, yyyy")</div>
                                     </div>
                                     <div class="db-bcard-field">
                                         <div class="db-bcard-field-label">@Html.L("Dash_TotalPrice")</div>
-                                        <div class="db-bcard-field-val db-bcard-price-val">@b.TotalPrice.ToString("N0") @Html.L("Dash_EGP")</div>
+                                        <div class="db-bcard-field-val db-bcard-price-val">@Html.Digits(b.TotalPrice.ToString("N0")) @Html.L("Dash_EGP")</div>
                                     </div>
                                 </div>
                             </div>
@@ -1669,11 +1671,11 @@
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="id" value="@b.Id" />
                                             <button type="button" class="btn-outline"
-                                                    onclick="openCancelModal(@b.Id, '@Html.Raw(b.PlaceName?.Replace("'", "\\'") ?? "")', '@b.VisitDate.ToString("MMM dd, yyyy")', @b.TotalPrice.ToString(System.Globalization.CultureInfo.InvariantCulture))">
+                                                    onclick="openCancelModal(@b.Id, '@Html.Raw(b.PlaceName?.Replace("'", "\\'") ?? "")', '@Html.DateLoc(b.VisitDate, "MMM dd, yyyy")', @b.TotalPrice.ToString(System.Globalization.CultureInfo.InvariantCulture))">
                                                 ✖ @Html.L("Dash_Cancel")
                                             </button>
                                         </form>
-                                        <small style="color:var(--text-dim); font-size:11px;">⏳ @Math.Round(48 - (DateTime.Now - b.CreatedAt).TotalHours, 1)@Html.L("Dash_HoursLeftToCancel")</small>
+                                        <small style="color:var(--text-dim); font-size:11px;">⏳ @Html.Digits(Math.Round(48 - (DateTime.Now - b.CreatedAt).TotalHours, 1))@Html.L("Dash_HoursLeftToCancel")</small>
                                     }
                                     else
                                     {
@@ -1710,7 +1712,7 @@
                                     <div class="db-fav-card-name">@f.Name</div>
                                     <div class="db-fav-card-sub">@f.SubTitle</div>
                                 </div>
-                                <a href="/Pharaoh/Details/@f.ItemId" class="db-fav-card-link">@Html.L("Dash_ViewDetails") →</a>
+                                <a href="/Pharaoh/Details/@f.ItemId" class="db-fav-card-link">@Html.L("Dash_ViewDetails") @arrowNext</a>
                             </div>
                         }
                     </div>
@@ -1735,7 +1737,7 @@
                                     <div class="db-fav-card-name">@f.Name</div>
                                     <div class="db-fav-card-sub">📍 @f.SubTitle</div>
                                 </div>
-                                <a href="/Temple/Details/@f.ItemId" class="db-fav-card-link">@Html.L("Dash_ViewDetails") →</a>
+                                <a href="/Temple/Details/@f.ItemId" class="db-fav-card-link">@Html.L("Dash_ViewDetails") @arrowNext</a>
                             </div>
                         }
                     </div>
@@ -1760,7 +1762,7 @@
                                     <div class="db-fav-card-name">@f.Name</div>
                                     <div class="db-fav-card-sub">📍 @f.SubTitle</div>
                                 </div>
-                                <a href="/Museum/Details/@f.ItemId" class="db-fav-card-link">@Html.L("Dash_ViewDetails") →</a>
+                                <a href="/Museum/Details/@f.ItemId" class="db-fav-card-link">@Html.L("Dash_ViewDetails") @arrowNext</a>
                             </div>
                         }
                     </div>
@@ -1785,7 +1787,7 @@
                                     <div class="db-fav-card-name">@f.Name</div>
                                     <div class="db-fav-card-sub">@f.SubTitle</div>
                                 </div>
-                                <a href="/God/Details/@f.ItemId" class="db-fav-card-link">@Html.L("Dash_ViewDetails") →</a>
+                                <a href="/God/Details/@f.ItemId" class="db-fav-card-link">@Html.L("Dash_ViewDetails") @arrowNext</a>
                             </div>
                         }
                     </div>
@@ -1810,7 +1812,7 @@
                                     <div class="db-fav-card-name">@f.Name</div>
                                     <div class="db-fav-card-sub">@f.SubTitle</div>
                                 </div>
-                                <a href="/Artifact/Details/@f.ItemId" class="db-fav-card-link">@Html.L("Dash_ViewDetails") →</a>
+                                <a href="/Artifact/Details/@f.ItemId" class="db-fav-card-link">@Html.L("Dash_ViewDetails") @arrowNext</a>
                             </div>
                         }
                     </div>
@@ -1865,19 +1867,19 @@
         {
             <div class="journey-stats">
                 <div class="jstat">
-                    <span class="jstat-num">@pins.Count(p => p.PinType == "booking" || p.PinType == "both")</span>
+                    <span class="jstat-num">@Html.Digits(pins.Count(p => p.PinType == "booking" || p.PinType == "both"))</span>
                     <span class="jstat-label">@Html.L("Journey_PlacesBooked")</span>
                 </div>
                 <div class="jstat">
-                    <span class="jstat-num">@pins.Count(p => p.PinType == "favorite" || p.PinType == "both")</span>
+                    <span class="jstat-num">@Html.Digits(pins.Count(p => p.PinType == "favorite" || p.PinType == "both"))</span>
                     <span class="jstat-label">@Html.L("Journey_Favourite")</span>
                 </div>
                 <div class="jstat">
-                    <span class="jstat-num">@pins.Count(p => p.Type == "temple")</span>
+                    <span class="jstat-num">@Html.Digits(pins.Count(p => p.Type == "temple"))</span>
                     <span class="jstat-label">@Html.L("Nav_Temples")</span>
                 </div>
                 <div class="jstat">
-                    <span class="jstat-num">@pins.Count(p => p.Type == "museum")</span>
+                    <span class="jstat-num">@Html.Digits(pins.Count(p => p.Type == "museum"))</span>
                     <span class="jstat-label">@Html.L("Nav_Museums")</span>
                 </div>
             </div>
@@ -1887,6 +1889,8 @@
             <div class="journey-cards">
                 @foreach (var pin in pins)
                 {
+                    var pinName = (lang == "ar" && !string.IsNullOrEmpty(pin.NameAr)) ? pin.NameAr : pin.Name;
+                    var pinDescription = (lang == "ar" && !string.IsNullOrEmpty(pin.DescriptionAr)) ? pin.DescriptionAr : pin.Description;
                     <div class="jcard @pin.PinType fade-up"
                          onclick="focusPin(@pin.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture), @pin.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture))">
                         <div class="jcard-img">
@@ -1899,12 +1903,12 @@
                             <span class="jcard-type">
                                 <i class="fas @(pin.Type == "temple" ? "fa-archway" : "fa-landmark")"></i> @(pin.Type == "temple" ? Html.L("Common_Temple") : Html.L("Common_Museum"))
                             </span>
-                            <h4>@pin.Name</h4>
-                            <p>@pin.Description</p>
+                            <h4>@pinName</h4>
+                            <p>@pinDescription</p>
                             @if (!string.IsNullOrEmpty(pin.VisitDate))
                             {
                                 <div class="jcard-date">
-                                    <i class="fas fa-calendar-alt"></i> @pin.VisitDate
+                                    <i class="fas fa-calendar-alt"></i> @Html.Digits(pin.VisitDate)
                                     <span class="status-badge @pin.Status.ToLower()">@Html.L("Status_" + pin.Status)</span>
                                 </div>
                             }
@@ -1929,15 +1933,15 @@
                     <div class="db-profile-divider"></div>
                     <div class="db-profile-stat-row">
                         <div class="db-profile-stat-item">
-                            <div class="val">@Model.TotalBookings</div>
+                            <div class="val">@Html.Digits(Model.TotalBookings)</div>
                             <div class="lbl">@Html.L("Dash_Tab_Bookings")</div>
                         </div>
                         <div class="db-profile-stat-item">
-                            <div class="val">@Model.TotalFavorites</div>
+                            <div class="val">@Html.Digits(Model.TotalFavorites)</div>
                             <div class="lbl">@Html.L("Dash_Tab_Favorites")</div>
                         </div>
                         <div class="db-profile-stat-item">
-                            <div class="val">@Model.TotalSpent.ToString("N0")</div>
+                            <div class="val">@Html.Digits(Model.TotalSpent.ToString("N0"))</div>
                             <div class="lbl">@Html.L("Dash_EGPSpent")</div>
                         </div>
                     </div>
@@ -1961,7 +1965,7 @@
                                 <span class="badge-icon">𓆣</span>
                                 <span class="badge-title">@Html.L("Badge_Explorer")</span>
                             }
-                            <span class="badge-count">@Model.VisitedCount @Html.L("Badge_PlacesVisited")</span>
+                            <span class="badge-count">@Html.Digits(Model.VisitedCount) @Html.L("Badge_PlacesVisited")</span>
                         </div>
                         <div class="db-profile-divider"></div>
                     }
@@ -1982,23 +1986,23 @@
                     </div>
                     <div class="db-info-row">
                         <div class="db-info-icon">📅</div>
-                        <div><div class="db-info-label">@Html.L("Dash_Tab_Bookings")</div><div class="db-info-value">@Model.TotalBookings @Html.L("Dash_BookingsCount")</div></div>
+                        <div><div class="db-info-label">@Html.L("Dash_Tab_Bookings")</div><div class="db-info-value">@Html.Digits(Model.TotalBookings) @Html.L("Dash_BookingsCount")</div></div>
                     </div>
                     <div class="db-info-row">
                         <div class="db-info-icon">✅</div>
-                        <div><div class="db-info-label">@Html.L("Dash_ActiveBookings")</div><div class="db-info-value">@Model.ActiveBookings @Html.L("Dash_ConfirmedVisits")</div></div>
+                        <div><div class="db-info-label">@Html.L("Dash_ActiveBookings")</div><div class="db-info-value">@Html.Digits(Model.ActiveBookings) @Html.L("Dash_ConfirmedVisits")</div></div>
                     </div>
                     <div class="db-info-row">
                         <div class="db-info-icon">🏛️</div>
-                        <div><div class="db-info-label">@Html.L("Dash_Stat_PlacesVisited")</div><div class="db-info-value">@Model.VisitedCount @Html.L("Dash_PlacesVisitedCount")</div></div>
+                        <div><div class="db-info-label">@Html.L("Dash_Stat_PlacesVisited")</div><div class="db-info-value">@Html.Digits(Model.VisitedCount) @Html.L("Dash_PlacesVisitedCount")</div></div>
                     </div>
                     <div class="db-info-row">
                         <div class="db-info-icon">𓆣</div>
-                        <div><div class="db-info-label">@Html.L("Dash_SavedFavorites")</div><div class="db-info-value">@Model.TotalFavorites @Html.L("Dash_ItemsSaved")</div></div>
+                        <div><div class="db-info-label">@Html.L("Dash_SavedFavorites")</div><div class="db-info-value">@Html.Digits(Model.TotalFavorites) @Html.L("Dash_ItemsSaved")</div></div>
                     </div>
                     <div class="db-info-row">
                         <div class="db-info-icon">𓂋</div>
-                        <div><div class="db-info-label">@Html.L("Dash_Stat_TotalSpent")</div><div class="db-info-value">@Model.TotalSpent.ToString("N0") @Html.L("Dash_EGP")</div></div>
+                        <div><div class="db-info-label">@Html.L("Dash_Stat_TotalSpent")</div><div class="db-info-value">@Html.Digits(Model.TotalSpent.ToString("N0")) @Html.L("Dash_EGP")</div></div>
                     </div>
                 </div>
             </div>
@@ -2085,12 +2089,20 @@
 @section Scripts {
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        var currentLang = '@lang';
+        var arabicDigitsMap = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+        function toLocalDigits(input) {
+            var str = String(input);
+            if (currentLang !== 'ar') return str;
+            return str.replace(/[0-9]/g, function (d) { return arabicDigitsMap[+d]; });
+        }
+        const dashCurrencyLabel = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Html.L("Dash_EGP")));
         // ===== CANCEL MODAL =====
         function openCancelModal(id, name, visitDate, amount) {
         document.getElementById('cancelBookingId').value = id;
         document.getElementById('cancelPlaceName').textContent = name;
         document.getElementById('cancelVisitDate').textContent = visitDate;
-        document.getElementById('cancelAmount').textContent = amount.toLocaleString('en-US') + ' EGP';
+        document.getElementById('cancelAmount').textContent = toLocalDigits(amount.toLocaleString('en-US')) + ' ' + dashCurrencyLabel;
         document.getElementById('cancelBookingOverlay').style.display = 'flex';
         document.body.style.overflow = 'hidden';
         }
@@ -2138,7 +2150,7 @@
         let current = 0;
         const timer = setInterval(() => {
         current = Math.min(current + step, target);
-        el.textContent = Math.floor(current).toLocaleString();
+        el.textContent = toLocalDigits(Math.floor(current).toLocaleString('en-US'));
         if (current >= target) clearInterval(timer);
         }, 16);
         }
@@ -2150,8 +2162,8 @@
         let current = 0;
         const timer = setInterval(() => {
         current = Math.min(current + step, target);
-        el.textContent = Math.floor(current).toLocaleString();
-        if (current >= target) { el.textContent = target.toLocaleString(); clearInterval(timer); }
+        el.textContent = toLocalDigits(Math.floor(current).toLocaleString('en-US'));
+        if (current >= target) { el.textContent = toLocalDigits(target.toLocaleString('en-US')); clearInterval(timer); }
         }, 16);
         }
         document.addEventListener('DOMContentLoaded', () => {
@@ -2178,15 +2190,20 @@
         // ===== JOURNEY MAP =====
         const journeyPins = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(pins));
         let journeyMap = null;
-        const journeyI18n = {
-        viewDetails: '@Html.Raw(Html.L("Dash_ViewDetails"))',
-        statusLabels: {
-        Confirmed: '@Html.Raw(Html.L("Status_Confirmed"))',
-        Cancelled: '@Html.Raw(Html.L("Status_Cancelled"))',
-        Refunded: '@Html.Raw(Html.L("Status_Refunded"))',
-        Visited: '@Html.Raw(Html.L("Status_Visited"))'
-        }
-        };
+        const journeyI18n = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new
+        {
+            viewDetails = Html.L("Dash_ViewDetails"),
+            arrow = arrowNext,
+            temple = Html.L("Common_Temple"),
+            museum = Html.L("Common_Museum"),
+            statusLabels = new
+            {
+                Confirmed = Html.L("Status_Confirmed"),
+                Cancelled = Html.L("Status_Cancelled"),
+                Refunded = Html.L("Status_Refunded"),
+                Visited = Html.L("Status_Visited")
+            }
+        }));
 
         function initJourneyMap() {
         if (journeyMap || !document.getElementById('journeyMap') || journeyPins.length === 0) return;
@@ -2205,19 +2222,21 @@
         iconSize: [38, 38], iconAnchor: [19, 38], popupAnchor: [0, -40]
         });
         const dateRow = pin.VisitDate
-        ? `<div class="jp-date"><i class="fas fa-calendar-alt"></i> ${pin.VisitDate}
+        ? `<div class="jp-date"><i class="fas fa-calendar-alt"></i> ${toLocalDigits(pin.VisitDate)}
         <span class="jp-status ${pin.Status.toLowerCase()}">${journeyI18n.statusLabels[pin.Status] || pin.Status}</span>
         </div>` : '';
+        const pinName = (currentLang === 'ar' && pin.NameAr) ? pin.NameAr : pin.Name;
+        const pinDescription = (currentLang === 'ar' && pin.DescriptionAr) ? pin.DescriptionAr : pin.Description;
         L.marker([pin.Latitude, pin.Longitude], { icon })
         .bindPopup(L.popup({ maxWidth: 260, className: 'journey-popup' }).setContent(`
         <div class="jp-card">
         <img src="${pin.ImageUrl}" onerror="this.src='/images/placeholder.jpg'" />
         <div class="jp-body">
-        <span class="jp-type">${pin.Type}</span>
-        <h4>${pin.Name}</h4>
-        <p>${pin.Description}</p>
+        <span class="jp-type">${pin.Type === 'temple' ? journeyI18n.temple : journeyI18n.museum}</span>
+        <h4>${pinName}</h4>
+        <p>${pinDescription}</p>
         ${dateRow}
-        <a href="/${pin.Type === 'temple' ? 'Temple' : 'Museum'}/Details/${pin.ItemId}" class="jp-link">${journeyI18n.viewDetails} →</a>
+        <a href="/${pin.Type === 'temple' ? 'Temple' : 'Museum'}/Details/${pin.ItemId}" class="jp-link">${journeyI18n.viewDetails} ${journeyI18n.arrow}</a>
         </div>
         </div>
         `)).addTo(journeyMap);

@@ -532,6 +532,33 @@ body {
 .adm-textarea { resize: vertical; min-height: 90px; }
 .adm-select option { background: var(--dark-3); }
 
+/* Arabic translation section */
+.adm-lang-divider {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 22px 0 16px;
+    padding-top: 16px;
+    border-top: 1px dashed #3d2a15;
+    font-family: 'Cinzel', serif;
+    font-size: 12.5px;
+    color: var(--gold-light);
+    letter-spacing: .5px;
+}
+.adm-lang-divider small {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 10.5px;
+    color: var(--text-dim);
+    letter-spacing: 0;
+}
+.adm-input-ar, .adm-textarea-ar {
+    direction: rtl;
+    text-align: right;
+    font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+}
+
 
 .adm-img-preview {
     width: 100%; height: 120px;
@@ -907,6 +934,10 @@ JavaScript تفتح Modal التعديل.       *@
                         data-period="@p.Period"
                         data-img="@p.ImageUrl"
                         data-desc="@p.Description"
+                        data-namear="@p.NameAr"
+                        data-dynastyar="@p.DynastyAr"
+                        data-periodar="@p.PeriodAr"
+                        data-descar="@p.DescriptionAr"
                         onclick="openEditPharaohBtn(this)">
                     ✏ Edit
                 </button>
@@ -975,6 +1006,12 @@ JavaScript تفتح Modal التعديل.       *@
                                                     data-location="@a.CurrentLocation"
                                                     data-img="@a.ImageUrl"
                                                     data-desc="@a.Description"
+                                                    data-namear="@a.NameAr"
+                                                    data-originar="@a.OriginAr"
+                                                    data-periodar="@a.PeriodAr"
+                                                    data-categoryar="@a.CategoryAr"
+                                                    data-locationar="@a.CurrentLocationAr"
+                                                    data-descar="@a.DescriptionAr"
                                                     onclick="openEditArtifactBtn(this)">
                                                 ✏ Edit
                                             </button>
@@ -1036,6 +1073,10 @@ JavaScript تفتح Modal التعديل.       *@
                                    data-desc="@t.Description"
                                   data-lat="@t.Latitude"
                                   data-lng="@t.Longitude"
+                                  data-namear="@t.NameAr"
+                                  data-locationar="@t.LocationAr"
+                                  data-periodar="@t.PeriodAr"
+                                  data-descar="@t.DescriptionAr"
                                    onclick="openEditTempleFromBtn(this)">
                              ✏ Edit
                         </button>
@@ -1096,6 +1137,10 @@ JavaScript تفتح Modal التعديل.       *@
                                    data-desc="@m.Description"
                                    data-lat="@m.Latitude"
                                    data-lng="@m.Longitude"
+                                   data-namear="@m.NameAr"
+                                   data-locationar="@m.LocationAr"
+                                   data-categoryar="@m.CategoryAr"
+                                   data-descar="@m.DescriptionAr"
                                 onclick="openEditMuseumFromBtn(this)">
                                  ✏ Edit
                             </button>
@@ -1153,6 +1198,10 @@ JavaScript تفتح Modal التعديل.       *@
                                             data-symbol="@g.Symbol"
                                             data-img="@g.ImageUrl"
                                             data-desc="@g.Description"
+                                            data-namear="@g.NameAr"
+                                            data-rolear="@g.RoleAr"
+                                            data-descar="@g.DescriptionAr"
+                                            data-symbolar="@g.SymbolAr"
                                             onclick="openEditGodBtn(this)">
                                         ✏ Edit
                                     </button>
@@ -1361,6 +1410,11 @@ JavaScript تفتح Modal التعديل.       *@
                                                     data-img="@d.ImageUrl"
                                                     data-desc="@d.Description"
                                                     data-achievements="@d.Achievements"
+                                                    data-namear="@d.NameAr"
+                                                    data-eraar="@d.EraAr"
+                                                    data-capitalar="@d.CapitalCityAr"
+                                                    data-descar="@d.DescriptionAr"
+                                                    data-achievementsar="@d.AchievementsAr"
                                                     onclick="openEditDynastyBtn(this)">
                                                 ✏ Edit
                                             </button>
@@ -1427,6 +1481,9 @@ JavaScript تفتح Modal التعديل.       *@
                                                     data-imageurl="@ev.ImageUrl"
                                                     data-dynastytag="@(ev.DynastyTag ?? "")"
                                                     data-pharaohtag="@(ev.PharaohTag ?? "")"
+                                                    data-titlear="@(ev.TitleAr ?? "")"
+                                                    data-categoryar="@(ev.CategoryAr ?? "")"
+                                                    data-descriptionar="@(ev.DescriptionAr ?? "")"
                                                     onclick="openEditEvent(this)">
                                                 ✏ Edit
                                             </button>
@@ -1498,6 +1555,20 @@ JavaScript تفتح Modal التعديل.       *@
                                 <label class="adm-label">Description *</label>
                                 <textarea class="adm-textarea" name="Description" required placeholder="About this event..."></textarea>
                             </div>
+
+                            <div class="adm-lang-divider">🇪🇬 Arabic Translation <small>(optional — falls back to English if empty)</small></div>
+                            <div class="adm-form-row">
+                                <label class="adm-label">Title (AR)</label>
+                                <input class="adm-input adm-input-ar" name="TitleAr" dir="rtl" placeholder="مثال: معركة قادش" />
+                            </div>
+                            <div class="adm-form-row">
+                                <label class="adm-label">Category (AR)</label>
+                                <input class="adm-input adm-input-ar" name="CategoryAr" dir="rtl" placeholder="مثال: عسكري" />
+                            </div>
+                            <div class="adm-form-row">
+                                <label class="adm-label">Description (AR)</label>
+                                <textarea class="adm-textarea adm-textarea-ar" name="DescriptionAr" dir="rtl" placeholder="نبذة عن هذا الحدث..."></textarea>
+                            </div>
                         </div>
                         <div class="adm-modal-foot">
                             <button type="button" class="adm-btn adm-btn-del" onclick="closeModal('modalAddEvent')">Cancel</button>
@@ -1557,6 +1628,20 @@ JavaScript تفتح Modal التعديل.       *@
                             <div class="adm-form-row">
                                 <label class="adm-label">Description *</label>
                                 <textarea class="adm-textarea" name="Description" id="editEventDescription" required></textarea>
+                            </div>
+
+                            <div class="adm-lang-divider">🇪🇬 Arabic Translation <small>(optional — falls back to English if empty)</small></div>
+                            <div class="adm-form-row">
+                                <label class="adm-label">Title (AR)</label>
+                                <input class="adm-input adm-input-ar" name="TitleAr" id="editEventTitleAr" dir="rtl" />
+                            </div>
+                            <div class="adm-form-row">
+                                <label class="adm-label">Category (AR)</label>
+                                <input class="adm-input adm-input-ar" name="CategoryAr" id="editEventCategoryAr" dir="rtl" />
+                            </div>
+                            <div class="adm-form-row">
+                                <label class="adm-label">Description (AR)</label>
+                                <textarea class="adm-textarea adm-textarea-ar" name="DescriptionAr" id="editEventDescriptionAr" dir="rtl"></textarea>
                             </div>
                         </div>
                         <div class="adm-modal-foot">
@@ -1817,6 +1902,24 @@ JavaScript تفتح Modal التعديل.       *@
           <label class="adm-label">Description *</label>
           <textarea class="adm-textarea" name="Description" required placeholder="About this deity..."></textarea>
         </div>
+
+        <div class="adm-lang-divider">🇪🇬 Arabic Translation <small>(optional — falls back to English if empty)</small></div>
+        <div class="adm-form-row">
+          <label class="adm-label">Name (AR)</label>
+          <input class="adm-input adm-input-ar" name="NameAr" dir="rtl" placeholder="مثال: رع" />
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Symbol (AR)</label>
+          <input class="adm-input adm-input-ar" name="SymbolAr" dir="rtl" placeholder="مثال: قرص الشمس" />
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Role / Domains (AR)</label>
+          <input class="adm-input adm-input-ar" name="RoleAr" dir="rtl" placeholder="مثال: الشمس، الخلق، النور" />
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Description (AR)</label>
+          <textarea class="adm-textarea adm-textarea-ar" name="DescriptionAr" dir="rtl" placeholder="نبذة عن هذا الإله..."></textarea>
+        </div>
       </div>
       <div class="adm-modal-foot">
         <button type="button" class="adm-btn adm-btn-del" onclick="closeModal('modalAddGod')">Cancel</button>
@@ -1854,6 +1957,24 @@ JavaScript تفتح Modal التعديل.       *@
         <div class="adm-form-row">
           <label class="adm-label">Description *</label>
           <textarea class="adm-textarea" name="Description" id="editGodDesc" required></textarea>
+        </div>
+
+        <div class="adm-lang-divider">🇪🇬 Arabic Translation <small>(optional — falls back to English if empty)</small></div>
+        <div class="adm-form-row">
+          <label class="adm-label">Name (AR)</label>
+          <input class="adm-input adm-input-ar" name="NameAr" id="editGodNameAr" dir="rtl" />
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Symbol (AR)</label>
+          <input class="adm-input adm-input-ar" name="SymbolAr" id="editGodSymbolAr" dir="rtl" />
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Role / Domains (AR)</label>
+          <input class="adm-input adm-input-ar" name="RoleAr" id="editGodRoleAr" dir="rtl" />
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Description (AR)</label>
+          <textarea class="adm-textarea adm-textarea-ar" name="DescriptionAr" id="editGodDescAr" dir="rtl"></textarea>
         </div>
       </div>
       <div class="adm-modal-foot">
@@ -1898,6 +2019,26 @@ JavaScript تفتح Modal التعديل.       *@
           <label class="adm-label">Description</label>
           <textarea class="adm-textarea" name="Description" required placeholder="Historical overview..."></textarea>
         </div>
+
+        <div class="adm-lang-divider">🇪🇬 Arabic Translation <small>(optional — falls back to English if empty)</small></div>
+        <div class="adm-form-row-2">
+          <div>
+            <label class="adm-label">Name (AR)</label>
+            <input class="adm-input adm-input-ar" name="NameAr" dir="rtl" placeholder="مثال: رمسيس الثاني" />
+          </div>
+          <div>
+            <label class="adm-label">Dynasty (AR)</label>
+            <input class="adm-input adm-input-ar" name="DynastyAr" dir="rtl" placeholder="مثال: الأسرة التاسعة عشر" />
+          </div>
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Period (AR)</label>
+          <input class="adm-input adm-input-ar" name="PeriodAr" dir="rtl" placeholder="مثال: 1279–1213 ق.م" />
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Description (AR)</label>
+          <textarea class="adm-textarea adm-textarea-ar" name="DescriptionAr" dir="rtl" placeholder="نظرة تاريخية عامة..."></textarea>
+        </div>
       </div>
       <div class="adm-modal-foot">
         <button type="button" class="adm-btn adm-btn-del" onclick="closeModal('modalAddPharaoh')">Cancel</button>
@@ -1941,6 +2082,26 @@ JavaScript تفتح Modal التعديل.       *@
         <div class="adm-form-row">
           <label class="adm-label">Description</label>
           <textarea class="adm-textarea" name="Description" id="editPharDesc"></textarea>
+        </div>
+
+        <div class="adm-lang-divider">🇪🇬 Arabic Translation <small>(optional — falls back to English if empty)</small></div>
+        <div class="adm-form-row-2">
+          <div>
+            <label class="adm-label">Name (AR)</label>
+            <input class="adm-input adm-input-ar" name="NameAr" id="editPharNameAr" dir="rtl" />
+          </div>
+          <div>
+            <label class="adm-label">Dynasty (AR)</label>
+            <input class="adm-input adm-input-ar" name="DynastyAr" id="editPharDynastyAr" dir="rtl" />
+          </div>
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Period (AR)</label>
+          <input class="adm-input adm-input-ar" name="PeriodAr" id="editPharPeriodAr" dir="rtl" />
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Description (AR)</label>
+          <textarea class="adm-textarea adm-textarea-ar" name="DescriptionAr" id="editPharDescAr" dir="rtl"></textarea>
         </div>
       </div>
       <div class="adm-modal-foot">
@@ -2001,6 +2162,30 @@ JavaScript تفتح Modal التعديل.       *@
           <label class="adm-label">Achievements</label>
           <textarea class="adm-textarea" name="Achievements" placeholder="Notable achievements..."></textarea>
         </div>
+
+        <div class="adm-lang-divider">🇪🇬 Arabic Translation <small>(optional — falls back to English if empty)</small></div>
+        <div class="adm-form-row-2">
+          <div>
+            <label class="adm-label">Name (AR)</label>
+            <input class="adm-input adm-input-ar" name="NameAr" dir="rtl" placeholder="مثال: الأسرة الأولى" />
+          </div>
+          <div>
+            <label class="adm-label">Era (AR)</label>
+            <input class="adm-input adm-input-ar" name="EraAr" dir="rtl" placeholder="مثال: الدولة القديمة" />
+          </div>
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Capital City (AR)</label>
+          <input class="adm-input adm-input-ar" name="CapitalCityAr" dir="rtl" placeholder="مثال: منف" />
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Description (AR)</label>
+          <textarea class="adm-textarea adm-textarea-ar" name="DescriptionAr" dir="rtl" placeholder="نظرة تاريخية عامة..."></textarea>
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Achievements (AR)</label>
+          <textarea class="adm-textarea adm-textarea-ar" name="AchievementsAr" dir="rtl" placeholder="أبرز الإنجازات..."></textarea>
+        </div>
       </div>
       <div class="adm-modal-foot">
         <button type="button" class="adm-btn adm-btn-del" onclick="closeModal('modalAddDynasty')">Cancel</button>
@@ -2060,6 +2245,30 @@ JavaScript تفتح Modal التعديل.       *@
         <div class="adm-form-row">
           <label class="adm-label">Achievements</label>
           <textarea class="adm-textarea" name="Achievements" id="editDynAchievements"></textarea>
+        </div>
+
+        <div class="adm-lang-divider">🇪🇬 Arabic Translation <small>(optional — falls back to English if empty)</small></div>
+        <div class="adm-form-row-2">
+          <div>
+            <label class="adm-label">Name (AR)</label>
+            <input class="adm-input adm-input-ar" name="NameAr" id="editDynNameAr" dir="rtl" />
+          </div>
+          <div>
+            <label class="adm-label">Era (AR)</label>
+            <input class="adm-input adm-input-ar" name="EraAr" id="editDynEraAr" dir="rtl" />
+          </div>
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Capital City (AR)</label>
+          <input class="adm-input adm-input-ar" name="CapitalCityAr" id="editDynCapitalAr" dir="rtl" />
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Description (AR)</label>
+          <textarea class="adm-textarea adm-textarea-ar" name="DescriptionAr" id="editDynDescAr" dir="rtl"></textarea>
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Achievements (AR)</label>
+          <textarea class="adm-textarea adm-textarea-ar" name="AchievementsAr" id="editDynAchievementsAr" dir="rtl"></textarea>
         </div>
       </div>
       <div class="adm-modal-foot">
@@ -2122,6 +2331,26 @@ JavaScript تفتح Modal التعديل.       *@
                     <div class="adm-form-row">
                         <label class="adm-label">Description *</label>
                         <textarea class="adm-textarea" name="Description" required placeholder="Temple history..."></textarea>
+                    </div>
+
+                    <div class="adm-lang-divider">🇪🇬 Arabic Translation <small>(optional — falls back to English if empty)</small></div>
+                    <div class="adm-form-row-2">
+                        <div>
+                            <label class="adm-label">Name (AR)</label>
+                            <input class="adm-input adm-input-ar" name="NameAr" dir="rtl" placeholder="مثال: معبد الكرنك" />
+                        </div>
+                        <div>
+                            <label class="adm-label">Location (AR)</label>
+                            <input class="adm-input adm-input-ar" name="LocationAr" dir="rtl" placeholder="مثال: الأقصر" />
+                        </div>
+                    </div>
+                    <div class="adm-form-row">
+                        <label class="adm-label">Period (AR)</label>
+                        <input class="adm-input adm-input-ar" name="PeriodAr" dir="rtl" placeholder="مثال: الدولة الحديثة" />
+                    </div>
+                    <div class="adm-form-row">
+                        <label class="adm-label">Description (AR)</label>
+                        <textarea class="adm-textarea adm-textarea-ar" name="DescriptionAr" dir="rtl" placeholder="تاريخ المعبد..."></textarea>
                     </div>
                 </div>
                 <div class="adm-modal-foot">
@@ -2186,6 +2415,26 @@ JavaScript تفتح Modal التعديل.       *@
                     <div class="adm-form-row">
                         <label class="adm-label">Description</label>
                         <textarea class="adm-textarea" name="Description" id="editTmpDesc"></textarea>
+                    </div>
+
+                    <div class="adm-lang-divider">🇪🇬 Arabic Translation <small>(optional — falls back to English if empty)</small></div>
+                    <div class="adm-form-row-2">
+                        <div>
+                            <label class="adm-label">Name (AR)</label>
+                            <input class="adm-input adm-input-ar" name="NameAr" id="editTmpNameAr" dir="rtl" />
+                        </div>
+                        <div>
+                            <label class="adm-label">Location (AR)</label>
+                            <input class="adm-input adm-input-ar" name="LocationAr" id="editTmpLocationAr" dir="rtl" />
+                        </div>
+                    </div>
+                    <div class="adm-form-row">
+                        <label class="adm-label">Period (AR)</label>
+                        <input class="adm-input adm-input-ar" name="PeriodAr" id="editTmpPeriodAr" dir="rtl" />
+                    </div>
+                    <div class="adm-form-row">
+                        <label class="adm-label">Description (AR)</label>
+                        <textarea class="adm-textarea adm-textarea-ar" name="DescriptionAr" id="editTmpDescAr" dir="rtl"></textarea>
                     </div>
                 </div>
                 <div class="adm-modal-foot">
@@ -2257,6 +2506,26 @@ JavaScript تفتح Modal التعديل.       *@
                     <div class="adm-form-row">
                         <label class="adm-label">Description *</label>
                         <textarea class="adm-textarea" name="Description" required placeholder="Museum overview..."></textarea>
+                    </div>
+
+                    <div class="adm-lang-divider">🇪🇬 Arabic Translation <small>(optional — falls back to English if empty)</small></div>
+                    <div class="adm-form-row-2">
+                        <div>
+                            <label class="adm-label">Name (AR)</label>
+                            <input class="adm-input adm-input-ar" name="NameAr" dir="rtl" placeholder="مثال: المتحف المصري" />
+                        </div>
+                        <div>
+                            <label class="adm-label">Location (AR)</label>
+                            <input class="adm-input adm-input-ar" name="LocationAr" dir="rtl" placeholder="مثال: القاهرة" />
+                        </div>
+                    </div>
+                    <div class="adm-form-row">
+                        <label class="adm-label">Category (AR)</label>
+                        <input class="adm-input adm-input-ar" name="CategoryAr" dir="rtl" placeholder="مثال: مصري" />
+                    </div>
+                    <div class="adm-form-row">
+                        <label class="adm-label">Description (AR)</label>
+                        <textarea class="adm-textarea adm-textarea-ar" name="DescriptionAr" dir="rtl" placeholder="نظرة عامة عن المتحف..."></textarea>
                     </div>
                 </div>
                 <div class="adm-modal-foot">
@@ -2330,6 +2599,26 @@ JavaScript تفتح Modal التعديل.       *@
                         <label class="adm-label">Description</label>
                         <textarea class="adm-textarea" name="Description" id="editMusDesc"></textarea>
                     </div>
+
+                    <div class="adm-lang-divider">🇪🇬 Arabic Translation <small>(optional — falls back to English if empty)</small></div>
+                    <div class="adm-form-row-2">
+                        <div>
+                            <label class="adm-label">Name (AR)</label>
+                            <input class="adm-input adm-input-ar" name="NameAr" id="editMusNameAr" dir="rtl" />
+                        </div>
+                        <div>
+                            <label class="adm-label">Location (AR)</label>
+                            <input class="adm-input adm-input-ar" name="LocationAr" id="editMusLocationAr" dir="rtl" />
+                        </div>
+                    </div>
+                    <div class="adm-form-row">
+                        <label class="adm-label">Category (AR)</label>
+                        <input class="adm-input adm-input-ar" name="CategoryAr" id="editMusCategoryAr" dir="rtl" />
+                    </div>
+                    <div class="adm-form-row">
+                        <label class="adm-label">Description (AR)</label>
+                        <textarea class="adm-textarea adm-textarea-ar" name="DescriptionAr" id="editMusDescAr" dir="rtl"></textarea>
+                    </div>
                 </div>
                 <div class="adm-modal-foot">
                     <button type="button" class="adm-btn adm-btn-del" onclick="closeModal('modalEditMuseum')">Cancel</button>
@@ -2397,6 +2686,36 @@ JavaScript تفتح Modal التعديل.       *@
                     <div class="adm-form-row">
                         <label class="adm-label">Description</label>
                         <textarea class="adm-textarea" name="Description" placeholder="Historical overview..."></textarea>
+                    </div>
+
+                    <div class="adm-lang-divider">🇪🇬 Arabic Translation <small>(optional — falls back to English if empty)</small></div>
+                    <div class="adm-form-row-2">
+                        <div>
+                            <label class="adm-label">Name (AR)</label>
+                            <input class="adm-input adm-input-ar" name="NameAr" dir="rtl" placeholder="مثال: القناع الذهبي لتوت عنخ آمون" />
+                        </div>
+                        <div>
+                            <label class="adm-label">Category (AR)</label>
+                            <input class="adm-input adm-input-ar" name="CategoryAr" dir="rtl" placeholder="مثال: تمثال" />
+                        </div>
+                    </div>
+                    <div class="adm-form-row-2">
+                        <div>
+                            <label class="adm-label">Origin (AR)</label>
+                            <input class="adm-input adm-input-ar" name="OriginAr" dir="rtl" placeholder="مثال: الأقصر، مصر" />
+                        </div>
+                        <div>
+                            <label class="adm-label">Period (AR)</label>
+                            <input class="adm-input adm-input-ar" name="PeriodAr" dir="rtl" placeholder="مثال: 1323 ق.م" />
+                        </div>
+                    </div>
+                    <div class="adm-form-row">
+                        <label class="adm-label">Current Location (AR)</label>
+                        <input class="adm-input adm-input-ar" name="CurrentLocationAr" dir="rtl" placeholder="مثال: القاهرة، مصر" />
+                    </div>
+                    <div class="adm-form-row">
+                        <label class="adm-label">Description (AR)</label>
+                        <textarea class="adm-textarea adm-textarea-ar" name="DescriptionAr" dir="rtl" placeholder="نظرة تاريخية عامة..."></textarea>
                     </div>
                 </div>
                 <div class="adm-modal-foot">
@@ -2467,6 +2786,36 @@ JavaScript تفتح Modal التعديل.       *@
                         <label class="adm-label">Description</label>
                         <textarea class="adm-textarea" name="Description" id="editArtifactDesc"></textarea>
                     </div>
+
+                    <div class="adm-lang-divider">🇪🇬 Arabic Translation <small>(optional — falls back to English if empty)</small></div>
+                    <div class="adm-form-row-2">
+                        <div>
+                            <label class="adm-label">Name (AR)</label>
+                            <input class="adm-input adm-input-ar" name="NameAr" id="editArtifactNameAr" dir="rtl" />
+                        </div>
+                        <div>
+                            <label class="adm-label">Category (AR)</label>
+                            <input class="adm-input adm-input-ar" name="CategoryAr" id="editArtifactCategoryAr" dir="rtl" />
+                        </div>
+                    </div>
+                    <div class="adm-form-row-2">
+                        <div>
+                            <label class="adm-label">Origin (AR)</label>
+                            <input class="adm-input adm-input-ar" name="OriginAr" id="editArtifactOriginAr" dir="rtl" />
+                        </div>
+                        <div>
+                            <label class="adm-label">Period (AR)</label>
+                            <input class="adm-input adm-input-ar" name="PeriodAr" id="editArtifactPeriodAr" dir="rtl" />
+                        </div>
+                    </div>
+                    <div class="adm-form-row">
+                        <label class="adm-label">Current Location (AR)</label>
+                        <input class="adm-input adm-input-ar" name="CurrentLocationAr" id="editArtifactLocationAr" dir="rtl" />
+                    </div>
+                    <div class="adm-form-row">
+                        <label class="adm-label">Description (AR)</label>
+                        <textarea class="adm-textarea adm-textarea-ar" name="DescriptionAr" id="editArtifactDescAr" dir="rtl"></textarea>
+                    </div>
                 </div>
                 <div class="adm-modal-foot">
                     <button type="button" class="adm-btn adm-btn-del" onclick="closeModal('modalEditArtifact')">Cancel</button>
@@ -2486,6 +2835,9 @@ JavaScript تفتح Modal التعديل.       *@
         document.getElementById('editEventImageUrl').value = btn.dataset.imageurl;
         document.getElementById('editEventDynastyTag').value = btn.dataset.dynastytag || '';
         document.getElementById('editEventPharaohTag').value = btn.dataset.pharaohtag || '';
+        document.getElementById('editEventTitleAr').value = btn.dataset.titlear || '';
+        document.getElementById('editEventCategoryAr').value = btn.dataset.categoryar || '';
+        document.getElementById('editEventDescriptionAr').value = btn.dataset.descriptionar || '';
         document.getElementById('modalEditEvent').style.display = 'flex';
         }
     
@@ -2764,16 +3116,24 @@ function openEditPharaohBtn(btn) {
     const period  = btn.getAttribute('data-period');   
     const img     = btn.getAttribute('data-img');
     const desc    = btn.getAttribute('data-desc');
-    openEditPharaoh(id, name, dynasty, period, img, desc); 
+    const nameAr     = btn.getAttribute('data-namear');
+    const dynastyAr  = btn.getAttribute('data-dynastyar');
+    const periodAr   = btn.getAttribute('data-periodar');
+    const descAr     = btn.getAttribute('data-descar');
+    openEditPharaoh(id, name, dynasty, period, img, desc, nameAr, dynastyAr, periodAr, descAr); 
 }
 
-function openEditPharaoh(id, name, dynasty, period, img, desc) {
+function openEditPharaoh(id, name, dynasty, period, img, desc, nameAr, dynastyAr, periodAr, descAr) {
     document.getElementById('editPharId').value      = id;
     document.getElementById('editPharName').value    = name;
     document.getElementById('editPharDynasty').value = dynasty;
     document.getElementById('editPharPeriod').value  = period;
     document.getElementById('editPharImg').value     = img;
     document.getElementById('editPharDesc').value    = desc;
+    document.getElementById('editPharNameAr').value     = nameAr || '';
+    document.getElementById('editPharDynastyAr').value  = dynastyAr || '';
+    document.getElementById('editPharPeriodAr').value   = periodAr || '';
+    document.getElementById('editPharDescAr').value     = descAr || '';
     const prev = document.getElementById('editPharImgPreview');
     prev.src = img; prev.style.display = img ? 'block' : 'none';
     openModal('modalEditPharaoh');
@@ -2787,6 +3147,10 @@ function openEditTempleFromBtn(btn) {
     document.getElementById('editTmpPeriod').value   = btn.dataset.period;
     document.getElementById('editTmpImg').value      = btn.dataset.img;
     document.getElementById('editTmpDesc').value     = btn.dataset.desc;
+    document.getElementById('editTmpNameAr').value     = btn.dataset.namear || '';
+    document.getElementById('editTmpLocationAr').value = btn.dataset.locationar || '';
+    document.getElementById('editTmpPeriodAr').value   = btn.dataset.periodar || '';
+    document.getElementById('editTmpDescAr').value     = btn.dataset.descar || '';
     const prev = document.getElementById('editTmpImgPreview');
     prev.src = btn.dataset.img;
     prev.style.display = btn.dataset.img ? 'block' : 'none';
@@ -2811,6 +3175,10 @@ function openEditMuseumFromBtn(btn) {
     document.getElementById('editMusCategory').value = btn.dataset.category;
     document.getElementById('editMusImg').value      = btn.dataset.img;
     document.getElementById('editMusDesc').value     = btn.dataset.desc;
+    document.getElementById('editMusNameAr').value     = btn.dataset.namear || '';
+    document.getElementById('editMusLocationAr').value = btn.dataset.locationar || '';
+    document.getElementById('editMusCategoryAr').value = btn.dataset.categoryar || '';
+    document.getElementById('editMusDescAr').value     = btn.dataset.descar || '';
     const prev = document.getElementById('editMusImgPreview');
     prev.src = btn.dataset.img;
     prev.style.display = btn.dataset.img ? 'block' : 'none';
@@ -2832,16 +3200,24 @@ function openEditGodBtn(btn) {
     const symbol = btn.getAttribute('data-symbol');
     const img    = btn.getAttribute('data-img');
     const desc   = btn.getAttribute('data-desc');
-    openEditGod(id, name, role, symbol, img, desc);
+    const nameAr = btn.getAttribute('data-namear');
+    const roleAr = btn.getAttribute('data-rolear');
+    const descAr = btn.getAttribute('data-descar');
+    const symbolAr = btn.getAttribute('data-symbolar');
+    openEditGod(id, name, role, symbol, img, desc, nameAr, roleAr, descAr, symbolAr);
 }
 
-function openEditGod(id, name, role, symbol, img, desc) {
+function openEditGod(id, name, role, symbol, img, desc, nameAr, roleAr, descAr, symbolAr) {
     document.getElementById('editGodId').value     = id;
     document.getElementById('editGodName').value   = name;
     document.getElementById('editGodRole').value   = role;
     document.getElementById('editGodSymbol').value = symbol;
     document.getElementById('editGodImg').value    = img;
     document.getElementById('editGodDesc').value   = desc;
+    document.getElementById('editGodNameAr').value = nameAr || '';
+    document.getElementById('editGodRoleAr').value = roleAr || '';
+    document.getElementById('editGodDescAr').value = descAr || '';
+    document.getElementById('editGodSymbolAr').value = symbolAr || '';
     const prev = document.getElementById('editGodImgPreview');
     prev.src = img; prev.style.display = img ? 'block' : 'none';
     openModal('modalEditGod');
@@ -2905,6 +3281,12 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('editArtifactLocation').value = btn.dataset.location;
         document.getElementById('editArtifactImg').value      = btn.dataset.img;
         document.getElementById('editArtifactDesc').value     = btn.dataset.desc;
+        document.getElementById('editArtifactNameAr').value     = btn.dataset.namear || '';
+        document.getElementById('editArtifactOriginAr').value   = btn.dataset.originar || '';
+        document.getElementById('editArtifactPeriodAr').value   = btn.dataset.periodar || '';
+        document.getElementById('editArtifactCategoryAr').value = btn.dataset.categoryar || '';
+        document.getElementById('editArtifactLocationAr').value = btn.dataset.locationar || '';
+        document.getElementById('editArtifactDescAr').value     = btn.dataset.descar || '';
         openModal('modalEditArtifact');
         }
 
@@ -2918,6 +3300,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('editDynImg').value          = btn.dataset.img;
         document.getElementById('editDynDesc').value         = btn.dataset.desc;
         document.getElementById('editDynAchievements').value = btn.dataset.achievements;
+        document.getElementById('editDynNameAr').value         = btn.dataset.namear || '';
+        document.getElementById('editDynEraAr').value         = btn.dataset.eraar || '';
+        document.getElementById('editDynCapitalAr').value     = btn.dataset.capitalar || '';
+        document.getElementById('editDynDescAr').value        = btn.dataset.descar || '';
+        document.getElementById('editDynAchievementsAr').value = btn.dataset.achievementsar || '';
 
         const preview = document.getElementById('editDynImgPreview');
         if (btn.dataset.img) {

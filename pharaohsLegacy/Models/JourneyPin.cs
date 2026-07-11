@@ -12,5 +12,7 @@
         public string Description { get; set; } = "";
         public string VisitDate { get; set; } = ""; // for bookings only
         public string Status { get; set; } = "";    // for bookings only
+        public string? NameAr { get; set; }
+        public string? DescriptionAr { get; set; }
     }
 }
