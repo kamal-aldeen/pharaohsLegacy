@@ -1,25 +1,25 @@
-﻿.events-page {
+.events-page {
     min-height: 100vh;
-    background: #0a0a0a;
+    background: var(--dark);
     padding-bottom: 80px;
 }
 
 .events-hero {
     text-align: center;
     padding: 80px 20px 40px;
-    background: linear-gradient(180deg, #1a1000 0%, #0a0a0a 100%);
-    border-bottom: 1px solid #8b6914;
+    background: linear-gradient(180deg, var(--dark2) 0%, var(--dark) 100%);
+    border-bottom: 1px solid var(--gold-dark);
 }
 
     .events-hero h1 {
         font-size: 3rem;
-        color: #d4a017;
+        color: var(--gold);
         font-family: 'Cinzel', serif;
         margin-bottom: 12px;
     }
 
     .events-hero p {
-        color: #a0856a;
+        color: var(--muted);
         font-size: 1.1rem;
     }
 
@@ -34,21 +34,22 @@
 
 .filter-btn {
     padding: 8px 20px;
-    border: 1px solid #8b6914;
+    border: 1px solid var(--gold-dark);
     border-radius: 30px;
-    color: #d4a017;
+    color: var(--gold);
     text-decoration: none;
     font-size: 0.9rem;
     transition: all 0.3s;
 }
 
     .filter-btn:hover, .filter-btn.active {
-        background: #d4a017;
-        color: #0a0a0a;
+        border-color: var(--gold);
+        color: var(--gold);
+        background: rgba(var(--gold-rgb),0.08);
         font-weight: 600;
     }
 
-/* Category Colors */
+/* Category Colors — ثابتة عمدًا (دلالية، مش جزء من نظام السطح المتقلب) */
 .cat-badge {
     padding: 3px 10px;
     border-radius: 20px;
@@ -123,7 +124,7 @@
     top: 0;
     bottom: 0;
     width: 2px;
-    background: linear-gradient(180deg, #d4a017, #8b6914, #d4a017);
+    background: linear-gradient(180deg, var(--gold), var(--gold-dark), var(--gold));
     transform: translateX(-50%);
 }
 
@@ -158,10 +159,11 @@
     height: 16px;
     border-radius: 50%;
     transform: translateX(-50%);
-    border: 3px solid #0a0a0a;
+    border: 3px solid var(--dark);
     z-index: 2;
 }
 
+/* Category dot colors — ثابتة عمدًا (دلالية) */
 .cat-dot-political {
     background: #8b2020;
 }
@@ -184,15 +186,15 @@
 
 .timeline-card {
     width: 100%;
-    background: #111;
-    border: 1px solid #2a2a2a;
+    background: var(--dark3);
+    border: 1px solid var(--border);
     border-radius: 12px;
     overflow: hidden;
     transition: border-color 0.3s, transform 0.3s;
 }
 
     .timeline-card:hover {
-        border-color: #d4a017;
+        border-color: var(--gold);
         transform: translateY(-3px);
     }
 
@@ -209,8 +211,8 @@
 
 .event-year-badge {
     display: inline-block;
-    background: #d4a017;
-    color: #0a0a0a;
+    background: var(--gold);
+    color: #0d0702;
     padding: 3px 12px;
     border-radius: 20px;
     font-size: 0.8rem;
@@ -225,34 +227,34 @@
     }
 
 .event-card-body h3 {
-    color: #e8d5a3;
+    color: var(--text);
     font-size: 1rem;
     font-family: 'Cinzel', serif;
     margin: 8px 0;
 }
 
 .event-card-body p {
-    color: #888;
+    color: var(--muted);
     font-size: 0.85rem;
     line-height: 1.6;
     margin-bottom: 10px;
 }
 
 .event-dynasty-tag {
-    color: #8b6914;
+    color: var(--gold-dark);
     font-size: 0.8rem;
     margin-bottom: 10px;
 }
 
 .event-details-btn {
-    color: #d4a017;
+    color: var(--gold);
     text-decoration: none;
     font-size: 0.85rem;
     font-weight: 600;
 }
 
     .event-details-btn:hover {
-        color: #f0c040;
+        color: var(--gold-light);
     }
 
 /* Details Page */
@@ -276,6 +278,7 @@
     max-width: 800px;
 }
 
+    /* فوق صورة حقيقية + أوفرلاي أسود ثابت — استثناء مقصود زي Dynasty Details، مبيتغيرش مع الوضع */
     .event-hero-content h1 {
         color: #e8d5a3;
         font-family: 'Cinzel', serif;
@@ -290,21 +293,21 @@
 }
 
 .event-desc-card {
-    background: #111;
-    border: 1px solid #2a2a2a;
+    background: var(--dark3);
+    border: 1px solid var(--border);
     border-radius: 12px;
     padding: 30px;
     margin-bottom: 30px;
 }
 
     .event-desc-card h2 {
-        color: #d4a017;
+        color: var(--gold);
         font-family: 'Cinzel', serif;
         margin-bottom: 16px;
     }
 
     .event-desc-card p {
-        color: #aaa;
+        color: var(--muted);
         line-height: 1.8;
         font-size: 1rem;
     }
@@ -317,15 +320,15 @@
 }
 
 .relation-card {
-    background: #111;
-    border: 1px solid #2a2a2a;
+    background: var(--dark3);
+    border: 1px solid var(--border);
     border-radius: 12px;
     overflow: hidden;
     transition: border-color 0.3s;
 }
 
     .relation-card:hover {
-        border-color: #d4a017;
+        border-color: var(--gold);
     }
 
     .relation-card img {
@@ -340,7 +343,7 @@
 }
 
 .relation-label {
-    color: #8b6914;
+    color: var(--gold-dark);
     font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 1px;
@@ -348,20 +351,20 @@
 }
 
 .relation-body h3 {
-    color: #e8d5a3;
+    color: var(--text);
     font-family: 'Cinzel', serif;
     font-size: 1rem;
     margin: 6px 0;
 }
 
 .relation-body p {
-    color: #777;
+    color: var(--muted);
     font-size: 0.85rem;
     margin-bottom: 10px;
 }
 
 .relation-body a {
-    color: #d4a017;
+    color: var(--gold);
     text-decoration: none;
     font-size: 0.85rem;
     font-weight: 600;
@@ -372,7 +375,7 @@
 }
 
     .related-events-section h2 {
-        color: #d4a017;
+        color: var(--gold);
         font-family: 'Cinzel', serif;
         margin-bottom: 16px;
     }
@@ -384,8 +387,8 @@
 }
 
 .related-event-card {
-    background: #111;
-    border: 1px solid #2a2a2a;
+    background: var(--dark3);
+    border: 1px solid var(--border);
     border-radius: 10px;
     padding: 16px;
     text-decoration: none;
@@ -394,12 +397,12 @@
 }
 
     .related-event-card:hover {
-        border-color: #d4a017;
+        border-color: var(--gold);
         transform: translateY(-3px);
     }
 
 .related-year {
-    color: #d4a017;
+    color: var(--gold);
     font-size: 0.85rem;
     font-weight: 700;
     font-family: 'Cinzel', serif;
@@ -407,7 +410,7 @@
 }
 
 .related-event-card h4 {
-    color: #e8d5a3;
+    color: var(--text);
     font-family: 'Cinzel', serif;
     font-size: 0.9rem;
     margin-top: 6px;
@@ -415,23 +418,23 @@
 
 .back-btn {
     display: inline-block;
-    color: #d4a017;
+    color: var(--gold);
     text-decoration: none;
-    border: 1px solid #8b6914;
+    border: 1px solid var(--gold-dark);
     padding: 10px 24px;
     border-radius: 30px;
     transition: all 0.3s;
 }
 
     .back-btn:hover {
-        background: #d4a017;
-        color: #0a0a0a;
+        background: var(--gold);
+        color: #0d0702;
     }
 
 .events-empty {
     text-align: center;
     padding: 80px 20px;
-    color: #666;
+    color: var(--muted);
     font-size: 1.1rem;
 }
 
@@ -441,7 +444,7 @@
 }
 
     .dynasty-events-section h2 {
-        color: #d4a017;
+        color: var(--gold);
         font-family: 'Cinzel', serif;
         margin-bottom: 16px;
         font-size: 1.4rem;
@@ -457,9 +460,9 @@
     display: flex;
     align-items: center;
     gap: 14px;
-    background: #111;
-    border: 0.5px solid #2a2a2a;
-    border-left: 3px solid #8b6914;
+    background: var(--dark3);
+    border: 0.5px solid var(--border);
+    border-left: 3px solid var(--gold-dark);
     border-radius: 0 10px 10px 0;
     padding: 12px 16px;
     text-decoration: none;
@@ -467,9 +470,10 @@
 }
 
     .dynasty-event-item:hover {
-        background: #1a1a1a;
+        background: var(--dark2);
     }
 
+    /* حدود الفئات — ثابتة عمدًا (دلالية) */
     .dynasty-event-item.cat-political {
         border-left-color: #8b2020;
     }
@@ -491,7 +495,7 @@
     }
 
 .dynasty-event-year {
-    color: #a0856a;
+    color: var(--muted);
     font-size: 0.8rem;
     font-weight: 600;
     min-width: 75px;
@@ -506,6 +510,7 @@
     color: #fff;
 }
 
+    /* شارات الفئات — ثابتة عمدًا (دلالية) */
     .dynasty-event-badge.cat-political {
         background: #8b2020;
     }
@@ -527,19 +532,19 @@
     }
 
 .dynasty-event-title {
-    color: #e8d5a3;
+    color: var(--text);
     font-size: 0.9rem;
     flex: 1;
 }
 
 .dynasty-event-arrow {
-    color: #8b6914;
+    color: var(--gold-dark);
     font-size: 0.9rem;
 }
 
 
 /* Responsive */
-@@media (max-width: 768px) {
+@media (max-width: 768px) {
     .timeline-line {
         left: 20px;
     }

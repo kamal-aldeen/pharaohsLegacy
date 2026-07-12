@@ -20,7 +20,7 @@
 
     @if (pharaohs != null && pharaohs.Count > 0)
     {
-        <h3 style="font-family:'Cinzel',serif; color:#c9a227; margin-bottom:1rem;">@Html.L("Common_PharaohsPlural")</h3>
+        <h3 style="font-family:'Cinzel',serif; color:var(--gold); margin-bottom:1rem;">@Html.L("Common_PharaohsPlural")</h3>
         <div class="cards-grid">
             @foreach (var p in pharaohs)
             {
@@ -39,7 +39,7 @@
 
     @if (temples != null && temples.Count > 0)
     {
-        <h3 style="font-family:'Cinzel',serif; color:#c9a227; margin:2rem 0 1rem;">@Html.L("Common_TemplesPlural")</h3>
+        <h3 style="font-family:'Cinzel',serif; color:var(--gold); margin:2rem 0 1rem;">@Html.L("Common_TemplesPlural")</h3>
         <div class="cards-grid">
             @foreach (var t in temples)
             {
@@ -58,7 +58,7 @@
 
     @if (gods != null && gods.Count > 0)
     {
-        <h3 style="font-family:'Cinzel',serif; color:#c9a227; margin:2rem 0 1rem;">@Html.L("Common_GodsPlural")</h3>
+        <h3 style="font-family:'Cinzel',serif; color:var(--gold); margin:2rem 0 1rem;">@Html.L("Common_GodsPlural")</h3>
         <div class="cards-grid">
             @foreach (var g in gods)
             {
@@ -77,7 +77,7 @@
 
     @if (museums != null && museums.Count > 0)
     {
-        <h3 style="font-family:'Cinzel',serif; color:#c9a227; margin:2rem 0 1rem;">@Html.L("Common_MuseumsPlural")</h3>
+        <h3 style="font-family:'Cinzel',serif; color:var(--gold); margin:2rem 0 1rem;">@Html.L("Common_MuseumsPlural")</h3>
         <div class="cards-grid">
             @foreach (var m in museums)
             {
@@ -96,7 +96,7 @@
 
     @if (artifacts != null && artifacts.Count > 0)
     {
-        <h3 style="font-family:'Cinzel',serif; color:#c9a227; margin:2rem 0 1rem;">@Html.L("Common_Artifacts")</h3>
+        <h3 style="font-family:'Cinzel',serif; color:var(--gold); margin:2rem 0 1rem;">@Html.L("Common_Artifacts")</h3>
         <div class="cards-grid">
             @foreach (var a in artifacts)
             {
@@ -115,7 +115,7 @@
 
     @if (dynasties != null && dynasties.Count > 0)
     {
-        <h3 style="font-family:'Cinzel',serif; color:#c9a227; margin:2rem 0 1rem;">@Html.L("Common_DynastiesPlural")</h3>
+        <h3 style="font-family:'Cinzel',serif; color:var(--gold); margin:2rem 0 1rem;">@Html.L("Common_DynastiesPlural")</h3>
         <div class="cards-grid">
             @foreach (var d in dynasties)
             {
@@ -138,7 +138,7 @@
          (artifacts == null || artifacts.Count == 0) &&
          (dynasties == null || dynasties.Count == 0))
     {
-        <div style="text-align:center; padding:3rem; color:#8a7055; font-style:italic;">
+        <div style="text-align:center; padding:3rem; color:var(--muted); font-style:italic;">
             <p style="font-size:3rem; margin-bottom:1rem;">𓂀</p>
             <p>@Html.L("Search_NoResults_Prefix") "@ViewBag.Query"</p>
         </div>

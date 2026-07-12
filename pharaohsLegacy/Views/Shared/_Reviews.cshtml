@@ -223,8 +223,8 @@
 
     .rev-filter-btn {
         background: transparent;
-        border: 1px solid rgba(212,175,55,0.3);
-        color: #aaa;
+        border: 1px solid rgba(var(--gold-rgb),0.3);
+        color: var(--muted);
         padding: 6px 14px;
         border-radius: 20px;
         cursor: pointer;
@@ -233,27 +233,27 @@
     }
 
         .rev-filter-btn:hover {
-            border-color: #d4af37;
-            color: #d4af37;
+            border-color: var(--gold);
+            color: var(--gold);
         }
 
         .rev-filter-btn.active {
-            background: rgba(212,175,55,0.15);
-            border-color: #d4af37;
-            color: #d4af37;
+            background: rgba(var(--gold-rgb),0.15);
+            border-color: var(--gold);
+            color: var(--gold);
         }
 
     /* ── Section ── */
     .reviews-section {
         margin: 50px 0;
         padding: 30px;
-        background: rgba(0,0,0,0.3);
-        border: 1px solid rgba(212,175,55,0.2);
+        background: var(--well-bg);
+        border: 1px solid rgba(var(--gold-rgb),0.2);
         border-radius: 12px;
     }
 
     .reviews-title {
-        color: #d4af37;
+        color: var(--gold);
         font-size: 1.4rem;
         margin-bottom: 20px;
         display: flex;
@@ -267,7 +267,7 @@
     }
 
     .reviews-count {
-        color: #aaa;
+        color: var(--muted);
         font-size: 0.95rem;
     }
 
@@ -278,24 +278,24 @@
         gap: 30px;
         margin-bottom: 30px;
         padding: 20px;
-        background: rgba(212,175,55,0.05);
+        background: rgba(var(--gold-rgb),0.05);
         border-radius: 10px;
         flex-wrap: wrap;
     }
 
     .big-rating {
         font-size: 3rem;
-        color: #d4af37;
+        color: var(--gold);
         font-weight: bold;
     }
 
     .big-stars .star {
         font-size: 1.5rem;
-        color: #444;
+        color: var(--muted);
     }
 
         .big-stars .star.filled {
-            color: #d4af37;
+            color: var(--gold);
         }
 
     .rating-bars {
@@ -311,42 +311,42 @@
     }
 
     .bar-label {
-        color: #aaa;
+        color: var(--muted);
         font-size: .85rem;
         width: 30px;
     }
 
     .bar-track {
         flex: 1;
-        background: #333;
+        background: var(--dark3);
         border-radius: 4px;
         height: 8px;
     }
 
     .bar-fill {
-        background: #d4af37;
+        background: var(--gold);
         height: 100%;
         border-radius: 4px;
         transition: width .5s;
     }
 
     .bar-count {
-        color: #aaa;
+        color: var(--muted);
         font-size: .85rem;
         width: 20px;
     }
 
     /* ── Write Review ── */
     .write-review {
-        background: rgba(212,175,55,0.05);
-        border: 1px solid rgba(212,175,55,0.2);
+        background: rgba(var(--gold-rgb),0.05);
+        border: 1px solid rgba(var(--gold-rgb),0.2);
         border-radius: 10px;
         padding: 25px;
         margin-bottom: 30px;
     }
 
         .write-review h4 {
-            color: #d4af37;
+            color: var(--gold);
             margin-bottom: 15px;
         }
 
@@ -359,17 +359,17 @@
     .pick-star {
         font-size: 2rem;
         cursor: pointer;
-        color: #555;
+        color: var(--muted);
         transition: color .2s,transform .2s;
     }
 
         .pick-star:hover, .pick-star.active {
-            color: #d4af37;
+            color: var(--gold);
             transform: scale(1.2);
         }
 
     .star-hint {
-        color: #888;
+        color: var(--muted);
         font-size: .85rem;
         margin-bottom: 15px;
     }
@@ -377,10 +377,10 @@
     .write-review textarea, .edit-form textarea {
         width: 100%;
         min-height: 90px;
-        background: rgba(0,0,0,0.4);
-        border: 1px solid rgba(212,175,55,0.3);
+        background: var(--well-bg);
+        border: 1px solid rgba(var(--gold-rgb),0.3);
         border-radius: 8px;
-        color: #e8d5a3;
+        color: var(--text);
         padding: 12px;
         font-size: .95rem;
         resize: vertical;
@@ -389,19 +389,19 @@
 
         .write-review textarea:focus, .edit-form textarea:focus {
             outline: none;
-            border-color: #d4af37;
+            border-color: var(--gold);
         }
 
     .char-count {
         text-align: end;
-        color: #888;
+        color: var(--muted);
         font-size: .8rem;
         margin-bottom: 12px;
     }
 
     .btn-submit-review {
-        background: linear-gradient(135deg,#d4af37,#f0c040);
-        color: #1a0a00;
+        background: linear-gradient(135deg,var(--gold),var(--gold-light));
+        color: var(--on-gold);
         border: none;
         padding: 10px 28px;
         border-radius: 6px;
@@ -421,21 +421,21 @@
 
     /* ── Already reviewed / login ── */
     .already-reviewed, .login-to-review {
-        background: rgba(212,175,55,0.08);
-        border: 1px solid rgba(212,175,55,0.2);
+        background: rgba(var(--gold-rgb),0.08);
+        border: 1px solid rgba(var(--gold-rgb),0.2);
         border-radius: 8px;
         padding: 15px 20px;
-        color: #d4af37;
+        color: var(--gold);
         margin-bottom: 25px;
     }
 
         .login-to-review a {
-            color: #f0c040;
+            color: var(--gold-light);
         }
 
     /* ── Review Card ── */
     .review-card {
-        border-bottom: 1px solid rgba(212,175,55,0.1);
+        border-bottom: 1px solid rgba(var(--gold-rgb),0.1);
         padding: 20px 0;
     }
 
@@ -455,11 +455,11 @@
         width: 40px;
         height: 40px;
         border-radius: 50%;
-        background: linear-gradient(135deg,#d4af37,#8b6914);
+        background: linear-gradient(135deg,var(--gold),var(--gold-dark));
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #1a0a00;
+        color: var(--on-gold);
         font-weight: bold;
         font-size: 1.1rem;
         flex-shrink: 0;
@@ -467,38 +467,38 @@
     }
 
     .reviewer-name {
-        color: #e8d5a3;
+        color: var(--text);
         font-weight: 600;
         display: block;
     }
 
     .reviewer-date {
-        color: #888;
+        color: var(--muted);
         font-size: .8rem;
     }
 
     .edited-badge {
-        color: #888;
+        color: var(--muted);
         font-size: .75rem;
         margin-inline-start: 5px;
     }
 
     .review-stars .star {
-        color: #444;
+        color: var(--muted);
     }
 
         .review-stars .star.filled {
-            color: #d4af37;
+            color: var(--gold);
         }
 
     .review-comment {
-        color: #ccc;
+        color: var(--muted);
         line-height: 1.6;
         margin: 0 0 12px;
     }
 
     .no-reviews {
-        color: #888;
+        color: var(--muted);
         font-style: italic;
         text-align: center;
         padding: 20px 0;
@@ -508,8 +508,8 @@
     .btn-edit-review {
         margin-inline-start: auto;
         background: transparent;
-        border: 1px solid rgba(212,175,55,0.4);
-        color: #d4af37;
+        border: 1px solid rgba(var(--gold-rgb),0.4);
+        color: var(--gold);
         padding: 4px 10px;
         border-radius: 5px;
         cursor: pointer;
@@ -518,14 +518,14 @@
     }
 
         .btn-edit-review:hover {
-            background: rgba(212,175,55,0.15);
+            background: rgba(var(--gold-rgb),0.15);
         }
 
     /* ── Report Button ── */
     .btn-report-review {
         background: transparent;
         border: none;
-        color: #888;
+        color: var(--muted);
         cursor: pointer;
         font-size: 1rem;
         padding: 4px 6px;
@@ -535,13 +535,13 @@
     }
 
         .btn-report-review:hover {
-            color: #e74c3c;
+            color: var(--red);
         }
 
     /* ── Inline Edit Form ── */
     .edit-form {
-        background: rgba(212,175,55,0.04);
-        border: 1px solid rgba(212,175,55,0.2);
+        background: rgba(var(--gold-rgb),0.04);
+        border: 1px solid rgba(var(--gold-rgb),0.2);
         border-radius: 8px;
         padding: 18px;
         margin: 10px 0;
@@ -562,8 +562,8 @@
     }
 
     .btn-save-edit {
-        background: linear-gradient(135deg,#d4af37,#f0c040);
-        color: #1a0a00;
+        background: linear-gradient(135deg,var(--gold),var(--gold-light));
+        color: var(--on-gold);
         border: none;
         padding: 8px 20px;
         border-radius: 6px;
@@ -578,8 +578,8 @@
 
     .btn-cancel-edit {
         background: transparent;
-        border: 1px solid #555;
-        color: #aaa;
+        border: 1px solid var(--border);
+        color: var(--muted);
         padding: 8px 16px;
         border-radius: 6px;
         cursor: pointer;
@@ -587,8 +587,8 @@
     }
 
         .btn-cancel-edit:hover {
-            border-color: #888;
-            color: #fff;
+            border-color: var(--muted);
+            color: var(--text);
         }
 
     /* ── Helpful Button ── */
@@ -598,8 +598,8 @@
 
     .btn-helpful {
         background: transparent;
-        border: 1px solid rgba(212,175,55,0.25);
-        color: #aaa;
+        border: 1px solid rgba(var(--gold-rgb),0.25);
+        color: var(--muted);
         padding: 5px 14px;
         border-radius: 20px;
         cursor: pointer;
@@ -608,18 +608,18 @@
     }
 
         .btn-helpful:hover {
-            border-color: #d4af37;
-            color: #d4af37;
+            border-color: var(--gold);
+            color: var(--gold);
         }
 
         .btn-helpful.voted {
-            background: rgba(212,175,55,0.15);
-            border-color: #d4af37;
-            color: #d4af37;
+            background: rgba(var(--gold-rgb),0.15);
+            border-color: var(--gold);
+            color: var(--gold);
         }
 
     .helpful-display {
-        color: #888;
+        color: var(--muted);
         font-size: .82rem;
     }
 
@@ -639,8 +639,8 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%,-50%);
-        background: #1a0f00;
-        border: 1px solid rgba(212,175,55,0.3);
+        background: var(--dark2);
+        border: 1px solid rgba(var(--gold-rgb),0.3);
         border-radius: 12px;
         padding: 30px;
         width: 90%;
@@ -650,13 +650,13 @@
     }
 
         .report-modal h4 {
-            color: #d4af37;
+            color: var(--gold);
             margin-bottom: 6px;
             font-size: 1.15rem;
         }
 
     .report-subtitle {
-        color: #aaa;
+        color: var(--muted);
         font-size: .85rem;
         margin-bottom: 16px;
     }
@@ -670,8 +670,8 @@
 
     .reason-btn {
         background: transparent;
-        border: 1px solid rgba(212,175,55,0.3);
-        color: #aaa;
+        border: 1px solid rgba(var(--gold-rgb),0.3);
+        color: var(--muted);
         padding: 6px 12px;
         border-radius: 20px;
         cursor: pointer;
@@ -680,23 +680,23 @@
     }
 
         .reason-btn:hover {
-            border-color: #d4af37;
-            color: #d4af37;
+            border-color: var(--gold);
+            color: var(--gold);
         }
 
         .reason-btn.active {
-            background: rgba(212,175,55,0.15);
-            border-color: #d4af37;
-            color: #d4af37;
+            background: rgba(var(--gold-rgb),0.15);
+            border-color: var(--gold);
+            color: var(--gold);
         }
 
     .report-modal textarea {
         width: 100%;
         min-height: 80px;
-        background: rgba(0,0,0,0.4);
-        border: 1px solid rgba(212,175,55,0.3);
+        background: var(--well-bg);
+        border: 1px solid rgba(var(--gold-rgb),0.3);
         border-radius: 8px;
-        color: #e8d5a3;
+        color: var(--text);
         padding: 10px;
         font-size: .9rem;
         resize: vertical;
@@ -706,7 +706,7 @@
 
         .report-modal textarea:focus {
             outline: none;
-            border-color: #d4af37;
+            border-color: var(--gold);
         }
 
     .report-actions {
@@ -715,7 +715,7 @@
     }
 
     .btn-submit-report {
-        background: linear-gradient(135deg,#c0392b,#e74c3c);
+        background: linear-gradient(135deg,var(--red-dark),var(--red));
         color: #fff;
         border: none;
         padding: 9px 22px;
@@ -731,8 +731,8 @@
 
     .btn-cancel-report {
         background: transparent;
-        border: 1px solid #555;
-        color: #aaa;
+        border: 1px solid var(--border);
+        color: var(--muted);
         padding: 9px 16px;
         border-radius: 6px;
         cursor: pointer;
@@ -740,8 +740,8 @@
     }
 
         .btn-cancel-report:hover {
-            border-color: #888;
-            color: #fff;
+            border-color: var(--muted);
+            color: var(--text);
         }
 </style>
 
@@ -840,7 +840,7 @@
 
     function showMsg(el, text, type) {
         el.textContent = text;
-        el.style.color = type === 'ok' ? '#27ae60' : type === 'warn' ? '#f39c12' : '#e74c3c';
+        el.style.color = type === 'ok' ? 'var(--green)' : type === 'warn' ? '#f39c12' : 'var(--red)';
     }
 
     /* ── Submit Review ── */

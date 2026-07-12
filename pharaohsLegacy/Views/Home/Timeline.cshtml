@@ -25,7 +25,7 @@
             font-size: .65rem;
             letter-spacing: 4px;
             text-transform: uppercase;
-            color: #c9a227;
+            color: var(--gold);
             margin-bottom: 1rem;
             display: block;
         }
@@ -34,14 +34,14 @@
             font-family: 'Cinzel', serif;
             font-size: clamp(2rem, 5vw, 3rem);
             font-weight: 700;
-            color: #e8d5b0;
+            color: var(--text);
             margin-bottom: 1rem;
         }
 
         .tl-hero-line {
             width: 80px;
             height: 1px;
-            background: linear-gradient(90deg, transparent, #c9a227, transparent);
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
             margin: 0 auto;
         }
 
@@ -61,18 +61,18 @@
             text-transform: uppercase;
             padding: 7px 16px;
             border-radius: 20px;
-            border: 1px solid #3d2a15;
+            border: 1px solid var(--border);
             background: transparent;
-            color: #8a7055;
+            color: var(--muted);
             cursor: pointer;
             transition: all .25s;
         }
 
             .tl-filter-btn:hover,
             .tl-filter-btn.active {
-                border-color: #c9a227;
-                color: #c9a227;
-                background: rgba(201,162,39,0.08);
+                border-color: var(--gold);
+                color: var(--gold);
+                background: rgba(var(--gold-rgb),0.08);
             }
 
         /* Dynasty Group */
@@ -93,11 +93,11 @@
                 content: '';
                 flex: 1;
                 height: 1px;
-                background: linear-gradient(90deg, transparent, #c9a227);
+                background: linear-gradient(90deg, transparent, var(--gold));
             }
 
             .tl-dynasty-header::after {
-                background: linear-gradient(90deg, #c9a227, transparent);
+                background: linear-gradient(90deg, var(--gold), transparent);
             }
 
         .tl-dynasty-label {
@@ -105,12 +105,12 @@
             font-size: .7rem;
             letter-spacing: 3px;
             text-transform: uppercase;
-            color: #c9a227;
+            color: var(--gold);
             white-space: nowrap;
             padding: 6px 16px;
-            border: 1px solid #3d2a15;
+            border: 1px solid var(--border);
             border-radius: 20px;
-            background: #1a0e05;
+            background: var(--dark2);
         }
 
         /* Timeline */
@@ -126,7 +126,7 @@
                 top: 0;
                 bottom: 0;
                 width: 1px;
-                background: linear-gradient(to bottom, transparent, #c9a227, transparent);
+                background: linear-gradient(to bottom, transparent, var(--gold), transparent);
                 transform: translateX(-50%);
             }
 
@@ -161,22 +161,22 @@
                 top: 1.2rem;
                 transform: translateX(-50%);
                 font-size: .9rem;
-                color: #c9a227;
-                background: #1a0e05;
+                color: var(--gold);
+                background: var(--dark2);
                 width: 28px;
                 height: 28px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 border-radius: 50%;
-                border: 1px solid #3d2a15;
+                border: 1px solid var(--border);
                 z-index: 1;
             }
 
         /* Card */
         .tl-card {
-            background: #2d1a08;
-            border: 1px solid #3d2a15;
+            background: var(--dark3);
+            border: 1px solid var(--border);
             border-radius: 12px;
             overflow: hidden;
             width: 100%;
@@ -187,7 +187,7 @@
         }
 
             .tl-card:hover {
-                border-color: #c9a227;
+                border-color: var(--gold);
                 transform: translateY(-3px);
             }
 
@@ -217,7 +217,7 @@
             font-size: .6rem;
             letter-spacing: 3px;
             text-transform: uppercase;
-            color: #c9a227;
+            color: var(--gold);
             margin-bottom: .4rem;
         }
 
@@ -225,20 +225,20 @@
             font-family: 'Cinzel', serif;
             font-size: 1.1rem;
             font-weight: 700;
-            color: #e8d5b0;
+            color: var(--text);
             margin-bottom: .3rem;
         }
 
         .tl-card-period {
             font-size: .85rem;
-            color: #8a7055;
+            color: var(--muted);
         }
 
         /* Empty state */
         .tl-empty {
             text-align: center;
             padding: 3rem;
-            color: #8a7055;
+            color: var(--muted);
             font-family: 'Cinzel', serif;
             font-size: .85rem;
             letter-spacing: 2px;

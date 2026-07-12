@@ -44,33 +44,33 @@
             padding: .6rem 1.2rem;
             border-radius: 20px;
             cursor: pointer;
-            border: 1px solid #3d2a15;
+            border: 1px solid var(--border);
             transition: all .3s;
-            background: rgba(13,7,2,.92);
-            color: #8a7055;
+            background: rgba(var(--dark-rgb),.92);
+            color: var(--muted);
             backdrop-filter: blur(10px);
         }
 
             .map-filter-btn.active {
-                border-color: #c9a227;
-                color: #c9a227;
+                border-color: var(--gold);
+                color: var(--gold);
             }
 
             .map-filter-btn:hover {
-                border-color: #c9a227;
-                color: #c9a227;
+                border-color: var(--gold);
+                color: var(--gold);
             }
 
         /* Popup */
         .leaflet-popup-content-wrapper {
-            background: #1a0e05 !important;
-            border: 1px solid #3d2a15 !important;
+            background: var(--dark2) !important;
+            border: 1px solid var(--border) !important;
             border-radius: 8px !important;
             box-shadow: 0 8px 32px rgba(0,0,0,.5) !important;
         }
 
         .leaflet-popup-tip {
-            background: #1a0e05 !important;
+            background: var(--dark2) !important;
         }
 
         .leaflet-popup-content {
@@ -80,7 +80,7 @@
         }
 
         .leaflet-popup-close-button {
-            color: #8a7055 !important;
+            color: var(--muted) !important;
             top: 8px !important;
             right: 8px !important;
         }
@@ -102,7 +102,7 @@
             font-size: .6rem;
             letter-spacing: 2px;
             text-transform: uppercase;
-            color: #c9a227;
+            color: var(--gold);
             display: block;
             margin-bottom: .3rem;
         }
@@ -110,12 +110,12 @@
         .popup-title {
             font-family: 'Cinzel', serif;
             font-size: .95rem;
-            color: #e8d5b0;
+            color: var(--text);
             margin-bottom: .5rem;
         }
 
         .popup-desc {
-            color: #8a7055;
+            color: var(--muted);
             font-size: .85rem;
             line-height: 1.5;
             margin-bottom: .75rem;
@@ -129,9 +129,9 @@
             display: block;
             text-align: center;
             padding: .5rem;
-            background: linear-gradient(135deg, #c9a227, #a07a1a);
+            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
             border-radius: 4px;
-            color: #0d0702 !important;
+            color: var(--on-gold) !important;
             font-family: 'Cinzel', serif;
             font-size: .65rem;
             letter-spacing: 2px;
@@ -149,8 +149,8 @@
             bottom: 2rem;
             left: 1rem;
             z-index: 1000;
-            background: rgba(13,7,2,.92);
-            border: 1px solid #3d2a15;
+            background: rgba(var(--dark-rgb),.92);
+            border: 1px solid var(--border);
             border-radius: 8px;
             padding: .75rem 1rem;
             backdrop-filter: blur(10px);
@@ -161,7 +161,7 @@
             font-size: .6rem;
             letter-spacing: 2px;
             text-transform: uppercase;
-            color: #c9a227;
+            color: var(--gold);
             margin-bottom: .5rem;
             display: block;
         }
@@ -170,7 +170,7 @@
             display: flex;
             align-items: center;
             gap: .5rem;
-            color: #8a7055;
+            color: var(--muted);
             font-size: .85rem;
             margin-bottom: .25rem;
         }
@@ -242,13 +242,25 @@
         zoom: 6
         });
 
-        // Dark Tile Layer
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        // ── Tile Layer — بيتبدّل تلقائي مع الدارك/لايت مود ──
+        function getMapTileUrl() {
+        var isLight = document.documentElement.getAttribute('data-theme') === 'light';
+        return isLight
+        ? 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
+        : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+        }
+
+        var tileLayer = L.tileLayer(getMapTileUrl(), {
         attribution: '',
         maxZoom: 19
         }).addTo(map);
 
         map.attributionControl.remove();
+
+        // بيراقب تغيير data-theme (لما حد يدوس زرار التوجل) ويبدّل الـ tiles على طول
+        new MutationObserver(function () {
+        tileLayer.setUrl(getMapTileUrl());
+        }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
         // Custom Icons
         var templeIcon = L.divIcon({

@@ -24,7 +24,7 @@
          (gods == null || gods.Count == 0) &&
          (museums == null || museums.Count == 0))
     {
-        <div style="text-align:center; padding:4rem; color:#8a7055;">
+        <div style="text-align:center; padding:4rem; color:var(--muted);">
             <p style="font-size:3rem; margin-bottom:1rem;">🤍</p>
             <p style="font-family:'Cinzel',serif; font-size:1rem;">@Html.L("Fav_Empty_Text")</p>
             <p style="font-style:italic; margin-top:.5rem;">@Html.L("Fav_Empty_Sub")</p>
@@ -36,7 +36,7 @@
     
     @if (pharaohs != null && pharaohs.Count > 0)
     {
-        <h3 style="font-family:'Cinzel',serif; color:#c9a227; margin-bottom:1.5rem;">
+        <h3 style="font-family:'Cinzel',serif; color:var(--gold); margin-bottom:1.5rem;">
             ❤️ @Html.L("Common_PharaohsPlural") (@Html.Digits(pharaohs.Count))
         </h3>
 
@@ -67,7 +67,7 @@
     
     @if (temples != null && temples.Count > 0)
     {
-        <h3 style="font-family:'Cinzel',serif; color:#c9a227; margin:3rem 0 1.5rem;">
+        <h3 style="font-family:'Cinzel',serif; color:var(--gold); margin:3rem 0 1.5rem;">
             ❤️ @Html.L("Common_TemplesPlural") (@Html.Digits(temples.Count))
         </h3>
 
@@ -98,7 +98,7 @@
     
     @if (gods != null && gods.Count > 0)
     {
-        <h3 style="font-family:'Cinzel',serif; color:#c9a227; margin:3rem 0 1.5rem;">
+        <h3 style="font-family:'Cinzel',serif; color:var(--gold); margin:3rem 0 1.5rem;">
             ❤️ @Html.L("Common_GodsPlural") (@Html.Digits(gods.Count))
         </h3>
 
@@ -128,7 +128,7 @@
   
     @if (museums != null && museums.Count > 0)
     {
-        <h3 style="font-family:'Cinzel',serif; color:#c9a227; margin:3rem 0 1.5rem;">
+        <h3 style="font-family:'Cinzel',serif; color:var(--gold); margin:3rem 0 1.5rem;">
             ❤️ @Html.L("Common_MuseumsPlural") (@Html.Digits(museums.Count))
         </h3>
 

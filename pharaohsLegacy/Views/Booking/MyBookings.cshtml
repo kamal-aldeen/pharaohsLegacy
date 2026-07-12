@@ -11,20 +11,11 @@
         @@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cairo:wght@300;400;500;600;700&display=swap');
 
         :root {
-            --gold: #c9a84c;
-            --gold-light: #e8c96a;
-            --gold-dark: #9a7a2e;
-            --bg-deep: #0d0a05;
-            --bg-card: #16110a;
-            --bg-card2: #1e1608;
-            --border: rgba(201,168,76,0.18);
-            --border-bright: rgba(201,168,76,0.45);
-            --text-main: #f0e6c8;
-            --text-muted: #9e8e6a;
+            /* الألوان الذهبية والخلفيات بقت بتيجي من _Layout.cshtml (--gold, --gold-light, --gold-dark, --dark, --dark2, --dark3, --text, --muted)
+               عشان الصفحة تستجيب لزرار الـ Dark/Light Toggle. سايبين هنا بس الألوان الدلالية اللي مالهاش علاقة بالثيم. */
             --red: #c0392b;
             --green: #27ae60;
             --yellow: #f39c12;
-            --shadow-gold: 0 0 30px rgba(201,168,76,0.15);
         }
 
         * {
@@ -35,9 +26,9 @@
 
         .bookings-page {
             min-height: 100vh;
-            background: var(--bg-deep);
+            background: var(--dark);
             font-family: 'Cairo', sans-serif;
-            color: var(--text-main);
+            color: var(--text);
             padding-bottom: 80px;
         }
 
@@ -47,14 +38,14 @@
             padding: 60px 20px 50px;
             text-align: center;
             overflow: hidden;
-            background: linear-gradient(180deg, #1a1205 0%, var(--bg-deep) 100%);
+            background: linear-gradient(180deg, var(--dark2) 0%, var(--dark) 100%);
         }
 
             .bookings-hero::before {
                 content: '';
                 position: absolute;
                 inset: 0;
-                background: radial-gradient(ellipse 60% 50% at 50% 0%, rgba(201,168,76,0.12) 0%, transparent 70%);
+                background: radial-gradient(ellipse 60% 50% at 50% 0%, rgba(var(--gold-rgb),0.12) 0%, transparent 70%);
                 pointer-events: none;
             }
 
@@ -79,7 +70,7 @@
             font-family: 'Cinzel', serif;
             font-size: clamp(1.8rem, 4vw, 2.8rem);
             font-weight: 900;
-            background: linear-gradient(135deg, var(--gold-light), #c9a227, var(--gold-dark));
+            background: linear-gradient(135deg, var(--gold-light), var(--gold), var(--gold-dark));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -88,7 +79,7 @@
         }
 
         .bookings-hero p {
-            color: var(--text-muted);
+            color: var(--muted);
             font-size: 0.95rem;
         }
 
@@ -106,19 +97,19 @@
         }
 
         .summary-card {
-            background: var(--bg-card);
-            border: 1px solid rgba(201,168,76,0.15);
+            background: var(--dark2);
+            border: 1px solid rgba(var(--gold-rgb),0.15);
             border-radius: 16px;
             padding: 18px 28px;
             text-align: center;
             min-width: 140px;
             flex: 1;
             transition: border-color .3s, transform .3s;
-            box-shadow: var(--shadow-gold);
+            box-shadow: 0 0 30px rgba(var(--gold-rgb),.15);
         }
 
             .summary-card:hover {
-                border-color: #c9a227;
+                border-color: var(--gold);
                 transform: translateY(-3px);
             }
 
@@ -131,7 +122,7 @@
 
             .summary-card .s-label {
                 font-size: 0.78rem;
-                color: var(--text-muted);
+                color: var(--muted);
                 margin-top: 4px;
                 letter-spacing: 1px;
                 text-transform: uppercase;
@@ -149,8 +140,8 @@
 
         .filter-btn {
             background: transparent;
-            border: 1px solid rgba(201,168,76,0.15);
-            color: var(--text-muted);
+            border: 1px solid rgba(var(--gold-rgb),0.15);
+            color: var(--muted);
             padding: 9px 22px;
             border-radius: 30px;
             cursor: pointer;
@@ -162,15 +153,15 @@
         }
 
             .filter-btn:hover {
-                border-color: #c9a227;
+                border-color: var(--gold);
                 color: var(--gold-light);
             }
 
             .filter-btn.active {
-                background: linear-gradient(135deg, var(--gold-dark), #c9a227);
-                border-color: #c9a227;
-                color: #0d0a05;
-                box-shadow: 0 4px 20px rgba(201,168,76,0.35);
+                background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+                border-color: var(--gold);
+                color: #150f05; /* نص ثابت الغمقان — مش var(--dark) عشان النص لازم يفضل واضح فوق الخلفية الدهبية في الوضعين */
+                box-shadow: 0 4px 20px rgba(var(--gold-rgb),0.35);
             }
 
    
@@ -185,8 +176,8 @@
 
     
         .booking-card {
-            background: var(--bg-card);
-            border: 1px solid rgba(201,168,76,0.15);
+            background: var(--dark2);
+            border: 1px solid rgba(var(--gold-rgb),0.15);
             border-radius: 20px;
             overflow: hidden;
             transition: transform .35s ease, box-shadow .35s ease, border-color .35s ease;
@@ -203,8 +194,8 @@
 
             .booking-card:hover {
                 transform: translateY(-6px);
-                box-shadow: 0 20px 50px rgba(0,0,0,0.6), 0 0 30px rgba(201,168,76,0.1);
-                border-color: var(--border-bright);
+                box-shadow: 0 20px 50px rgba(0,0,0,0.6), 0 0 30px rgba(var(--gold-rgb),0.1);
+                border-color: rgba(var(--gold-rgb),.45);
             }
 
             .booking-card.cancelling {
@@ -236,7 +227,7 @@
         .card-banner {
             position: relative;
             height: 140px;
-            background: linear-gradient(135deg, #1e1608, #2a1e0a);
+            background: linear-gradient(135deg, var(--dark3), var(--dark2));
             display: flex;
             align-items: center;
             justify-content: center;
@@ -258,7 +249,7 @@
         .card-banner-overlay {
             position: absolute;
             inset: 0;
-            background: linear-gradient(180deg, transparent 30%, var(--bg-card) 100%);
+            background: linear-gradient(180deg, transparent 30%, var(--dark2) 100%);
         }
 
         .card-type-icon {
@@ -321,15 +312,15 @@
         }
 
         .meta-item {
-            background: var(--bg-card2);
-            border: 1px solid rgba(201,168,76,0.15);
+            background: var(--dark3);
+            border: 1px solid rgba(var(--gold-rgb),0.15);
             border-radius: 10px;
             padding: 10px 12px;
         }
 
             .meta-item .mi-label {
                 font-size: 0.68rem;
-                color: var(--text-muted);
+                color: var(--muted);
                 text-transform: uppercase;
                 letter-spacing: 1px;
                 margin-bottom: 4px;
@@ -338,7 +329,7 @@
             .meta-item .mi-value {
                 font-size: 0.9rem;
                 font-weight: 600;
-                color: var(--text-main);
+                color: var(--text);
             }
 
             .meta-item.price .mi-value {
@@ -348,8 +339,8 @@
 
     
         .countdown-wrap {
-            background: var(--bg-card2);
-            border: 1px solid rgba(201,168,76,0.15);
+            background: var(--dark3);
+            border: 1px solid rgba(var(--gold-rgb),0.15);
             border-radius: 14px;
             padding: 14px 16px;
             margin-bottom: 16px;
@@ -357,7 +348,7 @@
 
         .countdown-label {
             font-size: 0.72rem;
-            color: var(--text-muted);
+            color: var(--muted);
             text-transform: uppercase;
             letter-spacing: 1px;
             margin-bottom: 10px;
@@ -405,8 +396,8 @@
             font-size: 1.5rem;
             font-weight: 700;
             color: var(--gold-light);
-            background: rgba(201,168,76,0.08);
-            border: 1px solid rgba(201,168,76,0.2);
+            background: rgba(var(--gold-rgb),0.08);
+            border: 1px solid rgba(var(--gold-rgb),0.2);
             border-radius: 8px;
             width: 100%;
             text-align: center;
@@ -434,7 +425,7 @@
 
         .digit-lbl {
             font-size: 0.6rem;
-            color: var(--text-muted);
+            color: var(--muted);
             text-transform: uppercase;
             margin-top: 4px;
             letter-spacing: .5px;
@@ -456,7 +447,7 @@
         .expired-notice {
             text-align: center;
             padding: 10px;
-            color: var(--text-muted);
+            color: var(--muted);
             font-size: 0.82rem;
             font-style: italic;
         }
@@ -486,8 +477,8 @@
             .btn-cancel:disabled {
                 opacity: .35;
                 cursor: not-allowed;
-                border-color:;
-                color: var(--text-muted);
+                border-color: rgba(var(--gold-rgb),.15);
+                color: var(--muted);
             }
 
  
@@ -512,12 +503,12 @@
 
         .empty-state h3 {
             font-family: 'Cinzel', serif;
-            color: var(--text-muted);
+            color: var(--muted);
             font-size: 1.1rem;
         }
 
         .empty-state p {
-            color: var(--text-muted);
+            color: var(--muted);
             font-size: .88rem;
         }
 
@@ -525,8 +516,8 @@
             display: inline-block;
             margin-top: 10px;
             padding: 12px 30px;
-            background: linear-gradient(135deg, var(--gold-dark), #c9a227);
-            color: #0d0a05;
+            background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+            color: #150f05; /* نص ثابت الغمقان — نفس سبب .filter-btn.active فوق */
             border-radius: 30px;
             font-weight: 700;
             font-family: 'Cairo', sans-serif;
@@ -536,7 +527,7 @@
 
             .btn-explore:hover {
                 transform: translateY(-2px);
-                box-shadow: 0 8px 25px rgba(201,168,76,.4);
+                box-shadow: 0 8px 25px rgba(var(--gold-rgb),.4);
             }
 
   
@@ -560,8 +551,8 @@
             }
 
         .modal-box {
-            background: var(--bg-card);
-            border: 1px solid var(--border-bright);
+            background: var(--dark2);
+            border: 1px solid rgba(var(--gold-rgb),.45);
             border-radius: 24px;
             padding: 40px 36px;
             max-width: 420px;
@@ -569,7 +560,7 @@
             text-align: center;
             transform: scale(.9);
             transition: transform .3s;
-            box-shadow: 0 30px 80px rgba(0,0,0,.7), 0 0 40px rgba(201,168,76,.1);
+            box-shadow: 0 30px 80px rgba(0,0,0,.7), 0 0 40px rgba(var(--gold-rgb),.1);
         }
 
         .modal-overlay.open .modal-box {
@@ -589,7 +580,7 @@
         }
 
         .modal-sub {
-            color: var(--text-muted);
+            color: var(--muted);
             font-size: .9rem;
             margin-bottom: 28px;
             line-height: 1.6;
@@ -623,13 +614,13 @@
                 }
 
             .modal-btn.dismiss {
-                background: var(--bg-card2);
-                border: 1px solid rgba(201,168,76,0.15);
-                color: var(--text-muted);
+                background: var(--dark3);
+                border: 1px solid rgba(var(--gold-rgb),0.15);
+                color: var(--muted);
             }
 
                 .modal-btn.dismiss:hover {
-                    border-color: #c9a227;
+                    border-color: var(--gold);
                     color: var(--gold-light);
                 }
 
@@ -644,15 +635,15 @@
         }
 
         .skeleton-card {
-            background: var(--bg-card);
-            border: 1px solid rgba(201,168,76,0.15);
+            background: var(--dark2);
+            border: 1px solid rgba(var(--gold-rgb),0.15);
             border-radius: 20px;
             overflow: hidden;
         }
 
         .sk-banner {
             height: 140px;
-            background: var(--bg-card2);
+            background: var(--dark3);
         }
 
         .sk-body {
@@ -662,7 +653,7 @@
         .sk-line {
             height: 14px;
             border-radius: 99px;
-            background: linear-gradient(90deg, var(--bg-card2) 25%, rgba(201,168,76,.08) 50%, var(--bg-card2) 75%);
+            background: linear-gradient(90deg, var(--dark3) 25%, rgba(var(--gold-rgb),.08) 50%, var(--dark3) 75%);
             background-size: 200% 100%;
             animation: shimmer 1.5s infinite;
             margin-bottom: 12px;
@@ -692,12 +683,12 @@
             bottom: 30px;
             left: 50%;
             transform: translateX(-50%) translateY(100px);
-            background: var(--bg-card);
-            border: 1px solid var(--border-bright);
+            background: var(--dark2);
+            border: 1px solid rgba(var(--gold-rgb),.45);
             border-radius: 14px;
             padding: 14px 28px;
             font-size: .9rem;
-            color: var(--text-main);
+            color: var(--text);
             box-shadow: 0 10px 40px rgba(0,0,0,.6);
             z-index: 9998;
             transition: transform .4s cubic-bezier(.175,.885,.32,1.275);
@@ -713,8 +704,8 @@
             width: 100%;
             padding: 10px;
             background: transparent;
-            border: 1px solid rgba(201,168,76,0.15);
-            color: var(--text-muted);
+            border: 1px solid rgba(var(--gold-rgb),0.15);
+            color: var(--muted);
             border-radius: 12px;
             font-family: 'Cairo', sans-serif;
             font-size: 0.85rem;
@@ -726,9 +717,9 @@
         }
 
             .btn-track:hover {
-                border-color: #c9a227;
+                border-color: var(--gold);
                 color: var(--gold-light);
-                background: rgba(201,168,76,0.05);
+                background: rgba(var(--gold-rgb),0.05);
             }
 
         .tracking-panel {
@@ -748,13 +739,13 @@
             font-size: 0.75rem;
             letter-spacing: 2px;
             text-transform: uppercase;
-            color: #c9a227;
+            color: var(--gold);
             margin: 14px 0 6px;
         }
 
         .track-id {
             font-size: 0.75rem;
-            color: var(--text-muted);
+            color: var(--muted);
             margin-bottom: 14px;
             font-style: italic;
         }
@@ -780,7 +771,7 @@
             height: 13px;
             border-radius: 50%;
             border: 2px solid;
-            background: var(--bg-card2);
+            background: var(--dark3);
             flex-shrink: 0;
             margin-top: 3px;
             transition: all .3s;
@@ -795,7 +786,7 @@
         }
 
         .track-step.pending .step-dot {
-            background: var(--bg-card2);
+            background: var(--dark3);
             border-color: var(--gold-dark);
         }
 
@@ -811,7 +802,7 @@
             top: 16px;
             width: 1px;
             height: calc(100% - 8px);
-            background: rgba(201,168,76,0.15);
+            background: rgba(var(--gold-rgb),0.15);
         }
 
         .track-step.done .step-line {
@@ -831,12 +822,12 @@
         .step-title {
             font-size: 0.85rem;
             font-weight: 600;
-            color: var(--text-main);
+            color: var(--text);
             margin-bottom: 2px;
         }
 
         .track-step.pending .step-title {
-            color: var(--text-muted);
+            color: var(--muted);
         }
 
         .track-step.cancelled .step-title {
@@ -845,7 +836,7 @@
 
         .step-date {
             font-size: 0.72rem;
-            color: var(--text-muted);
+            color: var(--muted);
         }
 
         @@media (max-width: 600px) {

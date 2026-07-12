@@ -31,7 +31,7 @@
     }
 
         .dynasty-events-section h2 {
-            color: #d4a017;
+            color: var(--gold);
             font-family: 'Cinzel', serif;
             margin-bottom: 16px;
             font-size: 1.4rem;
@@ -47,9 +47,9 @@
         display: flex !important;
         align-items: center !important;
         gap: 14px !important;
-        background: #111 !important;
-        border: 0.5px solid #2a2a2a !important;
-        border-inline-start: 3px solid #8b6914 !important;
+        background: var(--dark2) !important;
+        border: 0.5px solid var(--border) !important;
+        border-inline-start: 3px solid var(--gold) !important;
         border-start-end-radius: 8px !important;
         border-end-end-radius: 8px !important;
         padding: 10px 16px !important;
@@ -58,9 +58,10 @@
     }
 
         .dynasty-event-item:hover {
-            background: #1a1a1a !important;
+            background: var(--dark3) !important;
         }
 
+        /* ألوان الفئات (Category) ثابتة في الاتنين — دلالية زي لون الـ Favorite، مش جزء من نظام السطح المتقلب */
         .dynasty-event-item.cat-political {
             border-inline-start-color: #8b2020 !important;
         }
@@ -82,7 +83,7 @@
         }
 
     .dynasty-event-year {
-        color: #a0856a !important;
+        color: var(--muted) !important;
         font-size: 0.8rem !important;
         font-weight: 600 !important;
         min-width: 65px !important;
@@ -118,13 +119,13 @@
         }
 
     .dynasty-event-title {
-        color: #e8d5a3 !important;
+        color: var(--text) !important;
         font-size: 0.85rem !important;
         flex: 1 !important;
     }
 
     .dynasty-event-arrow {
-        color: #8b6914 !important;
+        color: var(--gold) !important;
         font-size: 0.85rem !important;
     }
 </style>

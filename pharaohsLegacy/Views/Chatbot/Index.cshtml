@@ -7,18 +7,11 @@
 <style>
     @@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&display=swap');
 
-    :root {
-        --gold: #d4af37;
-        --gold-light: #f0d060;
-        --gold-dim: #a08040;
-        --dark: #110d04;
-        --dark-card: #1e1608;
-        --dark-border: #3a2e10;
-    }
+    /* الألوان بتيجي من _Layout.cshtml (--gold, --gold-light, --gold-dark, --dark, --dark2, --dark3, --border, --text, --muted) */
 
     .chat-page {
         min-height: 100vh;
-        background: radial-gradient(ellipse at top, #2a1f08 0%, #110d04 60%, #0a0804 100%);
+        background: radial-gradient(ellipse at top, var(--dark3) 0%, var(--dark) 60%, var(--dark) 100%);
         padding: 40px 20px 60px;
         font-family: 'Cinzel', serif;
         display: flex;
@@ -35,7 +28,7 @@
         .chat-header .subtitle {
             font-size: 0.78rem;
             letter-spacing: 6px;
-            color: var(--gold-dim);
+            color: var(--gold-dark);
             text-transform: uppercase;
             margin-bottom: 8px;
         }
@@ -44,7 +37,7 @@
             font-size: clamp(1.6rem, 3vw, 2.4rem);
             font-weight: 700;
             color: var(--gold-light);
-            text-shadow: 0 0 30px rgba(212,175,55,0.4);
+            text-shadow: 0 0 30px rgba(var(--gold-rgb),0.4);
             letter-spacing: 3px;
             margin: 0 0 8px;
         }
@@ -60,34 +53,34 @@
             .chat-header .divider span {
                 height: 1px;
                 width: 60px;
-                background: linear-gradient(to right, transparent, var(--gold-dim));
+                background: linear-gradient(to right, transparent, var(--gold-dark));
             }
 
                 .chat-header .divider span:last-child {
-                    background: linear-gradient(to left, transparent, var(--gold-dim));
+                    background: linear-gradient(to left, transparent, var(--gold-dark));
                 }
 
     /* Avatar */
     .imhotep-avatar {
         width: 70px;
         height: 70px;
-        background: linear-gradient(135deg, #3a2e10, #1e1608);
-        border: 2px solid var(--dark-border);
+        background: linear-gradient(135deg, var(--border), var(--dark2));
+        border: 2px solid var(--border);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 2rem;
         margin: 0 auto 16px;
-        box-shadow: 0 0 20px rgba(212,175,55,0.2);
+        box-shadow: 0 0 20px rgba(var(--gold-rgb),0.2);
     }
 
     /* Chat Container */
     .chat-container {
         width: 100%;
         max-width: 720px;
-        background: linear-gradient(135deg, #1e1608, #110d04);
-        border: 1px solid var(--dark-border);
+        background: linear-gradient(135deg, var(--dark2), var(--dark));
+        border: 1px solid var(--border);
         border-radius: 20px;
         overflow: hidden;
         box-shadow: 0 12px 50px rgba(0,0,0,0.6);
@@ -102,7 +95,7 @@
         flex-direction: column;
         gap: 16px;
         scrollbar-width: thin;
-        scrollbar-color: var(--dark-border) transparent;
+        scrollbar-color: var(--border) transparent;
     }
 
         .messages-area::-webkit-scrollbar {
@@ -114,7 +107,7 @@
         }
 
         .messages-area::-webkit-scrollbar-thumb {
-            background: var(--dark-border);
+            background: var(--border);
             border-radius: 4px;
         }
 
@@ -145,13 +138,13 @@
         width: 36px;
         height: 36px;
         border-radius: 50%;
-        border: 1px solid var(--dark-border);
+        border: 1px solid var(--border);
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 1rem;
         flex-shrink: 0;
-        background: linear-gradient(135deg, #2a1f08, #1a1208);
+        background: linear-gradient(135deg, var(--dark3), var(--dark2));
     }
 
     .msg-bubble {
@@ -164,15 +157,15 @@
     }
 
     .message.bot .msg-bubble {
-        background: linear-gradient(135deg, #2a1f08, #1e1608);
-        border: 1px solid var(--dark-border);
-        color: #c8a855;
+        background: linear-gradient(135deg, var(--dark3), var(--dark2));
+        border: 1px solid var(--border);
+        color: var(--text);
         border-radius: 4px 16px 16px 16px;
     }
 
     .message.user .msg-bubble {
-        background: linear-gradient(135deg, #d4af37, #a08028);
-        color: #1a1208;
+        background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+        color: #150f05; /* نص ثابت الغمقان فوق فقاعة دهبي — نفس مبدأ btn-explore في MyBookings */
         font-weight: 600;
         border-radius: 16px 4px 16px 16px;
     }
@@ -188,7 +181,7 @@
     .dot {
         width: 7px;
         height: 7px;
-        background: var(--gold-dim);
+        background: var(--gold-dark);
         border-radius: 50%;
         animation: bounce 1.2s infinite;
     }
@@ -214,7 +207,7 @@
     /* Input Area */
     .input-area {
         padding: 16px 20px;
-        border-top: 1px solid var(--dark-border);
+        border-top: 1px solid var(--border);
         display: flex;
         gap: 10px;
         background: rgba(0,0,0,0.2);
@@ -222,8 +215,8 @@
 
     .chat-input {
         flex: 1;
-        background: rgba(0,0,0,0.35);
-        border: 1px solid var(--dark-border);
+        background: var(--well-bg);
+        border: 1px solid var(--border);
         border-radius: 10px;
         padding: 12px 16px;
         font-family: Georgia, serif;
@@ -235,15 +228,15 @@
     }
 
         .chat-input::placeholder {
-            color: #4a3820;
+            color: var(--muted);
         }
 
         .chat-input:focus {
-            border-color: var(--gold-dim);
+            border-color: var(--gold-dark);
         }
 
     .send-btn {
-        background: linear-gradient(135deg, #d4af37, #a08028);
+        background: linear-gradient(135deg, var(--gold), var(--gold-dark));
         border: none;
         border-radius: 10px;
         width: 48px;
@@ -253,14 +246,14 @@
         justify-content: center;
         cursor: pointer;
         transition: all 0.25s;
-        color: #1a1208;
+        color: #150f05; /* نص ثابت الغمقان فوق الزرار الدهبي */
         font-size: 1.2rem;
         flex-shrink: 0;
         align-self: flex-end;
     }
 
         .send-btn:hover {
-            background: linear-gradient(135deg, #f0d060, #c09030);
+            background: linear-gradient(135deg, var(--gold-light), var(--gold-dark));
             transform: scale(1.05);
         }
 
@@ -283,21 +276,21 @@
 
     .suggestion-btn {
         background: transparent;
-        border: 1px solid var(--dark-border);
+        border: 1px solid var(--border);
         border-radius: 20px;
         padding: 7px 16px;
         font-family: 'Cinzel', serif;
         font-size: 0.72rem;
-        color: var(--gold-dim);
+        color: var(--gold-dark);
         cursor: pointer;
         transition: all 0.2s;
         letter-spacing: 1px;
     }
 
         .suggestion-btn:hover {
-            border-color: var(--gold-dim);
-            color: #c9a227;
-            background: rgba(212,175,55,0.06);
+            border-color: var(--gold-dark);
+            color: var(--gold);
+            background: rgba(var(--gold-rgb),0.06);
         }
 </style>
 

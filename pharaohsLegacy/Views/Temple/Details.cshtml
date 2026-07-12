@@ -22,7 +22,7 @@
     position: relative; height: 380px;
     border-radius: 16px; overflow: hidden;
             margin-bottom: 2rem;
-            border: 1px solid #3d2a15;
+            border: 1px solid var(--border);
 }
 .det-banner img { width: 100%; height: 100%; object-fit: cover; filter: brightness(.55); }
 .det-banner-overlay {
@@ -38,22 +38,22 @@
 
 .det-content { display: grid; grid-template-columns: 1fr 320px; gap: 2rem; align-items: start; }
 
-.det-section-title { font-family: 'Cinzel', serif; font-size: .65rem; letter-spacing: 3px; text-transform: uppercase; color: #c9a227; margin-bottom: .75rem; display: flex; align-items: center; gap: .75rem; }
+.det-section-title { font-family: 'Cinzel', serif; font-size: .65rem; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-bottom: .75rem; display: flex; align-items: center; gap: .75rem; }
 
             .det-section-title::after {
                 content: '';
                 flex: 1;
                 height: 1px;
-                background: linear-gradient(90deg, #3d2a15, transparent);
+                background: linear-gradient(90deg, var(--border), transparent);
             }
 
-.det-description { color: #8a7055; font-size: 1.05rem; line-height: 1.9; margin-bottom: 2rem; }
+.det-description { color: var(--muted); font-size: 1.05rem; line-height: 1.9; margin-bottom: 2rem; }
 
 .det-sidebar { display: flex; flex-direction: column; gap: 1rem; }
 
         .det-info-card {
-            background: #2d1a08;
-            border: 1px solid #3d2a15;
+            background: var(--dark3);
+            border: 1px solid var(--border);
             border-radius: 12px;
             padding: 1.5rem;
         }
@@ -62,27 +62,27 @@
             font-size: .65rem;
             letter-spacing: 2px;
             text-transform: uppercase;
-            color: #c9a227;
+            color: var(--gold);
             margin-bottom: 1rem;
             padding-bottom: .75rem;
-            border-bottom: 1px solid #3d2a15;
+            border-bottom: 1px solid var(--border);
         }
-.det-info-row { display: flex; align-items: center; gap: .75rem; padding: .6rem 0; border-bottom: 1px solid rgba(61,42,21,.5); }
+.det-info-row { display: flex; align-items: center; gap: .75rem; padding: .6rem 0; border-bottom: 1px solid rgba(var(--border-rgb),.5); }
 .det-info-row:last-child { border-bottom: none; }
 .det-info-icon { font-size: 1.1rem; width: 24px; text-align: center; flex-shrink: 0; }
-.det-info-label { font-size: .75rem; color: #8a7055; text-transform: uppercase; letter-spacing: 1px; font-family: 'Cinzel', serif; }
-.det-info-value { font-size: .95rem; color: #e8d5b0; margin-top: 2px; }
+.det-info-label { font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-family: 'Cinzel', serif; }
+.det-info-value { font-size: .95rem; color: var(--text); margin-top: 2px; }
 
 .det-btn { width: 100%; padding: .9rem; border-radius: 8px; font-family: 'Cinzel', serif; font-size: .7rem; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: all .3s; border: 1px solid; display: flex; align-items: center; justify-content: center; gap: .6rem; text-decoration: none; }
         .det-btn-fav {
             background: transparent;
-            border-color: #3d2a15;
-            color: #8a7055;
+            border-color: var(--border);
+            color: var(--muted);
         }
 .det-btn-fav:hover { border-color: #e74c3c; color: #e74c3c; }
 .det-btn-fav.active { background: rgba(231,76,60,.08); border-color: #e74c3c; color: #e74c3c; }
         .det-btn-book {
-            background: linear-gradient(135deg, #a07a1a, #c9a227);
+            background: linear-gradient(135deg, var(--gold-dark), var(--gold));
             border-color: transparent;
             color: #0d0702;
             font-weight: 700;
@@ -95,13 +95,13 @@
 .det-nav { display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap; }
 
 .det-price-badge {
-    background: rgba(201,162,39,.08);
-    border: 1px solid rgba(201,162,39,.25);
+    background: rgba(var(--gold-rgb),.08);
+    border: 1px solid rgba(var(--gold-rgb),.25);
     border-radius: 8px; padding: 1rem 1.25rem;
     display: flex; align-items: center; justify-content: space-between;
 }
-.det-price-label { font-family: 'Cinzel', serif; font-size: .6rem; letter-spacing: 2px; text-transform: uppercase; color: #8a7055; }
-.det-price-val { font-family: 'Cinzel', serif; font-size: 1.4rem; font-weight: 700; color: #c9a227; }
+.det-price-label { font-family: 'Cinzel', serif; font-size: .6rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+.det-price-val { font-family: 'Cinzel', serif; font-size: 1.4rem; font-weight: 700; color: var(--gold); }
 
 @@media (max-width: 900px) {
     .det-content { grid-template-columns: 1fr; }
