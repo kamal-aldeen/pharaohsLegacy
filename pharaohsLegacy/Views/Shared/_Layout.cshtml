@@ -474,12 +474,24 @@
                 transition: none; opacity: 1; transform: none;
             }
         }
-        .daily-fact-tag { display: block; }
+        .daily-fact-tag { display: block; margin-bottom: 0; }
         .daily-fact-tag::before { content: none; }
+        .daily-fact-meta {
+            display: flex; align-items: center; justify-content: center;
+            gap: 10px; flex-wrap: wrap;
+        }
+        .daily-fact-category {
+            font-family: 'Cinzel', serif; font-size: .58rem;
+            letter-spacing: 1.5px; text-transform: uppercase;
+            color: var(--gold); border: 1px solid var(--border);
+            border-radius: 20px; padding: 3px 12px;
+        }
         .daily-fact-text {
             font-size: 1.05rem; line-height: 1.9; color: var(--text);
             margin-top: .75rem;
+            transition: opacity .25s ease;
         }
+        .daily-fact-text.is-fading { opacity: 0; }
         /* زرار النسخ — أيقونة شفافة صغيرة في الركن، بتبان واضحة عند الـ hover بس، من غير ما تاخد سطر لوحدها */
         .daily-fact-actions {
             position: absolute;
@@ -487,6 +499,7 @@
             inset-inline-end: 16px;
             display: flex;
             align-items: center;
+            gap: 4px;
         }
         .daily-fact-copy-btn {
             background: transparent;
@@ -515,6 +528,12 @@
             background: rgba(var(--gold-rgb), .1);
         }
         .daily-fact-copy-icon { display: block; }
+        .daily-fact-shuffle-btn.is-loading .daily-fact-shuffle-icon {
+            animation: dailyFactSpin .6s linear infinite;
+        }
+        @@keyframes dailyFactSpin {
+            to { transform: rotate(360deg); }
+        }
 
         
         .cards-grid {

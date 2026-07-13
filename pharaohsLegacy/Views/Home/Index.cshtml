@@ -76,8 +76,18 @@
 {
     var factText = (lang == "ar" && !string.IsNullOrEmpty(todaysFact.FactTextAr)) ? todaysFact.FactTextAr : todaysFact.FactText;
     <div class="section daily-fact-section">
-        <div class="daily-fact-card reveal-on-scroll">
+        <div class="daily-fact-card reveal-on-scroll" id="dailyFactCard" data-fact-id="@todaysFact.Id">
             <div class="daily-fact-actions">
+                <button type="button" class="daily-fact-copy-btn daily-fact-shuffle-btn" onclick="shuffleDailyFact(this)"
+                        title="@(lang == "ar" ? "حقيقة تانية" : "Another fact")"
+                        aria-label="@(lang == "ar" ? "حقيقة تانية" : "Another fact")">
+                    <svg class="daily-fact-shuffle-icon" viewBox="0 0 24 24" width="15" height="15"
+                         fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <polyline points="1 20 1 14 7 14"></polyline>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                    </svg>
+                </button>
                 <button type="button" class="daily-fact-copy-btn" onclick="copyDailyFact(this)"
                         title="@(lang == "ar" ? "انسخ الحقيقة" : "Copy fact")"
                         aria-label="@(lang == "ar" ? "انسخ الحقيقة" : "Copy fact")">
@@ -94,8 +104,14 @@
                 </button>
             </div>
             <span class="daily-fact-icon">𓋹</span>
-            <span class="section-tag daily-fact-tag">@Html.L("DailyFact_Title")</span>
-            <p class="daily-fact-text" id="dailyFactText">@factText</p>
+            <div class="daily-fact-meta">
+                <span class="section-tag daily-fact-tag" id="dailyFactTag">@Html.L("DailyFact_Title")</span>
+                @if (!string.IsNullOrEmpty(todaysFact.Category))
+                {
+                    <span class="daily-fact-category" id="dailyFactCategory">@Html.D(todaysFact.CategoryAr, todaysFact.Category)</span>
+                }
+            </div>
+            <p class="daily-fact-text" id="dailyFactText" aria-live="polite">@factText</p>
         </div>
     </div>
 
@@ -161,6 +177,52 @@
 
             observer.observe(el);
         })();
+
+        function shuffleDailyFact(btn) {
+            if (btn.classList.contains('is-loading')) return;
+
+            var card = document.getElementById('dailyFactCard');
+            var textEl = document.getElementById('dailyFactText');
+            var tagEl = document.getElementById('dailyFactTag');
+            var categoryEl = document.getElementById('dailyFactCategory');
+            var currentId = card.getAttribute('data-fact-id');
+
+            btn.classList.add('is-loading');
+            textEl.classList.add('is-fading');
+
+            fetch('/Home/GetRandomFact?excludeId=' + encodeURIComponent(currentId))
+                .then(function (res) { return res.json(); })
+                .then(function (data) {
+                    if (!data || !data.success) return;
+
+                    setTimeout(function () {
+                        textEl.textContent = data.text;
+                        card.setAttribute('data-fact-id', data.id);
+
+                        if (data.category) {
+                            if (categoryEl) {
+                                categoryEl.textContent = data.category;
+                            } else {
+                                categoryEl = document.createElement('span');
+                                categoryEl.className = 'daily-fact-category';
+                                categoryEl.id = 'dailyFactCategory';
+                                categoryEl.textContent = data.category;
+                                tagEl.parentElement.appendChild(categoryEl);
+                            }
+                        } else if (categoryEl) {
+                            categoryEl.remove();
+                        }
+
+                        textEl.classList.remove('is-fading');
+                    }, 200);
+                })
+                .catch(function () {
+                    textEl.classList.remove('is-fading');
+                })
+                .finally(function () {
+                    btn.classList.remove('is-loading');
+                });
+        }
     </script>
 }
 

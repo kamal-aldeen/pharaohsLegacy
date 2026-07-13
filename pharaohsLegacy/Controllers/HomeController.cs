@@ -44,6 +44,36 @@ namespace pharaohsLegacy.Controllers
             return facts[index];
         }
 
+        // بيرجع حقيقة عشوائية تانية غير "حقيقة اليوم" — بيستخدمها زرار "حقيقة تانية" في الـ Home Page
+        [HttpGet]
+        public IActionResult GetRandomFact(int excludeId)
+        {
+            if (HttpContext.Session.GetString("UserEmail") == null)
+                return Json(new { success = false });
+
+            var lang = HttpContext.Session.GetString("Lang") ?? "en";
+
+            var facts = _context.DailyFacts
+                .Where(f => f.Id != excludeId)
+                .ToList();
+
+            if (!facts.Any())
+                return Json(new { success = false });
+
+            var random = new Random();
+            var fact = facts[random.Next(facts.Count)];
+            var text = (lang == "ar" && !string.IsNullOrEmpty(fact.FactTextAr)) ? fact.FactTextAr : fact.FactText;
+            var category = (lang == "ar" && !string.IsNullOrEmpty(fact.CategoryAr)) ? fact.CategoryAr : fact.Category;
+
+            return Json(new
+            {
+                success = true,
+                id = fact.Id,
+                text = text,
+                category = category
+            });
+        }
+
         public IActionResult Privacy()
         {
             return View();

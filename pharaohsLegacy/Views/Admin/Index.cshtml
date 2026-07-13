@@ -1545,6 +1545,7 @@ JavaScript تفتح Modal التعديل.       *@
                                                     data-facttext="@f.FactText"
                                                     data-facttextar="@(f.FactTextAr ?? "")"
                                                     data-category="@(f.Category ?? "")"
+                                                    data-categoryar="@(f.CategoryAr ?? "")"
                                                     onclick="openEditFactBtn(this)">
                                                 ✏ Edit
                                             </button>
@@ -1566,6 +1567,18 @@ JavaScript تفتح Modal التعديل.       *@
                 </div>
             </div>
 
+            @{
+                var knownFactCategories = new[] { "Daily Life", "Science", "Religion", "Architecture", "Political", "Art" };
+                var usedFactCategories = Model.Facts.Select(f => f.Category).Where(c => !string.IsNullOrEmpty(c));
+                var allFactCategories = knownFactCategories.Union(usedFactCategories).OrderBy(c => c).ToList();
+            }
+            <datalist id="dailyFactCategoryOptions">
+                @foreach (var c in allFactCategories)
+                {
+                    <option value="@c"></option>
+                }
+            </datalist>
+
             <!-- ADD FACT -->
             <div class="adm-overlay" id="modalAddFact">
                 <div class="adm-modal">
@@ -1582,13 +1595,19 @@ JavaScript تفتح Modal التعديل.       *@
                             </div>
                             <div class="adm-form-row">
                                 <label class="adm-label">Category</label>
-                                <input class="adm-input" name="Category" placeholder="e.g. Daily Life / Science / Religion" />
+                                <input class="adm-input" name="Category" id="addFactCategory" list="dailyFactCategoryOptions"
+                                       placeholder="Pick from list or type a new category"
+                                       oninput="fillFactCategoryAr(this, 'addFactCategoryAr')" />
                             </div>
 
                             <div class="adm-lang-divider">🇪🇬 Arabic Translation <small>(optional — falls back to English if empty)</small></div>
                             <div class="adm-form-row">
                                 <label class="adm-label">Fact (AR)</label>
                                 <textarea class="adm-textarea adm-textarea-ar" name="FactTextAr" dir="rtl" placeholder="حقيقة مترجمة..."></textarea>
+                            </div>
+                            <div class="adm-form-row">
+                                <label class="adm-label">Category (AR)</label>
+                                <input class="adm-input adm-input-ar" name="CategoryAr" id="addFactCategoryAr" dir="rtl" placeholder="مثال: الحياة اليومية" />
                             </div>
                         </div>
                         <div class="adm-modal-foot">
@@ -1616,13 +1635,19 @@ JavaScript تفتح Modal التعديل.       *@
                             </div>
                             <div class="adm-form-row">
                                 <label class="adm-label">Category</label>
-                                <input class="adm-input" name="Category" id="editFactCategory" />
+                                <input class="adm-input" name="Category" id="editFactCategory" list="dailyFactCategoryOptions"
+                                       placeholder="Pick from list or type a new category"
+                                       oninput="fillFactCategoryAr(this, 'editFactCategoryAr')" />
                             </div>
 
                             <div class="adm-lang-divider">🇪🇬 Arabic Translation <small>(optional — falls back to English if empty)</small></div>
                             <div class="adm-form-row">
                                 <label class="adm-label">Fact (AR)</label>
                                 <textarea class="adm-textarea adm-textarea-ar" name="FactTextAr" id="editFactTextAr" dir="rtl"></textarea>
+                            </div>
+                            <div class="adm-form-row">
+                                <label class="adm-label">Category (AR)</label>
+                                <input class="adm-input adm-input-ar" name="CategoryAr" id="editFactCategoryAr" dir="rtl" />
                             </div>
                         </div>
                         <div class="adm-modal-foot">
@@ -3354,19 +3379,44 @@ function openEditGod(id, name, role, symbol, img, desc, nameAr, roleAr, descAr, 
 
 //  Edit Daily Fact
 
+// ترجمة الفئات المعروفة بتاعة DailyFacts — للربط التلقائي بين خانة Category والـ Category (AR)
+// لو ضفت فئة جديدة تحبها تتربط أوتوماتيك، ضيفها هنا كسطر واحد
+const dailyFactCategoryMap = {
+    "Daily Life": "الحياة اليومية",
+    "Science": "العلوم",
+    "Religion": "الدين",
+    "Architecture": "العمارة",
+    "Political": "السياسة",
+    "Art": "الفن"
+};
+
+// بتتنادى وقت الكتابة/الاختيار في خانة Category — لو الفئة معروفة وخانة Category (AR) لسه فاضية، بتتملى تلقائي
+// لو الأدمن كتب فئة جديدة مش في القايمة، أو كان عدّل الخانة العربية بنفسه، مبيحصلش overwrite
+function fillFactCategoryAr(categoryInput, categoryArId) {
+    const categoryArInput = document.getElementById(categoryArId);
+    if (!categoryArInput) return;
+
+    const match = dailyFactCategoryMap[categoryInput.value.trim()];
+    if (match && !categoryArInput.value.trim()) {
+        categoryArInput.value = match;
+    }
+}
+
 function openEditFactBtn(btn) {
     const id = btn.getAttribute('data-id');
     const factText = btn.getAttribute('data-facttext');
     const factTextAr = btn.getAttribute('data-facttextar');
     const category = btn.getAttribute('data-category');
-    openEditFact(id, factText, factTextAr, category);
+    const categoryAr = btn.getAttribute('data-categoryar');
+    openEditFact(id, factText, factTextAr, category, categoryAr);
 }
 
-function openEditFact(id, factText, factTextAr, category) {
+function openEditFact(id, factText, factTextAr, category, categoryAr) {
     document.getElementById('editFactId').value = id;
     document.getElementById('editFactText').value = factText;
     document.getElementById('editFactTextAr').value = factTextAr || '';
     document.getElementById('editFactCategory').value = category || '';
+    document.getElementById('editFactCategoryAr').value = categoryAr || '';
     openModal('modalEditFact');
 }
 

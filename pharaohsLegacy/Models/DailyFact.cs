@@ -12,5 +12,6 @@ namespace pharaohsLegacy.Models
         public string? FactTextAr { get; set; }        // عربي (nullable زي باقي الجداول)
 
         public string? Category { get; set; }          // اختياري: Daily Life / Science / Religion / Architecture...
+        public string? CategoryAr { get; set; }         // الترجمة العربية للفئة — بتتكتب يدوي زي CategoryAr في Museum/Artifact/HistoricalEvent
     }
 }

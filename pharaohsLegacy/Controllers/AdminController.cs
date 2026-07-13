@@ -546,6 +546,7 @@ namespace pharaohsLegacy.Controllers
             existing.FactText = model.FactText ?? "";
             existing.FactTextAr = model.FactTextAr;
             existing.Category = model.Category;
+            existing.CategoryAr = model.CategoryAr;
 
             await _context.SaveChangesAsync();
             TempData["Success"] = "Fact updated successfully!";
