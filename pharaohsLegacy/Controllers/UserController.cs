@@ -137,8 +137,12 @@ namespace pharaohsLegacy.Controllers
             var lang = HttpContext.Session.GetString("Lang") ?? "en";
 
             // ===== BOOKINGS =====
+            // ملحوظة: شلنا شرط "&& b.Status == "Confirmed"" اللي كان هنا —
+            // كان بيمنع أي حجز اتلغى أو اتعمله Refund من الوصول للداشبورد
+            // من الأصل. الفلترة حسب الحالة (Confirmed/Refunded/Visited)
+            // بتحصل تحت في كل حساب لوحده حسب الحاجة.
             var bookings = await context.Bookings
-                .Where(b => b.UserEmail == email && b.Status == "Confirmed")
+                .Where(b => b.UserEmail == email)
                 .OrderByDescending(b => b.CreatedAt)
                 .ToListAsync();
 
@@ -149,7 +153,7 @@ namespace pharaohsLegacy.Controllers
                 string placeName = b.PlaceName;
                 string? imageUrl = null;
 
-                if (b.PlaceType == "temple")
+                if (b.PlaceType?.ToLower() == "temple")
                 {
                     var temple = await context.Temples.FindAsync(b.PlaceId);
                     placeName = (lang == "ar" && !string.IsNullOrEmpty(temple?.NameAr)) ? temple.NameAr : (temple?.Name ?? placeName);
@@ -272,7 +276,7 @@ namespace pharaohsLegacy.Controllers
                 TotalFavorites = favorites.Count,
                 VisitedCount = bookingCards.Count(b => b.Status == "Visited"),
                 TotalSpent = bookingCards
-                                    .Where(b => b.Status != "Cancelled")
+                                    .Where(b => b.Status != "Cancelled" && b.Status != "Refunded")
                                     .Sum(b => b.TotalPrice),
                 Bookings = bookingCards,
                 FavoritePharaohs = favPharaohs,

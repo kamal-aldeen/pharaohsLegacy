@@ -1750,7 +1750,7 @@ JavaScript تفتح Modal التعديل.       *@
                         <tr>
                             <td>@b.UserEmail</td>
                             <td><div class="adm-name-cell">@b.PlaceName</div></td>
-                            <td><div class="adm-sub-cell">@(b.PlaceType == "temple" ? "🛕 Temple" : "🏛️ Museum")</div></td>
+                            <td><div class="adm-sub-cell">@(b.PlaceType?.ToLower() == "temple" ? "🛕 Temple" : "🏛️ Museum")</div></td>
                             <td>@b.VisitDate.ToString("MMM dd, yyyy")</td>
                             <td>@b.NumberOfTickets 🎫</td>
                             <td style="color:#c9a227; font-weight:600;">@b.TotalPrice.ToString("N0") EGP</td>

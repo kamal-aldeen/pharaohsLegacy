@@ -36,7 +36,7 @@ namespace pharaohsLegacy.Controllers
             foreach (var b in bookings)
             {
                 string placeName = "";
-                if (b.PlaceType == "temple")
+                if (b.PlaceType?.ToLower() == "temple")
                     placeName = (await _context.Temples.FindAsync(b.PlaceId))?.Name ?? "";
                 else
                     placeName = (await _context.Museums.FindAsync(b.PlaceId))?.Name ?? "";

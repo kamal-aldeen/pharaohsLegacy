@@ -62,9 +62,10 @@ namespace pharaohsLegacy.Controllers
             if ((DateTime.Now - booking.CreatedAt).TotalHours > 48)
                 return Content($"❌ EXPIRED — CreatedAt={booking.CreatedAt}");
 
+            // اليوزر بيعمل Cancel بس — الحالة تفضل "Cancelled".
+            // الـ Refund (وتحديث حالة الدفع) بيحصل بعد كده من الأدمن فقط،
+            // بعد ما يراجع الطلب ويرجع الفلوس فعلياً (شوف AdminController).
             booking.Status = "Cancelled";
-            var payment = await _db.Payments.FirstOrDefaultAsync(p => p.BookingId == id);
-            if (payment != null) payment.Status = "Refunded";
             await _db.SaveChangesAsync();
 
             return RedirectToAction("Dashboard", "User", new { tab = "bookings" });

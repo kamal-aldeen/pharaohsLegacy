@@ -1125,7 +1125,7 @@
         function updateSummary() {
             const confirmed = document.querySelectorAll('.booking-card[data-status="Confirmed"]');
             const total     = bookingsData.reduce((s, b) =>
-                b.status !== 'Cancelled' ? s + b.totalPrice : s, 0);
+                (b.status !== 'Cancelled' && b.status !== 'Refunded') ? s + b.totalPrice : s, 0);
             animateNum('total-count',  document.querySelectorAll('.booking-card').length);
             animateNum('active-count', confirmed.length);
             animateNum('total-spent',  Math.round(total));
