@@ -409,5 +409,8 @@
   "Category_Scientific": "Scientific",
   "Art_Search_Placeholder": "Search artifacts...",
   "Art_Count_Label": "artifacts",
-  "Art_Category_Uncategorized": "Uncategorized"
+  "Art_Category_Uncategorized": "Uncategorized",
+  "Nav_Group_Rulers": "Rulers",
+  "Nav_Group_Places": "Places",
+  "Nav_Group_Religion": "Religion & Artifacts"
 }

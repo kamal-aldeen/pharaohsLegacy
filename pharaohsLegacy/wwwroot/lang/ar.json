@@ -405,6 +405,9 @@
   "Category_Scientific": "علمي",
   "Art_Search_Placeholder": "دور على قطعة أثرية...",
   "Art_Count_Label": "قطعة أثرية",
-  "Art_Category_Uncategorized": "غير مصنف"
+  "Art_Category_Uncategorized": "غير مصنف",
+  "Nav_Group_Rulers": "الحكام",
+  "Nav_Group_Places": "أماكن",
+  "Nav_Group_Religion": "الديانة والآثار"
 
-}
+} 

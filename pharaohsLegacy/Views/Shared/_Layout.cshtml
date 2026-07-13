@@ -2,6 +2,8 @@
 @{
     var currentLang = Context.Session.GetString("Lang") ?? "en";
     var currentDir = currentLang == "ar" ? "rtl" : "ltr";
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
 }
 <!DOCTYPE html>
 <html lang="@currentLang" dir="@currentDir">
@@ -150,7 +152,22 @@
             font-family: 'Cinzel', serif; font-size: .7rem;
             letter-spacing: 2px; text-transform: uppercase;
             color: var(--muted); text-decoration: none;
+            position: relative; padding-bottom: 4px;
             transition: color .3s;
+        }
+        .nav-links a::after {
+            content: '';
+            position: absolute; bottom: 0; inset-inline-start: 0;
+            width: 0%; height: 1px;
+            background: var(--gold);
+            transition: width .3s ease;
+        }
+        .nav-links a:hover::after,
+        .nav-links a.active::after {
+            width: 100%;
+        }
+        .nav-links a.active {
+            color: var(--gold);
         }
 
                 .nav-links li {
@@ -631,11 +648,24 @@
                 border: 1px solid rgba(var(--gold-rgb),0.3);
                 border-radius: 10px;
                 padding: 8px 0;
-                min-width: 180px;
+                min-width: 200px;
                 z-index: 999;
                 box-shadow: 0 10px 30px rgba(0,0,0,0.25);
                 list-style: none;
             }
+
+            .nav-dropdown-group {
+                font-family: 'Cinzel', serif;
+                font-size: .6rem;
+                letter-spacing: 2px;
+                text-transform: uppercase;
+                color: var(--gold);
+                opacity: .7;
+                padding: 10px 20px 4px;
+            }
+                .nav-dropdown-group:first-child {
+                    padding-top: 4px;
+                }
 
                 .nav-dropdown-menu li a {
                     display: block;
@@ -690,25 +720,33 @@
         }
 
         <ul class="nav-links" id="navLinks">
-            <li><a asp-controller="Home" asp-action="Index">@Html.L("Nav_Home")</a></li>
+            <li><a asp-controller="Home" asp-action="Index" class="@(currentController == "Home" && currentAction == "Index" ? "active" : "")">@Html.L("Nav_Home")</a></li>
 
             <!-- Explore Dropdown -->
             <li class="nav-dropdown">
-                <a class="nav-dropdown-toggle">@Html.L("Nav_Explore") ▾</a>
+                @{
+                    var exploreControllers = new[] { "Pharaoh", "God", "Temple", "Museum", "Artifact", "Dynasty", "HistoricalEvent" };
+                }
+                <a class="nav-dropdown-toggle @(exploreControllers.Contains(currentController) ? "active" : "")">@Html.L("Nav_Explore") ▾</a>
                 <ul class="nav-dropdown-menu">
+                    <li class="nav-dropdown-group">@Html.L("Nav_Group_Rulers")</li>
                     <li><a asp-controller="Pharaoh" asp-action="Index">👑 @Html.L("Nav_Pharaohs")</a></li>
-                    <li><a asp-controller="God" asp-action="Index">⚡ @Html.L("Nav_Gods")</a></li>
-                    <li><a asp-controller="Temple" asp-action="Index">🏛️ @Html.L("Nav_Temples")</a></li>
-                    <li><a asp-controller="Museum" asp-action="Index">🏺 @Html.L("Nav_Museums")</a></li>
-                    <li><a asp-controller="Artifact" asp-action="Index">🔮 @Html.L("Nav_Artifacts")</a></li>
                     <li><a asp-controller="Dynasty" asp-action="Index">𓂀 @Html.L("Nav_Dynasties")</a></li>
                     <li><a asp-controller="HistoricalEvent" asp-action="Index">𓋹 @Html.L("Nav_Events")</a></li>
+
+                    <li class="nav-dropdown-group">@Html.L("Nav_Group_Places")</li>
+                    <li><a asp-controller="Temple" asp-action="Index">🏛️ @Html.L("Nav_Temples")</a></li>
+                    <li><a asp-controller="Museum" asp-action="Index">🏺 @Html.L("Nav_Museums")</a></li>
+
+                    <li class="nav-dropdown-group">@Html.L("Nav_Group_Religion")</li>
+                    <li><a asp-controller="God" asp-action="Index">⚡ @Html.L("Nav_Gods")</a></li>
+                    <li><a asp-controller="Artifact" asp-action="Index">🔮 @Html.L("Nav_Artifacts")</a></li>
                 </ul>
             </li>
 
-            <li><a asp-controller="Home" asp-action="Timeline">@Html.L("Nav_Timeline")</a></li>
-            <li><a asp-controller="Home" asp-action="Map">@Html.L("Nav_Map")</a></li>
-            <li><a asp-controller="Hieroglyphics" asp-action="Translator">@Html.L("Nav_Translator")</a></li>
+            <li><a asp-controller="Home" asp-action="Timeline" class="@(currentAction == "Timeline" ? "active" : "")">@Html.L("Nav_Timeline")</a></li>
+            <li><a asp-controller="Home" asp-action="Map" class="@(currentAction == "Map" ? "active" : "")">@Html.L("Nav_Map")</a></li>
+            <li><a asp-controller="Hieroglyphics" asp-action="Translator" class="@(currentController == "Hieroglyphics" ? "active" : "")">@Html.L("Nav_Translator")</a></li>
 
             @if (Context.Session.GetString("UserEmail") != null &&
                  Context.Session.GetString("UserEmail") != "guest")
