@@ -21,34 +21,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Pharaohs Legacy</title>
-
-    @{
-        var pageDescription = ViewData["Description"] as string
-            ?? (currentLang == "ar"
-                ? "استكشف تاريخ مصر القديمة: الفراعنة، الآلهة، المعابد، المتاحف، والقطع الأثرية في منصة تفاعلية متكاملة."
-                : "Explore ancient Egypt: pharaohs, gods, temples, museums, and artifacts on one interactive platform.");
-    }
-    <meta name="description" content="@pageDescription" />
-
-    <!-- Open Graph -->
-    <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Pharaohs Legacy" />
-    <meta property="og:title" content="@ViewData["Title"] - Pharaohs Legacy" />
-    <meta property="og:description" content="@pageDescription" />
-    <meta property="og:image" content="@Url.Content("~/images/og-cover.jpg")" />
-    <meta property="og:locale" content="@(currentLang == "ar" ? "ar_EG" : "en_US")" />
-
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="@ViewData["Title"] - Pharaohs Legacy" />
-    <meta name="twitter:description" content="@pageDescription" />
-
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%230d0702'/%3E%3Ctext x='50' y='68' font-size='60' text-anchor='middle' fill='%23c9a227'%3E%F0%93%82%80%3C/text%3E%3C/svg%3E" />
-
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Noto+Sans+Egyptian+Hieroglyphs&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/css/pharaoh.css" asp-append-version="true" />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Egyptian+Hieroglyphs&display=swap" rel="stylesheet">
     <style>
         :root {
             --gold: #c9a227;
@@ -765,8 +740,6 @@
 
                     <li class="nav-dropdown-group">@Html.L("Nav_Group_Religion")</li>
                     <li><a asp-controller="God" asp-action="Index">⚡ @Html.L("Nav_Gods")</a></li>
-
-                    <li class="nav-dropdown-group">@Html.L("Nav_Group_Artifacts")</li>
                     <li><a asp-controller="Artifact" asp-action="Index">🔮 @Html.L("Nav_Artifacts")</a></li>
                 </ul>
             </li>
@@ -831,7 +804,7 @@
                 <a href="/User/Login" class="nav-logout">⬡ @Html.L("Btn_Login")</a>
             }
 
-            <button class="nav-toggle" id="navToggle" onclick="toggleNav()" aria-label="@Html.L("Nav_ToggleMenu")" aria-expanded="false" aria-controls="navLinks">
+            <button class="nav-toggle" id="navToggle" onclick="toggleNav()">
                 <span></span><span></span><span></span>
             </button>
         </div>
@@ -850,10 +823,7 @@
 <script>
     
     function toggleNav() {
-        var links = document.getElementById('navLinks');
-        var btn = document.getElementById('navToggle');
-        var isOpen = links.classList.toggle('open');
-        if (btn) btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        document.getElementById('navLinks').classList.toggle('open');
     }
 
     // ── Theme Toggle (Light / Dark) — Circle Reveal Animation ──
@@ -923,13 +893,7 @@
         });
         img.addEventListener('error', function () {
             this.classList.remove('pl-img-loading');
-            // SVG محلي كـ data URI بدل خدمة خارجية (via.placeholder.com بيقع أحياناً)
-            this.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(
-                '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">' +
-                '<rect width="400" height="300" fill="#2d1a08"/>' +
-                '<text x="50%" y="50%" fill="#c9a227" font-family="serif" font-size="18" text-anchor="middle" dominant-baseline="middle">𓁹 No Image</text>' +
-                '</svg>'
-            );
+            this.src = 'https://via.placeholder.com/400x300/2d1a08/c9a227?text=No+Image';
         });
     });
 

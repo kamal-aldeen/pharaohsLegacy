@@ -408,6 +408,10 @@
   "Art_Category_Uncategorized": "غير مصنف",
   "Nav_Group_Rulers": "الحكام",
   "Nav_Group_Places": "أماكن",
-  "Nav_Group_Religion": "الديانة والآثار"
+  "Nav_Group_Religion": "الديانة",
+  "Nav_ToggleMenu": "فتح القائمة",
+  "Nav_Group_Artifacts": "آثار"
+
+
 
 } 

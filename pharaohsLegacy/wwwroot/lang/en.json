@@ -412,5 +412,7 @@
   "Art_Category_Uncategorized": "Uncategorized",
   "Nav_Group_Rulers": "Rulers",
   "Nav_Group_Places": "Places",
-  "Nav_Group_Religion": "Religion & Artifacts"
+  "Nav_Group_Religion": "Religion",
+  "Nav_ToggleMenu": "Open menu",
+  "Nav_Group_Artifacts": "Artifacts"
 }
