@@ -430,6 +430,93 @@
         }
 
         
+        .daily-fact-section { padding: 3rem 3rem; }
+        .daily-fact-card {
+            background: var(--dark3);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            box-shadow: var(--card-shadow);
+            max-width: 780px;
+            margin: 0 auto;
+            padding: 2.2rem 2.5rem;
+            text-align: center;
+            position: relative;
+            transition: box-shadow .35s ease, border-color .35s ease,
+                        opacity .6s ease, transform .6s ease;
+        }
+        /* Scroll Reveal — الحالة الابتدائية (مخفي شوية ومتنزل)، وبعدين .is-visible بيرجعه لمكانه */
+        .daily-fact-card.reveal-on-scroll {
+            opacity: 0;
+            transform: translateY(24px);
+        }
+        .daily-fact-card.reveal-on-scroll.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        /* توهج ذهبي خفيف عند الـ Hover — نفس لمسة .btn-gold (شادو مستقل، مش متجمّع مع --card-shadow-hover
+           عشان دي بتبقى none في الدارك مود، ودمج none مع شادو تاني بيبطل الـ box-shadow كله) */
+        .daily-fact-card:hover {
+            border-color: var(--gold);
+            box-shadow: 0 0 22px rgba(var(--gold-rgb), .18);
+        }
+        .daily-fact-icon {
+            display: inline-block; font-size: 1.8rem; color: var(--gold);
+            margin-bottom: .5rem;
+            animation: dailyFactPulse 3.2s ease-in-out infinite;
+        }
+        @@keyframes dailyFactPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50%      { transform: scale(1.12); opacity: .82; }
+        }
+        @@media (prefers-reduced-motion: reduce) {
+            .daily-fact-icon { animation: none; }
+            .daily-fact-card.reveal-on-scroll {
+                transition: none; opacity: 1; transform: none;
+            }
+        }
+        .daily-fact-tag { display: block; }
+        .daily-fact-tag::before { content: none; }
+        .daily-fact-text {
+            font-size: 1.05rem; line-height: 1.9; color: var(--text);
+            margin-top: .75rem;
+        }
+        /* زرار النسخ — أيقونة شفافة صغيرة في الركن، بتبان واضحة عند الـ hover بس، من غير ما تاخد سطر لوحدها */
+        .daily-fact-actions {
+            position: absolute;
+            top: 16px;
+            inset-inline-end: 16px;
+            display: flex;
+            align-items: center;
+        }
+        .daily-fact-copy-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--muted);
+            border-radius: 7px;
+            width: 28px; height: 28px;
+            font-size: .8rem;
+            cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center;
+            opacity: .55;
+            transition: opacity .2s ease, color .2s ease, border-color .2s ease,
+                        background .2s ease, transform .15s ease;
+        }
+        .daily-fact-copy-btn:hover {
+            opacity: 1;
+            color: var(--gold);
+            border-color: var(--border);
+            background: var(--surface-tint);
+        }
+        .daily-fact-copy-btn:active { transform: scale(.88); }
+        .daily-fact-copy-btn.is-copied {
+            opacity: 1;
+            color: var(--gold);
+            border-color: var(--gold);
+            background: rgba(var(--gold-rgb), .1);
+        }
+        .daily-fact-copy-icon { display: block; }
+
+        
         .cards-grid {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 1.5rem;

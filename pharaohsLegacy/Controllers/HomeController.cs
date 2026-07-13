@@ -25,9 +25,23 @@ namespace pharaohsLegacy.Controllers
             ViewBag.Temples = _context.Temples.Take(3).ToList();
             ViewBag.Museums = _context.Museums.Take(3).ToList();
             ViewBag.Gods = _context.Gods.Take(3).ToList();
+            ViewBag.TodaysFact = GetTodaysFact();
 
 
             return View();
+        }
+
+        // بيرجع حقيقة ثابتة طول اليوم (نفس الحقيقة لكل اليوزرز)، وتتغير أوتوماتيك كل يوم
+        private DailyFact? GetTodaysFact()
+        {
+            var facts = _context.DailyFacts.ToList();
+            if (!facts.Any())
+                return null;
+
+            int seed = DateTime.Now.Year * 1000 + DateTime.Now.DayOfYear;
+            var rng = new Random(seed);
+            int index = rng.Next(facts.Count);
+            return facts[index];
         }
 
         public IActionResult Privacy()

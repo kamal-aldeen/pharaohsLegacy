@@ -25,6 +25,8 @@ namespace pharaohsLegacy.Models
 
         public DbSet<HistoricalEvent> HistoricalEvents { get; set; }
 
+        public DbSet<DailyFact> DailyFacts { get; set; }
+
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

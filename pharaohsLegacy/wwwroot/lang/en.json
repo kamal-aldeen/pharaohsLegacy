@@ -414,5 +414,6 @@
   "Nav_Group_Places": "Places",
   "Nav_Group_Religion": "Religion",
   "Nav_ToggleMenu": "Open menu",
-  "Nav_Group_Artifacts": "Artifacts"
+  "Nav_Group_Artifacts": "Artifacts",
+  "DailyFact_Title": "Fact of the Day"
 }

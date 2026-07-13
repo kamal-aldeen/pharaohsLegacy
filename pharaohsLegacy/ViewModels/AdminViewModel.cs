@@ -44,8 +44,10 @@ namespace pharaohsLegacy.ViewModels
 
 
         public List<AdminBookingRow> Bookings { get; set; } = new();
-        
-       
+        public int TotalFacts { get; set; }
+        public List<DailyFact> Facts { get; set; }
+
+
 
     }
 

@@ -728,6 +728,11 @@ body {
                 <span class="nav-icon">𓋹</span> Events
                 <span class="nav-count">@Model.TotalHistoricalEvents</span>
             </button>
+            <button class="adm-nav-item @(activeTab == "facts" ? "active" : "")"
+                    onclick="switchPanel('facts',this)">
+                <span class="nav-icon">📜</span> Daily Facts
+                <span class="nav-count">@Model.TotalFacts</span>
+            </button>
 
             <span class="adm-nav-label" style="margin-top:12px;">Users & Data</span>
             <button class="adm-nav-item @(activeTab == "users" ? "active" : "")"
@@ -1502,6 +1507,129 @@ JavaScript تفتح Modal التعديل.       *@
                             }
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- DAILY FACTS -->
+            <div id="panel-facts" class="adm-panel @(activeTab == "facts" ? "active" : "")">
+                <div class="adm-sec-head">
+                    <div class="adm-sec-title">Daily Facts</div>
+                    <div style="display:flex;gap:12px;align-items:center;">
+                        <div class="adm-search-wrap">
+                            <span class="adm-search-icon">🔍</span>
+                            <input class="adm-search" placeholder="Search facts..."
+                                   oninput="searchTable('factsTable', this.value)" />
+                        </div>
+                        <button class="adm-btn adm-btn-add" onclick="openModal('modalAddFact')">+ Add Fact</button>
+                    </div>
+                </div>
+                <div class="adm-table-wrap">
+                    <table class="adm-table" id="factsTable">
+                        <thead>
+                            <tr>
+                                <th>Fact (EN)</th>
+                                <th>Category</th>
+                                <th style="width:140px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var f in Model.Facts)
+                            {
+                                <tr>
+                                    <td><div class="adm-sub-cell">@f.FactText</div></td>
+                                    <td><div class="adm-sub-cell">@(f.Category ?? "—")</div></td>
+                                    <td>
+                                        <div class="adm-actions">
+                                            <button class="adm-btn adm-btn-edit"
+                                                    data-id="@f.Id"
+                                                    data-facttext="@f.FactText"
+                                                    data-facttextar="@(f.FactTextAr ?? "")"
+                                                    data-category="@(f.Category ?? "")"
+                                                    onclick="openEditFactBtn(this)">
+                                                ✏ Edit
+                                            </button>
+                                            <form method="post" action="/Admin/DeleteFact" style="display:inline;"
+                                                  onsubmit="return false;">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@f.Id" />
+                                                <button type="button" class="adm-btn adm-btn-del"
+                                                        onclick="showDeleteConfirm(this.closest('form'), '@Html.Raw(f.FactText?.Replace("'", "\\'") ?? "")')">
+                                                    🗑
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ADD FACT -->
+            <div class="adm-overlay" id="modalAddFact">
+                <div class="adm-modal">
+                    <div class="adm-modal-head">
+                        <div class="adm-modal-title">𓋹 Add Daily Fact</div>
+                        <div class="adm-modal-close" onclick="closeModal('modalAddFact')">✕</div>
+                    </div>
+                    <form method="post" action="/Admin/AddFact">
+                        @Html.AntiForgeryToken()
+                        <div class="adm-modal-body">
+                            <div class="adm-form-row">
+                                <label class="adm-label">Fact (EN) *</label>
+                                <textarea class="adm-textarea" name="FactText" required placeholder="e.g. Ancient Egyptians used a 365-day calendar..."></textarea>
+                            </div>
+                            <div class="adm-form-row">
+                                <label class="adm-label">Category</label>
+                                <input class="adm-input" name="Category" placeholder="e.g. Daily Life / Science / Religion" />
+                            </div>
+
+                            <div class="adm-lang-divider">🇪🇬 Arabic Translation <small>(optional — falls back to English if empty)</small></div>
+                            <div class="adm-form-row">
+                                <label class="adm-label">Fact (AR)</label>
+                                <textarea class="adm-textarea adm-textarea-ar" name="FactTextAr" dir="rtl" placeholder="حقيقة مترجمة..."></textarea>
+                            </div>
+                        </div>
+                        <div class="adm-modal-foot">
+                            <button type="button" class="adm-btn adm-btn-del" onclick="closeModal('modalAddFact')">Cancel</button>
+                            <button type="submit" class="adm-btn adm-btn-add">Save Fact</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- EDIT FACT -->
+            <div class="adm-overlay" id="modalEditFact">
+                <div class="adm-modal">
+                    <div class="adm-modal-head">
+                        <div class="adm-modal-title">✏ Edit Daily Fact</div>
+                        <div class="adm-modal-close" onclick="closeModal('modalEditFact')">✕</div>
+                    </div>
+                    <form method="post" action="/Admin/EditFact">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="Id" id="editFactId" />
+                        <div class="adm-modal-body">
+                            <div class="adm-form-row">
+                                <label class="adm-label">Fact (EN) *</label>
+                                <textarea class="adm-textarea" name="FactText" id="editFactText" required></textarea>
+                            </div>
+                            <div class="adm-form-row">
+                                <label class="adm-label">Category</label>
+                                <input class="adm-input" name="Category" id="editFactCategory" />
+                            </div>
+
+                            <div class="adm-lang-divider">🇪🇬 Arabic Translation <small>(optional — falls back to English if empty)</small></div>
+                            <div class="adm-form-row">
+                                <label class="adm-label">Fact (AR)</label>
+                                <textarea class="adm-textarea adm-textarea-ar" name="FactTextAr" id="editFactTextAr" dir="rtl"></textarea>
+                            </div>
+                        </div>
+                        <div class="adm-modal-foot">
+                            <button type="button" class="adm-btn adm-btn-del" onclick="closeModal('modalEditFact')">Cancel</button>
+                            <button type="submit" class="adm-btn adm-btn-add">Update</button>
+                        </div>
+                    </form>
                 </div>
             </div>
 
@@ -3072,6 +3200,7 @@ const panelTitles = {
     temples:  '🛕 Manage Temples',
     museums:  '🏛️ Manage Museums',
     gods:     '𓂀 Manage Gods',
+    facts:    '📜 Daily Facts',
     users:    '👥 Users',
     bookings: '📅 Bookings'
 };
@@ -3221,6 +3350,24 @@ function openEditGod(id, name, role, symbol, img, desc, nameAr, roleAr, descAr, 
     const prev = document.getElementById('editGodImgPreview');
     prev.src = img; prev.style.display = img ? 'block' : 'none';
     openModal('modalEditGod');
+}
+
+//  Edit Daily Fact
+
+function openEditFactBtn(btn) {
+    const id = btn.getAttribute('data-id');
+    const factText = btn.getAttribute('data-facttext');
+    const factTextAr = btn.getAttribute('data-facttextar');
+    const category = btn.getAttribute('data-category');
+    openEditFact(id, factText, factTextAr, category);
+}
+
+function openEditFact(id, factText, factTextAr, category) {
+    document.getElementById('editFactId').value = id;
+    document.getElementById('editFactText').value = factText;
+    document.getElementById('editFactTextAr').value = factTextAr || '';
+    document.getElementById('editFactCategory').value = category || '';
+    openModal('modalEditFact');
 }
 
 //  Image Preview

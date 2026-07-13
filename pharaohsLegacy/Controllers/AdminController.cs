@@ -79,6 +79,8 @@ namespace pharaohsLegacy.Controllers
                 Dynasties = _context.Dynasties.OrderBy(d => d.StartYear).ToList(),
                 TotalHistoricalEvents = await _context.HistoricalEvents.CountAsync(),
                 HistoricalEvents = await _context.HistoricalEvents.OrderBy(e => e.Year).ToListAsync(),
+                TotalFacts = await _context.DailyFacts.CountAsync(),
+                Facts = await _context.DailyFacts.OrderBy(f => f.Id).ToListAsync(),
 
                 Bookings = bookingRows,
 
@@ -518,6 +520,47 @@ namespace pharaohsLegacy.Controllers
         }
 
 
+
+        // ──────────────────────────────
+        // DAILY FACT CRUD
+        // ──────────────────────────────
+
+        [HttpPost]
+        public async Task<IActionResult> AddFact(DailyFact model)
+        {
+            if (!IsAdmin()) return Unauthorized();
+            model.FactText = model.FactText ?? "";
+            _context.DailyFacts.Add(model);
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "Fact added successfully!";
+            return RedirectToAction("Index", new { tab = "facts" });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditFact(DailyFact model)
+        {
+            if (!IsAdmin()) return Unauthorized();
+            var existing = await _context.DailyFacts.FindAsync(model.Id);
+            if (existing == null) return NotFound();
+
+            existing.FactText = model.FactText ?? "";
+            existing.FactTextAr = model.FactTextAr;
+            existing.Category = model.Category;
+
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "Fact updated successfully!";
+            return RedirectToAction("Index", new { tab = "facts" });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteFact(int id)
+        {
+            if (!IsAdmin()) return Unauthorized();
+            var item = await _context.DailyFacts.FindAsync(id);
+            if (item != null) { _context.DailyFacts.Remove(item); await _context.SaveChangesAsync(); }
+            TempData["Success"] = "Fact deleted.";
+            return RedirectToAction("Index", new { tab = "facts" });
+        }
 
     }
 
