@@ -411,7 +411,29 @@
   "Nav_Group_Religion": "الديانة",
   "Nav_ToggleMenu": "فتح القائمة",
   "Nav_Group_Artifacts": "آثار",
-  "DailyFact_Title": "حقيقة اليوم"
+  "DailyFact_Title": "حقيقة اليوم",
+  "Booking_CardDetails_Label": "رقم الكارت",
+  "Booking_CardHolder_Label": "اسم حامل الكارت",
+  "Booking_Expiry_Label": "تاريخ الانتهاء",
+  "Booking_Coupon_Label": "كود الخصم (اختياري)",
+  "Booking_Coupon_Placeholder": "ادخل كود الخصم",
+  "Booking_Coupon_Apply": "تطبيق",
+  "Booking_Coupon_Applied": "تم تطبيق الكوبون — خصم {0}%!",
+  "Booking_Coupon_Empty": "من فضلك ادخل كود الخصم",
+  "Booking_Coupon_Invalid": "كود الخصم غير صحيح أو منتهي",
+  "Booking_Coupon_Error": "تعذر التحقق من الكود، حاول مرة أخرى",
+  "Booking_Otp_Label": "كود التحقق",
+  "Booking_Otp_Placeholder": "أدخل الكود المكون من 6 أرقام",
+  "Booking_Otp_Send": "ابعت كود تحقق",
+  "Booking_Otp_NeedDate": "اختر تاريخ الزيارة أولاً",
+  "Booking_Otp_Error": "تعذر إرسال كود التحقق، حاول مرة أخرى",
+  "Booking_Otp_Required": "لازم تدوس \"ابعت كود تحقق\" الأول",
+  "Dash_Stat_WalletBalance": "رصيد المحفظة",
+  "Dash_NoBankAccount_Title": "حساب الدفع لسه متفعّلش",
+  "Dash_NoBankAccount_Body": "عشان تقدر تحجز، تواصل معانا لتفعيل حساب الدفع بتاعك",
+  "Dash_NoBankAccount_Cta": "تواصل معنا"
+
+
 
 
 

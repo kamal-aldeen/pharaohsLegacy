@@ -15,7 +15,11 @@ namespace pharaohsLegacy.Models
         public decimal TotalPrice { get; set; }
         public string Status { get; set; }       
         public DateTime CreatedAt { get; set; }
-        
+
+        // 🆕 بيتسجل لما الحجز يتحول لـ Cancelled — الأساس اللي بيقيس عليه
+        // الـ Background Job الـ 24 ساعة قبل ما يحوله أوتوماتيك لـ Refunded
+        public DateTime? CancelledAt { get; set; }
+
         [NotMapped]
         public string PlaceName { get; set; } = "";
     }

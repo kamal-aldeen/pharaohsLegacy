@@ -896,11 +896,11 @@
             <div class="lang-switch">
                 <span class="lang-switch-indicator" style="inset-inline-start: @(currentLang == "en" ? "3px" : "calc(50% + 0px)");"></span>
                 <form asp-controller="Language" asp-action="SetLanguage" method="get">
-                    <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                    <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
                     <button type="submit" name="lang" value="en" class="lang-switch-btn @(currentLang == "en" ? "active" : "")">EN</button>
                 </form>
                 <form asp-controller="Language" asp-action="SetLanguage" method="get">
-                    <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                    <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
                     <button type="submit" name="lang" value="ar" class="lang-switch-btn @(currentLang == "ar" ? "active" : "")">AR</button>
                 </form>
             </div>

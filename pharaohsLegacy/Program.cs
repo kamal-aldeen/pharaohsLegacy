@@ -13,11 +13,19 @@ namespace pharaohsLegacy
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
             builder.Services.AddHttpClient();
+            builder.Services.AddHttpClient("BankService", client =>
+            {
+                client.BaseAddress = new Uri("http://127.0.0.1:8001/");
+            });
             builder.Services.AddControllersWithViews();
             builder.Services.AddSession();
             builder.Services.AddSingleton<LocalizationService>();
 
             builder.Services.AddHostedService<pharaohsLegacy.Services.BookingStatusUpdater>();
+            builder.Services.AddHostedService<pharaohsLegacy.Services.PendingBookingCleanupService>();
+
+            // 🆕 بيحول الحجوزات Cancelled لـ Refunded تلقائيًا بعد 24 ساعة (راجع BookingStatusService)
+            builder.Services.AddHostedService<pharaohsLegacy.Services.BookingRefundBackgroundService>();
 
             var app = builder.Build();
 
@@ -72,10 +80,6 @@ namespace pharaohsLegacy
                     context.SaveChanges();
                 }
             }
-
-            app.Run();
-
-
 
             app.Run();
         }

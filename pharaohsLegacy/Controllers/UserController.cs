@@ -9,10 +9,15 @@ namespace pharaohsLegacy.Controllers
     public class UserController : Controller
     {
         private readonly AppDbContext context;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public UserController(AppDbContext _context)
+        // 🆕 إيميل التواصل لتفعيل الحساب البنكي يدويًا — نفس إيميل الأدمن المستخدم في AdminController
+        private const string BankContactEmail = "kamalabdlbast89@gmail.com";
+
+        public UserController(AppDbContext _context, IHttpClientFactory httpClientFactory)
         {
             context = _context;
+            _httpClientFactory = httpClientFactory;
         }
 
         private static string ToArabicDigits(string input)
@@ -141,8 +146,10 @@ namespace pharaohsLegacy.Controllers
             // كان بيمنع أي حجز اتلغى أو اتعمله Refund من الوصول للداشبورد
             // من الأصل. الفلترة حسب الحالة (Confirmed/Refunded/Visited)
             // بتحصل تحت في كل حساب لوحده حسب الحاجة.
+            // 🆕 استبعدنا PendingPayment تحديدًا — ده حجز لسه ملوش دفع ناجح
+            // (زي لو اليوزر وقف عند خطوة الـ OTP ومكملش)، فمالوش لازمة يظهر هنا خالص
             var bookings = await context.Bookings
-                .Where(b => b.UserEmail == email)
+                .Where(b => b.UserEmail == email && b.Status != "PendingPayment")
                 .OrderByDescending(b => b.CreatedAt)
                 .ToListAsync();
 
@@ -383,8 +390,57 @@ namespace pharaohsLegacy.Controllers
             ViewBag.JourneyPins = journeyPins;
             ViewBag.JourneyCount = journeyPins.Count;
 
+            // 🆕 نجيب رصيد اليوزر الحقيقي من البنك للعرض بس — من غير ما ننشئ حساب
+            // تلقائيًا لو مش موجود (الإنشاء لسه يدوي بإيدك زي ما اتفقنا)
+            ViewBag.HasBankAccount = false;
+            ViewBag.BankBalance = 0m;
+            ViewBag.BankContactEmail = BankContactEmail;
+            ViewBag.BankConnectionError = false;
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient("BankService");
+                var bankResponse = await client.GetAsync($"accounts/{Uri.EscapeDataString(email)}");
+
+                if (bankResponse.IsSuccessStatusCode)
+                {
+                    var account = await bankResponse.Content.ReadFromJsonAsync<BankAccountResult>();
+                    ViewBag.HasBankAccount = true;
+                    ViewBag.BankBalance = account?.balance ?? 0m;
+                }
+                // 404 = مفيش حساب بنكي لسه لليوزر ده — HasBankAccount بتفضل false
+                // وده اللي بيخلي الداشبورد يوريله يتواصل مع الإيميل بدل ما يكسر أو يعرض صفر بصمت
+                else if (bankResponse.StatusCode != System.Net.HttpStatusCode.NotFound)
+                {
+                    // أي رد غريب غير 200 أو 404 (500 مثلاً) — ده مش "مفيش حساب"، ده مشكلة في البنك نفسه
+                    Console.WriteLine($"[BankService] Unexpected status {bankResponse.StatusCode} for {email}");
+                    ViewBag.BankConnectionError = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                // فرق مهم: ده معناه إحنا أصلاً معرفناش نوصل للبنك (Service مقفول، أو
+                // "BankService" مش مسجل في Program.cs) — مش إن اليوزر مفيش عنده حساب.
+                // نسجل الخطأ الحقيقي في اللوج عشان متضيعش وقت تفتكر إن الحساب هو المشكلة.
+                Console.WriteLine($"[BankService] Connection failed for {email}: {ex.Message}");
+                ViewBag.HasBankAccount = false;
+                ViewBag.BankConnectionError = true;
+            }
+
             ViewBag.ActiveTab = tab;
             return View(vm);
         }
+    }
+
+    // 🆕 بيمثل رد GET /accounts/{email} بتاع البنك — Masked (مش رقم كارت كامل)
+    public class BankAccountResult
+    {
+        public string? user_email { get; set; }
+        public string? card_holder_name { get; set; }
+        public string? masked_card_number { get; set; }
+        public string? expiry_date { get; set; }
+        public decimal balance { get; set; }
+        public bool is_active { get; set; }
+        public DateTime created_at { get; set; }
     }
 }

@@ -820,6 +820,103 @@
             font-weight: 500;
         }
 
+        .db-bank-banner {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: linear-gradient(135deg, rgba(var(--gold-rgb), 0.09), rgba(var(--gold-rgb), 0.03));
+            border: 1px solid rgba(var(--gold-rgb), 0.25);
+            border-radius: 16px;
+            padding: 22px 26px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px -12px rgba(0,0,0,0.35);
+        }
+
+            .db-bank-banner::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: linear-gradient(90deg, transparent, var(--gold), transparent);
+            }
+
+            .db-bank-banner.is-error {
+                background: linear-gradient(135deg, rgba(var(--red-rgb), 0.09), rgba(var(--red-rgb), 0.03));
+                border-color: rgba(var(--red-rgb), 0.25);
+            }
+
+                .db-bank-banner.is-error::before {
+                    background: linear-gradient(90deg, transparent, var(--red), transparent);
+                }
+
+        .db-bank-banner-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 21px;
+            flex-shrink: 0;
+            background: rgba(var(--gold-rgb), 0.14);
+            border: 1px solid rgba(var(--gold-rgb), 0.3);
+            color: var(--gold);
+        }
+
+            .db-bank-banner-icon svg {
+                width: 24px;
+                height: 24px;
+            }
+
+            .db-bank-banner.is-error .db-bank-banner-icon {
+                background: rgba(var(--red-rgb), 0.14);
+                border-color: rgba(var(--red-rgb), 0.3);
+                color: var(--red);
+            }
+
+        .db-bank-banner-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .db-bank-banner-title {
+            font-family: 'Cinzel', serif;
+            color: var(--gold-light);
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+            .db-bank-banner.is-error .db-bank-banner-title {
+                color: var(--red);
+            }
+
+        .db-bank-banner-body {
+            color: var(--text-dim);
+            font-size: 13.5px;
+            line-height: 1.6;
+        }
+
+        .db-bank-banner-cta {
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        @@media (max-width: 640px) {
+            .db-bank-banner {
+                flex-wrap: wrap;
+            }
+
+            .db-bank-banner-cta {
+                margin-inline-start: 72px;
+            }
+        }
+
         .db-empty {
             text-align: center;
             padding: 60px 20px;
@@ -1493,7 +1590,56 @@
 
         @* {{-- ===== OVERVIEW ===== --}} *@
         <div id="tab-overview" class="db-panel active">
-            <div class="db-stats" style="margin-top:32px;">
+
+            @if (!(bool)(ViewBag.HasBankAccount ?? false))
+            {
+                bool isConnError = (bool)(ViewBag.BankConnectionError ?? false);
+                <div class="db-bank-banner fade-up @(isConnError ? "is-error" : "")" style="margin-top:32px;">
+                    <div class="db-bank-banner-icon">
+                        @if (isConnError)
+                        {
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a1.5 1.5 0 0 0 1.29 2.25h17.78A1.5 1.5 0 0 0 22.18 18L13.71 3.86a1.5 1.5 0 0 0-2.42 0Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        }
+                        else
+                        {
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="2" y="5" width="20" height="14" rx="2.5" stroke="currentColor" stroke-width="1.8" />
+                                <path d="M2 10h20" stroke="currentColor" stroke-width="1.8" />
+                                <path d="M6 14.5h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                            </svg>
+                        }
+                    </div>
+                    <div class="db-bank-banner-content">
+                        <span class="db-bank-banner-title">
+                            @(isConnError ? @Html.L("Dash_BankUnavailable_Title") : @Html.L("Dash_NoBankAccount_Title"))
+                        </span>
+                        <div class="db-bank-banner-body">
+                            @if (isConnError)
+                            {
+                                @Html.L("Dash_BankUnavailable_Body")
+                            }
+                            else
+                            {
+                                @Html.L("Dash_NoBankAccount_Body")
+                            }
+                        </div>
+                    </div>
+                    @if (!isConnError)
+                    {
+                        <a href="mailto:@ViewBag.BankContactEmail" class="btn-gold db-bank-banner-cta">
+                            <svg viewBox="0 0 24 24" fill="none" width="14" height="14" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h15A1.5 1.5 0 0 1 21 6.5v11a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5v-11Z" stroke="currentColor" stroke-width="1.8" />
+                                <path d="m4 6.5 8 6.25 8-6.25" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            @Html.L("Dash_NoBankAccount_Cta")
+                        </a>
+                    }
+                </div>
+            }
+
+            <div class="db-stats" style="margin-top:@(((bool)(ViewBag.HasBankAccount ?? false)) ? "32px" : "20px");">
                 <div class="db-stat fade-up">
                     <div class="db-stat-icon gold">𓋹</div>
                     <div>
@@ -1529,6 +1675,16 @@
                         <div class="db-stat-label">@Html.L("Dash_Stat_TotalSpent")</div>
                     </div>
                 </div>
+                @if ((bool)(ViewBag.HasBankAccount ?? false))
+                {
+                    <div class="db-stat fade-up">
+                        <div class="db-stat-icon gold">💳</div>
+                        <div>
+                            <div class="db-stat-val">@Html.Digits(((decimal)ViewBag.BankBalance).ToString("N0"))</div>
+                            <div class="db-stat-label">@Html.L("Dash_Stat_WalletBalance")</div>
+                        </div>
+                    </div>
+                }
             </div>
 
             <div class="db-overview-grid">
@@ -1661,7 +1817,11 @@
                             {
                                 <div class="db-bcard-footer">
                                     @{
-                                        var canCancel = (DateTime.Now - b.CreatedAt).TotalHours < 48;
+                                        // 🆕 لازم يتطابق تمامًا مع الشرط في BookingStatusService.ToCancelledAsync
+                                        // (48 ساعة من الحجز + معاد الزيارة نفسه لسه ما جاش) — عشان الزرار
+                                        // يختفي من الأول بدل ما اليوزر يدوس عليه ويترفض من السيرفر
+                                        var canCancel = (DateTime.Now - b.CreatedAt).TotalHours < 48
+                                                         && b.VisitDate.Date >= DateTime.Today;
                                     }
                                     @if (canCancel)
                                     {

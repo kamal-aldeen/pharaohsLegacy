@@ -415,5 +415,26 @@
   "Nav_Group_Religion": "Religion",
   "Nav_ToggleMenu": "Open menu",
   "Nav_Group_Artifacts": "Artifacts",
-  "DailyFact_Title": "Fact of the Day"
+  "DailyFact_Title": "Fact of the Day",
+  "Booking_CardDetails_Label": "Card Number",
+  "Booking_CardHolder_Label": "Cardholder Name",
+  "Booking_Expiry_Label": "Expiry Date",
+  "Booking_Coupon_Label": "Coupon Code (optional)",
+  "Booking_Coupon_Placeholder": "Enter coupon code",
+  "Booking_Coupon_Apply": "Apply",
+  "Booking_Coupon_Applied": "Coupon applied — {0}% discount!",
+  "Booking_Coupon_Empty": "Please enter a coupon code",
+  "Booking_Coupon_Invalid": "Invalid or expired coupon code",
+  "Booking_Coupon_Error": "Could not verify coupon, please try again",
+  "Booking_Otp_Label": "Verification Code",
+  "Booking_Otp_Placeholder": "Enter the 6-digit code",
+  "Booking_Otp_Send": "Send Verification Code",
+  "Booking_Otp_NeedDate": "Please select a visit date first",
+  "Booking_Otp_Error": "Could not send verification code, please try again",
+  "Booking_Otp_Required": "You must click \"Send Verification Code\" first",
+  "Dash_Stat_WalletBalance": "Wallet Balance",
+  "Dash_NoBankAccount_Title": "Payment account not set up yet",
+  "Dash_NoBankAccount_Body": "To book a visit, please contact us to activate your payment account:",
+  "Dash_NoBankAccount_Cta": "Contact Us"
+
 }

@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using pharaohsLegacy.Models;
 using pharaohsLegacy.ViewModels;
+using pharaohsLegacy.Services;
 using System.Data;
 
 namespace pharaohsLegacy.Controllers
@@ -9,13 +10,15 @@ namespace pharaohsLegacy.Controllers
     public class AdminController : Controller
     {
         private readonly AppDbContext _context;
+        private readonly IHttpClientFactory _httpClientFactory;
 
 
         private const string AdminEmail = "kamalabdlbast89@gmail.com";
 
-        public AdminController(AppDbContext context)
+        public AdminController(AppDbContext context, IHttpClientFactory httpClientFactory)
         {
             _context = context;
+            _httpClientFactory = httpClientFactory;
         }
 
         private bool IsAdmin()
@@ -29,7 +32,12 @@ namespace pharaohsLegacy.Controllers
         {
             if (!IsAdmin()) return RedirectToAction("Login", "User");
 
-            var bookings = await _context.Bookings.OrderByDescending(b => b.CreatedAt).ToListAsync();
+            // 🆕 استبعدنا PendingPayment — ده حجز لسه ملوش دفع ناجح (زي لو اليوزر
+            // وقف عند خطوة الـ OTP ومكملش)، فمش لازم يظهر في لوحة الأدمن ولا يتحسب في الإحصائيات
+            var bookings = await _context.Bookings
+                .Where(b => b.Status != "PendingPayment")
+                .OrderByDescending(b => b.CreatedAt)
+                .ToListAsync();
             var bookingRows = new List<AdminBookingRow>();
 
 
@@ -311,7 +319,6 @@ namespace pharaohsLegacy.Controllers
         }
 
         [HttpPost]
-
         public async Task<IActionResult> ChangeBookingStatus(int id, string status)
         {
             if (!IsAdmin()) return Unauthorized();
@@ -319,15 +326,18 @@ namespace pharaohsLegacy.Controllers
             var booking = await _context.Bookings.FindAsync(id);
             if (booking == null) return NotFound();
 
-            booking.Status = status;
+            // 🆕 كل منطق الانتقال بين الحالات (وقرار نداء البنك من عدمه) بقى مركزي
+            // في BookingStatusService — عشان الأدمن مايقدرش يعمل انتقال غير منطقي
+            // (زي إرجاع Refunded لـ Confirmed، أو تأكيد حجز فات معاده) ولضمان إن
+            // الحالة المحلية تفضل متطابقة تمامًا مع اللي حصل في البنك فعليًا.
+            var statusService = new BookingStatusService(_context, _httpClientFactory);
+            var result = await statusService.ChangeStatusAsync(booking, status);
 
-            var payment = await _context.Payments
-                .FirstOrDefaultAsync(p => p.BookingId == id);
-            if (payment != null)
-                payment.Status = status == "Refunded" ? "Refunded" : status == "Cancelled" ? "Cancelled" : "Completed";
+            if (!result.Success)
+                TempData["Error"] = result.Message;
+            else
+                TempData["Success"] = result.Message;
 
-            await _context.SaveChangesAsync();
-            TempData["Success"] = "Booking status updated!";
             return RedirectToAction("Index", new { tab = "bookings" });
         }
 

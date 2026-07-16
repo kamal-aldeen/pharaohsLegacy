@@ -49,17 +49,42 @@
                 </div>
 
                 <div class="book-field">
-                    <label>@Html.L("Booking_PaymentMethod_Label")</label>
-                    <div class="payment-methods">
-                        <label class="pay-option">
-                            <input type="radio" name="paymentMethod" value="Credit Card" checked />
-                            <span>💳 @Html.L("Common_CreditCard")</span>
-                        </label>
-                        <label class="pay-option">
-                            <input type="radio" name="paymentMethod" value="Debit Card" />
-                            <span>🏧 @Html.L("Common_DebitCard")</span>
-                        </label>
+                    <label>@Html.L("Booking_CardDetails_Label")</label>
+                    <input type="text" name="cardNumber" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19" required />
+                </div>
+
+                <div class="book-field card-row">
+                    <div>
+                        <label>@Html.L("Booking_CardHolder_Label")</label>
+                        <input type="text" name="cardHolderName" id="cardHolderName" placeholder="John Doe" required />
                     </div>
+                    <div>
+                        <label>@Html.L("Booking_Expiry_Label")</label>
+                        <input type="text" name="expiryDate" id="expiryDate" placeholder="MM/YY" maxlength="5" required />
+                    </div>
+                    <div>
+                        <label>CVV</label>
+                        <input type="text" name="cvv" id="cvv" placeholder="123" maxlength="4" required />
+                    </div>
+                </div>
+
+                <div class="book-field">
+                    <label>@Html.L("Booking_Coupon_Label")</label>
+                    <div class="coupon-row">
+                        <input type="text" name="couponCode" id="couponCode" placeholder="@Html.L("Booking_Coupon_Placeholder")" />
+                        <button type="button" id="applyCouponBtn" class="btn-outline">@Html.L("Booking_Coupon_Apply")</button>
+                    </div>
+                    <div id="couponMsg" class="coupon-msg"></div>
+                </div>
+
+                <div class="book-field">
+                    <label>@Html.L("Booking_Otp_Label")</label>
+                    <div class="coupon-row">
+                        <input type="text" name="otpCode" id="otpCode" placeholder="@Html.L("Booking_Otp_Placeholder")" maxlength="6" disabled />
+                        <button type="button" id="sendOtpBtn" class="btn-outline">@Html.L("Booking_Otp_Send")</button>
+                    </div>
+                    <div id="otpMsg" class="coupon-msg"></div>
+                    <input type="hidden" name="bookingId" id="bookingId" value="" />
                 </div>
 
                 <div class="total-price">
@@ -67,7 +92,7 @@
                     <span id="totalPrice">@Html.Digits((object)ViewBag.TicketPrice) @Html.L("Common_EGP")</span>
                 </div>
 
-                <button type="submit" class="btn-gold" style="width:100%; margin-top:1rem;">
+                <button type="submit" class="btn-gold" style="width:100%; margin-top:1rem;" id="confirmBtn" disabled>
                     ✓ @Html.L("Booking_ConfirmBtn")
                 </button>
             </form>
@@ -110,17 +135,6 @@
         font-family: 'Cinzel', serif; font-size: 1.5rem;
         color: var(--text); min-width: 30px; text-align: center;
     }
-    .payment-methods { display: flex; gap: 1rem; flex-wrap: wrap; }
-    .pay-option {
-        display: flex; align-items: center; gap: .5rem;
-        background: var(--dark3);
-        border: 1px solid var(--border);
-        border-radius: 4px; padding: .75rem 1rem;
-        cursor: pointer; transition: border-color .3s;
-        font-size: .95rem;
-    }
-    .pay-option:has(input:checked) { border-color: var(--gold); }
-    .pay-option input { display: none; }
     .total-price {
         display: flex; justify-content: space-between;
         align-items: center; padding: 1rem;
@@ -132,6 +146,37 @@
     }
     .total-price span:first-child { color: var(--muted); font-size: .8rem; letter-spacing: 2px; }
     .total-price span:last-child  { color: var(--gold); font-size: 1.3rem; font-weight: 700; }
+
+    .book-field input[type="text"] {
+        width: 100%;
+        background: var(--dark);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: .75rem 1rem; color: var(--text);
+        font-family: 'Crimson Pro', serif; font-size: 1rem;
+        outline: none; transition: border-color .3s;
+    }
+    .book-field input[type="text"]:focus { border-color: var(--gold); }
+    .card-row {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr .8fr;
+        gap: .75rem;
+    }
+    .card-row label { margin-bottom: .5rem; }
+    .coupon-row { display: flex; gap: .6rem; }
+    .coupon-row input { flex: 1; }
+    .coupon-row .btn-outline {
+        padding: 0 1.2rem; white-space: nowrap;
+        font-family: 'Cinzel', serif; font-size: .7rem;
+        letter-spacing: 1px; border-radius: 4px;
+        background: transparent; cursor: pointer;
+    }
+    .coupon-msg { margin-top: .5rem; font-size: .85rem; min-height: 1.2em; }
+    .coupon-msg.success { color: #3fae5a; }
+    .coupon-msg.error { color: #c0392b; }
+    @@media (max-width: 560px) {
+        .card-row { grid-template-columns: 1fr; }
+    }
 </style>
 
 <script>
@@ -147,10 +192,149 @@
         return str.replace(/[0-9]/g, function (d) { return arabicDigitsMap[+d]; });
     }
 
+    var discountPercent = 0;
+
+    function updateTotal() {
+        var raw = ticketPrice * count;
+        var finalTotal = discountPercent > 0 ? raw * (1 - discountPercent / 100) : raw;
+        document.getElementById('totalPrice').textContent = toLocalDigits(Math.round(finalTotal * 100) / 100) + ' ' + currencyLabel;
+    }
+
     function changeTickets(val) {
         count = Math.max(1, Math.min(10, count + val));
         document.getElementById('ticketCount').textContent = toLocalDigits(count);
         document.getElementById('numberOfTickets').value = count;
-        document.getElementById('totalPrice').textContent = toLocalDigits(ticketPrice * count) + ' ' + currencyLabel;
+        updateTotal();
     }
+
+    // ---- Card input formatting ----
+    document.getElementById('cardNumber').addEventListener('input', function (e) {
+        var digits = e.target.value.replace(/\D/g, '').slice(0, 16);
+        e.target.value = digits.replace(/(.{4})/g, '$1 ').trim();
+    });
+
+    document.getElementById('expiryDate').addEventListener('input', function (e) {
+        var digits = e.target.value.replace(/\D/g, '').slice(0, 4);
+        e.target.value = digits.length > 2 ? digits.slice(0, 2) + '/' + digits.slice(2) : digits;
+    });
+
+    document.getElementById('cvv').addEventListener('input', function (e) {
+        e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4);
+    });
+
+    // ---- Coupon validation ----
+    // ⚠️ الـ Action الحقيقي [HttpGet] ValidateCoupon(string code) — GET بـ query string، مش POST بـ JSON
+    document.getElementById('applyCouponBtn').addEventListener('click', async function () {
+        var code = document.getElementById('couponCode').value.trim();
+        var msgEl = document.getElementById('couponMsg');
+
+        if (!code) {
+            msgEl.textContent = '@Html.L("Booking_Coupon_Empty")';
+            msgEl.className = 'coupon-msg error';
+            return;
+        }
+
+        msgEl.textContent = '...';
+        msgEl.className = 'coupon-msg';
+
+        try {
+            var res = await fetch('/Booking/ValidateCoupon?code=' + encodeURIComponent(code));
+            var data = await res.json();
+
+            if (data.valid) {
+                discountPercent = data.discountPercent;
+                msgEl.textContent = '@Html.L("Booking_Coupon_Applied")'.replace('{0}', toLocalDigits(discountPercent));
+                msgEl.className = 'coupon-msg success';
+            } else {
+                discountPercent = 0;
+                msgEl.textContent = data.message || '@Html.L("Booking_Coupon_Invalid")';
+                msgEl.className = 'coupon-msg error';
+            }
+        } catch (err) {
+            discountPercent = 0;
+            msgEl.textContent = '@Html.L("Booking_Coupon_Error")';
+            msgEl.className = 'coupon-msg error';
+        }
+
+        updateTotal();
+    });
+
+    // ---- Send OTP ----
+    function otpCooldown(btn, seconds) {
+        var originalText = btn.textContent;
+        btn.disabled = true;
+        var timer = setInterval(function () {
+            seconds--;
+            btn.textContent = originalText + ' (' + toLocalDigits(seconds) + ')';
+            if (seconds <= 0) {
+                clearInterval(timer);
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }, 1000);
+    }
+
+    document.getElementById('sendOtpBtn').addEventListener('click', async function () {
+        var btn = this;
+        var msgEl = document.getElementById('otpMsg');
+        var visitDate = document.getElementById('visitDate').value;
+        var numberOfTickets = document.getElementById('numberOfTickets').value;
+        var existingBookingId = document.getElementById('bookingId').value;
+        var otpBtnOriginalText = btn.textContent;
+
+        if (!visitDate) {
+            msgEl.textContent = '@Html.L("Booking_Otp_NeedDate")';
+            msgEl.className = 'coupon-msg error';
+            return;
+        }
+
+        btn.disabled = true;
+        msgEl.textContent = '...';
+        msgEl.className = 'coupon-msg';
+
+        var body = new URLSearchParams();
+        body.append('placeType', '@ViewBag.PlaceType');
+        body.append('placeId', '@ViewBag.PlaceId');
+        body.append('visitDate', visitDate);
+        body.append('numberOfTickets', numberOfTickets);
+        if (existingBookingId) body.append('existingBookingId', existingBookingId);
+        body.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
+
+        try {
+            var res = await fetch('/Booking/RequestOtp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: body.toString()
+            });
+            var data = await res.json();
+
+            if (data.bookingId) document.getElementById('bookingId').value = data.bookingId;
+
+            if (data.success) {
+                document.getElementById('otpCode').disabled = false;
+                document.getElementById('confirmBtn').disabled = false;
+                msgEl.textContent = data.message;
+                msgEl.className = 'coupon-msg success';
+                otpCooldown(btn, 60);
+            } else {
+                msgEl.textContent = data.message || '@Html.L("Booking_Otp_Error")';
+                msgEl.className = 'coupon-msg error';
+                btn.disabled = false;
+                btn.textContent = otpBtnOriginalText;
+            }
+        } catch (err) {
+            msgEl.textContent = '@Html.L("Booking_Otp_Error")';
+            msgEl.className = 'coupon-msg error';
+            btn.disabled = false;
+            btn.textContent = otpBtnOriginalText;
+        }
+    });
+
+    // ---- منع تأكيد الحجز من غير ما يتبعت ويتاكد كود التحقق الأول ----
+    document.getElementById('bookingForm').addEventListener('submit', function (e) {
+        if (!document.getElementById('bookingId').value) {
+            e.preventDefault();
+            alert('@Html.L("Booking_Otp_Required")');
+        }
+    });
 </script>
