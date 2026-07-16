@@ -1,0 +1,177 @@
+@model PharaohsLegacy.Models.BookingPaymentViewModel
+@{
+    ViewData["Title"] = "إتمام الدفع";
+}
+
+@*
+    ==========================================================================
+    صفحة الدفع (Checkout) — مرجع جاهز للصق في المشروع
+    ==========================================================================
+    - الفيلدز مطابقة تمامًا لبيانات الكارت في الـ Bank Service (رقم/اسم/تاريخ/CVV)
+    - Validation من جهتين: Client-side (JS فوري) + Server-side (Data Annotations
+      في BookingPaymentViewModel + رد الفعل على رسائل البنك زي "بيانات الدفع غير صحيحة")
+    - التصميم بنفس الثيم الذهبي/الغامق المستخدم في باقي الموقع
+    ==========================================================================
+*@
+
+<div class="checkout-wrapper">
+    <div class="checkout-card">
+
+        <div class="checkout-header">
+            <h2>🎫 إتمام الحجز والدفع</h2>
+            <p class="booking-summary">
+                @Model.BookingTitle — <span class="price">@Model.TotalPrice.ToString("N2") EGP</span>
+            </p>
+        </div>
+
+        <form asp-action="ConfirmPayment" method="post" id="paymentForm" novalidate>
+            <input type="hidden" asp-for="BookingId" />
+            <div asp-validation-summary="All" class="validation-summary"></div>
+
+            <div class="form-group">
+                <label asp-for="CardHolderName">اسم حامل الكارت</label>
+                <input asp-for="CardHolderName" class="form-control" placeholder="زي ما هو مكتوب على الكارت" autocomplete="cc-name" />
+                <span asp-validation-for="CardHolderName" class="field-error"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="CardNumber">رقم الكارت</label>
+                <input asp-for="CardNumber" class="form-control mono" placeholder="0000 0000 0000 0000"
+                       inputmode="numeric" maxlength="19" autocomplete="cc-number" id="cardNumberInput" />
+                <span asp-validation-for="CardNumber" class="field-error"></span>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label asp-for="ExpiryDate">تاريخ الانتهاء</label>
+                    <input asp-for="ExpiryDate" class="form-control mono" placeholder="MM/YY"
+                           inputmode="numeric" maxlength="5" autocomplete="cc-exp" id="expiryInput" />
+                    <span asp-validation-for="ExpiryDate" class="field-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Cvv">CVV</label>
+                    <input asp-for="Cvv" type="password" class="form-control mono" placeholder="•••"
+                           inputmode="numeric" maxlength="3" autocomplete="cc-csc" />
+                    <span asp-validation-for="Cvv" class="field-error"></span>
+                </div>
+            </div>
+
+            <div class="form-group coupon-group">
+                <label asp-for="CouponCode">كود الخصم (اختياري)</label>
+                <div class="coupon-row">
+                    <input asp-for="CouponCode" class="form-control mono" placeholder="QUIZ-XXXXXX" />
+                    <button type="button" id="applyCouponBtn" class="btn-secondary">تحقق</button>
+                </div>
+                <span id="couponFeedback" class="coupon-feedback"></span>
+            </div>
+
+            <div class="total-row">
+                <span>الإجمالي بعد الخصم</span>
+                <strong id="finalTotal">@Model.TotalPrice.ToString("N2") EGP</strong>
+            </div>
+
+            <button type="submit" class="btn-primary" id="submitBtn">
+                ادفع الآن — @Model.TotalPrice.ToString("N2") EGP
+            </button>
+
+            <p class="security-note">🔒 بياناتك بتتحقق مباشرة من نظام البنك ومفيش أي جزء منها بيتخزن على السيرفر</p>
+        </form>
+    </div>
+</div>
+
+<style>
+    .checkout-wrapper{display:flex;justify-content:center;padding:40px 20px;}
+    .checkout-card{
+        background:var(--card-bg,#1a1006); border:1px solid var(--border-color,#3d2a12);
+        border-radius:14px; padding:32px; max-width:460px; width:100%;
+        box-shadow:0 10px 30px rgba(0,0,0,.35);
+    }
+    .checkout-header h2{color:var(--gold,#c9a227); margin-bottom:6px; font-size:1.3rem;}
+    .booking-summary{color:var(--muted,#a68a5c); margin-bottom:24px; font-size:.9rem;}
+    .booking-summary .price{color:var(--gold,#c9a227); font-weight:700;}
+    .form-group{margin-bottom:18px;}
+    .form-row{display:flex; gap:14px;}
+    .form-row .form-group{flex:1;}
+    label{display:block; font-size:.85rem; color:var(--muted,#a68a5c); margin-bottom:6px;}
+    .form-control{
+        width:100%; padding:10px 14px; border-radius:8px;
+        border:1px solid var(--border-color,#3d2a12); background:#0d0702; color:#f3e8d0;
+        font-size:.95rem; transition:border-color .2s;
+    }
+    .form-control:focus{outline:none; border-color:var(--gold,#c9a227);}
+    .form-control.mono{font-family:'Consolas',monospace; direction:ltr; text-align:left;}
+    .field-error{color:#e05a5a; font-size:.78rem; display:block; margin-top:4px; min-height:16px;}
+    .validation-summary ul{color:#e05a5a; font-size:.85rem; padding-right:18px; margin-bottom:12px;}
+    .coupon-row{display:flex; gap:10px;}
+    .coupon-feedback{display:block; font-size:.8rem; margin-top:6px;}
+    .coupon-feedback.valid{color:#4caf82;}
+    .coupon-feedback.invalid{color:#e05a5a;}
+    .btn-secondary{
+        background:transparent; border:1px solid var(--gold,#c9a227); color:var(--gold,#c9a227);
+        padding:0 16px; border-radius:8px; cursor:pointer; white-space:nowrap;
+    }
+    .total-row{
+        display:flex; justify-content:space-between; align-items:center;
+        padding:14px 0; border-top:1px dashed var(--border-color,#3d2a12); margin:10px 0 20px;
+        color:#f3e8d0;
+    }
+    .total-row strong{color:var(--gold,#c9a227); font-size:1.1rem;}
+    .btn-primary{
+        width:100%; padding:13px; background:var(--gold,#c9a227); color:#0d0702;
+        border:none; border-radius:8px; font-weight:700; font-size:1rem; cursor:pointer;
+        transition:opacity .2s;
+    }
+    .btn-primary:hover{opacity:.9;}
+    .security-note{text-align:center; color:var(--muted,#a68a5c); font-size:.75rem; margin-top:14px;}
+</style>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const originalTotal = @Model.TotalPrice.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+        // تنسيق رقم الكارت أوتوماتيك: 0000 0000 0000 0000
+        const cardInput = document.getElementById('cardNumberInput');
+        cardInput.addEventListener('input', () => {
+            let digits = cardInput.value.replace(/\D/g, '').slice(0, 16);
+            cardInput.value = digits.replace(/(.{4})/g, '$1 ').trim();
+        });
+
+        // تنسيق تاريخ الانتهاء أوتوماتيك: MM/YY
+        const expiryInput = document.getElementById('expiryInput');
+        expiryInput.addEventListener('input', () => {
+            let digits = expiryInput.value.replace(/\D/g, '').slice(0, 4);
+            if (digits.length >= 3) digits = digits.slice(0, 2) + '/' + digits.slice(2);
+            expiryInput.value = digits;
+        });
+
+        // التحقق من الكوبون فوريًا قبل الإرسال (بينادي endpoint في الموقع بيكلم /coupons/validate بالبنك)
+        document.getElementById('applyCouponBtn').addEventListener('click', async () => {
+            const code = document.querySelector('[name="CouponCode"]').value.trim();
+            const feedback = document.getElementById('couponFeedback');
+            const finalTotalEl = document.getElementById('finalTotal');
+
+            if (!code) { feedback.textContent = ''; finalTotalEl.textContent = originalTotal.toFixed(2) + ' EGP'; return; }
+
+            try {
+                const res = await fetch(`/Booking/ValidateCoupon?code=${encodeURIComponent(code)}`);
+                const data = await res.json();
+
+                if (data.valid) {
+                    const discounted = originalTotal * (1 - data.discountPercent / 100);
+                    feedback.textContent = `✅ خصم ${data.discountPercent}% — هيتوفر ${(originalTotal - discounted).toFixed(2)} EGP`;
+                    feedback.className = 'coupon-feedback valid';
+                    finalTotalEl.textContent = discounted.toFixed(2) + ' EGP';
+                } else {
+                    feedback.textContent = `❌ ${data.message}`;
+                    feedback.className = 'coupon-feedback invalid';
+                    finalTotalEl.textContent = originalTotal.toFixed(2) + ' EGP';
+                }
+            } catch (e) {
+                feedback.textContent = '❌ تعذر التحقق من الكود الآن';
+                feedback.className = 'coupon-feedback invalid';
+            }
+        });
+    </script>
+}
