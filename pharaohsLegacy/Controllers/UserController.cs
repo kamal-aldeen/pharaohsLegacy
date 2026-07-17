@@ -197,6 +197,7 @@ namespace pharaohsLegacy.Controllers
             var favGods = new List<FavoriteCardViewModel>();
             var favMuseums = new List<FavoriteCardViewModel>();
             var favArtifacts = new List<FavoriteCardViewModel>(); // ✅ جديد
+            var favProducts = new List<FavoriteCardViewModel>(); // 🆕 المرحلة 4 — Wishlist
 
             foreach (var fav in favorites)
             {
@@ -271,6 +272,26 @@ namespace pharaohsLegacy.Controllers
                             SubTitle = (lang == "ar" && !string.IsNullOrEmpty(a.CategoryAr)) ? a.CategoryAr : a.Category
                         });
                 }
+                // 🆕 المرحلة 4 — Wishlist للمنتجات
+                else if (fav.Type.ToLower() == "product")
+                {
+                    var pr = await context.Products.Include(pp => pp.Category).FirstOrDefaultAsync(pp => pp.Id == fav.ItemId);
+                    if (pr != null)
+                    {
+                        var prCatName = pr.Category != null
+                            ? ((lang == "ar" && !string.IsNullOrEmpty(pr.Category.NameAr)) ? pr.Category.NameAr : pr.Category.Name)
+                            : "";
+                        favProducts.Add(new FavoriteCardViewModel
+                        {
+                            FavId = fav.Id,
+                            ItemId = pr.Id,
+                            Name = (lang == "ar" && !string.IsNullOrEmpty(pr.NameAr)) ? pr.NameAr : pr.Name,
+                            Type = "product",
+                            ImageUrl = pr.ImageUrl,
+                            SubTitle = prCatName
+                        });
+                    }
+                }
             }
 
             // ===== DASHBOARD VIEWMODEL =====
@@ -290,7 +311,8 @@ namespace pharaohsLegacy.Controllers
                 FavoriteTemples = favTemples,
                 FavoriteGods = favGods,
                 FavoriteMuseums = favMuseums,
-                FavoriteArtifacts = favArtifacts  // ✅ جديد
+                FavoriteArtifacts = favArtifacts,  // ✅ جديد
+                FavoriteProducts = favProducts // 🆕 المرحلة 4 — Wishlist
             };
 
             // ===== MY JOURNEY PINS =====

@@ -484,7 +484,10 @@
   "Shop_LowStock": "كمية محدودة",
   "Shop_Filter_OnSale": "عروض وخصومات",
   "Shop_Filter_BestSeller": "الأكثر مبيعًا",
-  "Shop_Filter_New": "وصل حديثًا"
+  "Shop_Filter_New": "وصل حديثًا",
+  "Shop_Specs_SKU": "رقم المنتج (SKU)",
+  "Fav_Add_Title": "إضافة للمفضلة",
+  "Fav_Remove_Title": "إزالة من المفضلة"
 
 
 

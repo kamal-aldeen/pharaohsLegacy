@@ -35,5 +35,8 @@ namespace pharaohsLegacy.Models
         public bool IsFeatured { get; set; }    // شارة "مميز" — بتتحط يدويًا من الأدمن
         public bool IsBestSeller { get; set; }  // شارة "الأكثر مبيعًا" — بتتحط يدويًا من الأدمن
         public bool IsNew { get; set; }         // شارة "جديد" — بتتحط يدويًا من الأدمن (مفيش CreatedAt في الموديل لسه عشان تتحسب تلقائي)
+
+        // 🆕 المرحلة 4 — SKU: رقم تنظيمي داخلي بس (مش مفتاح فريد مفروض في الداتا بيز)، nullable عشان المنتجات القديمة تفضل شغالة
+        public string? SKU { get; set; }
     }
 }

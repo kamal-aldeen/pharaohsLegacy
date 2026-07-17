@@ -1261,7 +1261,7 @@ JavaScript تفتح Modal التعديل.       *@
                 <table class="adm-table" id="shopTable">
                     <thead><tr>
                         <th style="width:60px;">Image</th>
-                        <th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Badges</th><th style="width:140px;">Actions</th>
+                        <th>Name</th><th>SKU</th><th>Category</th><th>Price</th><th>Stock</th><th>Badges</th><th style="width:140px;">Actions</th>
                     </tr></thead>
                     <tbody>
                     @foreach (var p in Model.Products)
@@ -1270,6 +1270,7 @@ JavaScript تفتح Modal التعديل.       *@
                             <td><img class="adm-thumb" src="@(p.ImageUrl ?? "/images/placeholder.jpg")"
                                      onerror="this.src='/images/placeholder.jpg'" /></td>
                             <td><div class="adm-name-cell">@p.Name</div></td>
+                            <td><div class="adm-sub-cell">@(string.IsNullOrEmpty(p.SKU) ? "—" : p.SKU)</div></td>
                             <td><div class="adm-sub-cell">@(p.Category?.Name ?? "—")</div></td>
                             <td>
                                 <div class="adm-sub-cell">
@@ -1295,6 +1296,7 @@ JavaScript تفتح Modal التعديل.       *@
                                             data-name="@p.Name"
                                             data-price="@p.Price"
                                             data-stock="@p.StockQuantity"
+                                            data-sku="@p.SKU"
                                             data-img="@p.ImageUrl"
                                             data-desc="@p.Description"
                                             data-namear="@p.NameAr"
@@ -2282,9 +2284,9 @@ JavaScript تفتح Modal التعديل.       *@
           <div><label class="adm-label">Name *</label><input class="adm-input" name="Name" required placeholder="e.g. Anubis Statue" /></div>
           <div><label class="adm-label">Price (EGP) *</label><input class="adm-input" type="number" step="0.01" min="0" name="Price" required placeholder="e.g. 250" /></div>
         </div>
-        <div class="adm-form-row">
-          <label class="adm-label">Stock Quantity *</label>
-          <input class="adm-input" type="number" min="0" name="StockQuantity" required placeholder="e.g. 30" />
+        <div class="adm-form-row-2">
+          <div><label class="adm-label">Stock Quantity *</label><input class="adm-input" type="number" min="0" name="StockQuantity" required placeholder="e.g. 30" /></div>
+          <div><label class="adm-label">SKU <small>(optional)</small></label><input class="adm-input" name="SKU" placeholder="e.g. PL-STA-0042" /></div>
         </div>
         <div class="adm-form-row">
           <label class="adm-label">Category</label>
@@ -2378,9 +2380,9 @@ JavaScript تفتح Modal التعديل.       *@
           <div><label class="adm-label">Name *</label><input class="adm-input" name="Name" id="editProductName" required /></div>
           <div><label class="adm-label">Price (EGP) *</label><input class="adm-input" type="number" step="0.01" min="0" name="Price" id="editProductPrice" required /></div>
         </div>
-        <div class="adm-form-row">
-          <label class="adm-label">Stock Quantity *</label>
-          <input class="adm-input" type="number" min="0" name="StockQuantity" id="editProductStock" required />
+        <div class="adm-form-row-2">
+          <div><label class="adm-label">Stock Quantity *</label><input class="adm-input" type="number" min="0" name="StockQuantity" id="editProductStock" required /></div>
+          <div><label class="adm-label">SKU <small>(optional)</small></label><input class="adm-input" name="SKU" id="editProductSKU" placeholder="e.g. PL-STA-0042" /></div>
         </div>
         <div class="adm-form-row">
           <label class="adm-label">Category</label>
@@ -3706,6 +3708,7 @@ function openEditProductBtn(btn) {
     const name   = btn.getAttribute('data-name');
     const price  = btn.getAttribute('data-price');
     const stock  = btn.getAttribute('data-stock');
+    const sku    = btn.getAttribute('data-sku'); // 🆕 المرحلة 4
     const img    = btn.getAttribute('data-img');
     const desc   = btn.getAttribute('data-desc');
     const nameAr = btn.getAttribute('data-namear');
@@ -3721,18 +3724,19 @@ function openEditProductBtn(btn) {
     const isFeatured = btn.getAttribute('data-isfeatured') === 'true';
     const isBestSeller = btn.getAttribute('data-isbestseller') === 'true';
     const isNew = btn.getAttribute('data-isnew') === 'true';
-    openEditProduct(id, name, price, stock, img, desc, nameAr, descAr, categoryId,
+    openEditProduct(id, name, price, stock, sku, img, desc, nameAr, descAr, categoryId,
         material, materialAr, dimensions, dimensionsAr, origin, originAr,
         originalPrice, isFeatured, isBestSeller, isNew);
 }
 
-function openEditProduct(id, name, price, stock, img, desc, nameAr, descAr, categoryId,
+function openEditProduct(id, name, price, stock, sku, img, desc, nameAr, descAr, categoryId,
     material, materialAr, dimensions, dimensionsAr, origin, originAr,
     originalPrice, isFeatured, isBestSeller, isNew) {
     document.getElementById('editProductId').value    = id;
     document.getElementById('editProductName').value  = name;
     document.getElementById('editProductPrice').value = price;
     document.getElementById('editProductStock').value = stock;
+    document.getElementById('editProductSKU').value   = sku || ''; // 🆕 المرحلة 4
     document.getElementById('editProductImg').value   = img;
     document.getElementById('editProductDesc').value  = desc;
     document.getElementById('editProductNameAr').value = nameAr || '';

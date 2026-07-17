@@ -71,6 +71,18 @@ namespace pharaohsLegacy.Controllers
             ViewBag.BestSeller = bestSeller == true; // 🆕
             ViewBag.IsNewFilter = isNew == true; // 🆕
 
+            // 🆕 المرحلة 4 — Wishlist: هات IDs المنتجات المفضّلة لليوزر الحالي (لو مسجل دخول وليس أدمن)
+            var userEmail = HttpContext.Session.GetString("UserEmail");
+            var isLoggedInUser = !string.IsNullOrEmpty(userEmail) && userEmail != "guest"
+                && HttpContext.Session.GetString("UserRole") != "Admin";
+
+            ViewBag.CanFavorite = isLoggedInUser;
+            // 🆕 Dictionary: ProductId -> Favorite.Id (محتاجين الـ Favorite.Id عشان نستخدم Favorite/Remove الموجود أصلاً)
+            ViewBag.FavoriteMap = isLoggedInUser
+                ? await _db.Favorites.Where(f => f.UserEmail == userEmail && f.Type == "product")
+                    .ToDictionaryAsync(f => f.ItemId, f => f.Id)
+                : new Dictionary<int, int>();
+
             return View(products);
         }
 
@@ -87,7 +99,7 @@ namespace pharaohsLegacy.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
-            var product = await _db.Products.FindAsync(id);
+            var product = await _db.Products.Include(p => p.Category).FirstOrDefaultAsync(p => p.Id == id);
             if (product == null) return NotFound();
 
             var lang = Lang();
@@ -96,6 +108,12 @@ namespace pharaohsLegacy.Controllers
             ViewBag.UnitPrice = product.Price;
             ViewBag.MaxQuantity = Math.Max(0, Math.Min(10, product.StockQuantity));
             ViewBag.ProductId = product.Id;
+
+            // 🆕 المرحلة 4 — Wishlist: الـ Details أصلاً بترفض الـ Guest والـ Admin فوق، فأي حد وصل هنا مضمون إنه يوزر عادي
+            var existingFav = await _db.Favorites.FirstOrDefaultAsync(f =>
+                f.UserEmail == userEmail && f.Type == "product" && f.ItemId == id);
+            ViewBag.IsFav = existingFav != null;
+            ViewBag.FavoriteId = existingFav?.Id;
 
             // 🆕 Reviews — نفس الباترن المستخدم في باقي الصفحات (Type = "product")
             var reviews = await _db.Reviews

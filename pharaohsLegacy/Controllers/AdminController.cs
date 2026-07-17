@@ -443,6 +443,7 @@ namespace pharaohsLegacy.Controllers
             model.DimensionsAr = model.DimensionsAr ?? "";    // 🆕
             model.OriginRegion = model.OriginRegion ?? "";    // 🆕
             model.OriginRegionAr = model.OriginRegionAr ?? "";  // 🆕
+            model.SKU = string.IsNullOrWhiteSpace(model.SKU) ? null : model.SKU.Trim(); // 🆕 المرحلة 4
 
             // 🆕 المرحلة 3 — لو OriginalPrice أقل من أو يساوي Price (خصم وهمي/غلط) بنتجاهلها
             // عشان الـ View مايبينش Strikethrough أو نسبة خصم غلط
@@ -477,6 +478,7 @@ namespace pharaohsLegacy.Controllers
             existing.DimensionsAr = model.DimensionsAr ?? "";    // 🆕
             existing.OriginRegion = model.OriginRegion ?? "";    // 🆕
             existing.OriginRegionAr = model.OriginRegionAr ?? "";  // 🆕
+            existing.SKU = string.IsNullOrWhiteSpace(model.SKU) ? null : model.SKU.Trim(); // 🆕 المرحلة 4
 
             // 🆕 المرحلة 3 — عروض وخصومات وشارات
             existing.OriginalPrice = (model.OriginalPrice.HasValue && model.OriginalPrice.Value > model.Price)

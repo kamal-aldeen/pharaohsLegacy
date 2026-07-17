@@ -6,6 +6,7 @@
     var temples = ViewBag.Temples as List<pharaohsLegacy.Models.Temple>;
     var gods = ViewBag.Gods as List<pharaohsLegacy.Models.God>;
     var museums = ViewBag.Museums as List<pharaohsLegacy.Models.Museum>;
+    var products = ViewBag.Products as List<pharaohsLegacy.Models.Product>; // 🆕 المرحلة 4 — Wishlist
 
     var lang = Context.Session.GetString("Lang") ?? "en";
     var arrowNext = lang == "ar" ? "←" : "→";
@@ -22,7 +23,8 @@
     @if ((pharaohs == null || pharaohs.Count == 0) &&
          (temples == null || temples.Count == 0) &&
          (gods == null || gods.Count == 0) &&
-         (museums == null || museums.Count == 0))
+         (museums == null || museums.Count == 0) &&
+         (products == null || products.Count == 0))
     {
         <div style="text-align:center; padding:4rem; color:var(--muted);">
             <p style="font-size:3rem; margin-bottom:1rem;">🤍</p>
@@ -146,6 +148,38 @@
                         <span class="card-tag">@mLocation</span>
                         <h3 class="card-title">@mName</h3>
                         <p class="card-desc">@mDescription</p>
+                    </div>
+                    <div class="card-footer">
+                        <span>@Html.L("Common_ViewDetails")</span>
+                        <span class="card-arrow">@arrowNext</span>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+
+    @* 🆕 المرحلة 4 — Wishlist للمنتجات *@
+    @if (products != null && products.Count > 0)
+    {
+        <h3 style="font-family:'Cinzel',serif; color:var(--gold); margin:3rem 0 1.5rem;">
+            ❤️ @Html.L("Common_ProductsPlural") (@Html.Digits(products.Count))
+        </h3>
+
+        <div class="cards-grid">
+            @foreach (var p in products)
+            {
+                var pName = (lang == "ar" && !string.IsNullOrEmpty(p.NameAr)) ? p.NameAr : p.Name;
+                var pCatName = p.Category != null
+                    ? ((lang == "ar" && !string.IsNullOrEmpty(p.Category.NameAr)) ? p.Category.NameAr : p.Category.Name)
+                    : "";
+                <a href="/Shop/Details/@p.Id" class="card">
+                    <div class="card-img">
+                        <img src="@p.ImageUrl" alt="@pName" />
+                    </div>
+                    <div class="card-body">
+                        <span class="card-tag">@pCatName</span>
+                        <h3 class="card-title">@pName</h3>
+                        <p class="card-desc">@Html.Digits((object)p.Price) @Html.L("Common_EGP")</p>
                     </div>
                     <div class="card-footer">
                         <span>@Html.L("Common_ViewDetails")</span>

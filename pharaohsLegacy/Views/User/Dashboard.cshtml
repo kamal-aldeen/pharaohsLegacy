@@ -1980,10 +1980,35 @@
                 </div>
             }
 
+            @* ── Products (Wishlist) ── *@
+            @if (Model.FavoriteProducts.Any())
+            {
+                <div class="db-fav-section">
+                    <div class="db-section-head"><div class="db-section-title">@Html.L("Common_ProductsPlural")</div></div>
+                    <div class="db-fav-grid">
+                        @foreach (var f in Model.FavoriteProducts)
+                        {
+                            <div class="db-fav-card fade-up">
+                                <div class="db-fav-card-img-wrap">
+                                    <img src="@(f.ImageUrl ?? "/images/placeholder.jpg")" alt="@f.Name" onerror="this.src='/images/placeholder.jpg'" />
+                                    <span class="db-fav-card-type-badge">🛍️ @Html.L("Shop_Title")</span>
+                                    <a href="#" class="db-fav-card-remove" onclick="openRemoveFavModal('@f.Name', '/Favorite/Remove/@f.FavId'); return false;">✕</a>
+                                </div>
+                                <div class="db-fav-card-body">
+                                    <div class="db-fav-card-name">@f.Name</div>
+                                    <div class="db-fav-card-sub">@f.SubTitle</div>
+                                </div>
+                                <a href="/Shop/Details/@f.ItemId" class="db-fav-card-link">@Html.L("Dash_ViewDetails") @arrowNext</a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
             @* ── Empty state ── *@
             @if (!Model.FavoritePharaohs.Any() && !Model.FavoriteTemples.Any() &&
                  !Model.FavoriteGods.Any() && !Model.FavoriteMuseums.Any() &&
-                 !Model.FavoriteArtifacts.Any())
+                 !Model.FavoriteArtifacts.Any() && !Model.FavoriteProducts.Any())
             {
                 <div class="db-empty">
                     <div class="db-empty-icon">𓆣</div>

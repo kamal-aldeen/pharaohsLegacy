@@ -489,7 +489,10 @@
   "Shop_LowStock": "Low stock",
   "Shop_Filter_OnSale": "Offers & Discounts",
   "Shop_Filter_BestSeller": "Best Sellers",
-  "Shop_Filter_New": "New Arrivals"
+  "Shop_Filter_New": "New Arrivals",
+  "Shop_Specs_SKU": "SKU",
+  "Fav_Add_Title": "Add to Wishlist",
+  "Fav_Remove_Title": "Remove from Wishlist"
 
 
 

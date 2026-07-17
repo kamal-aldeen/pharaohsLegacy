@@ -24,7 +24,30 @@
     }
 }
 
+@{
+    // 🆕 المرحلة 4 — Breadcrumbs: Home > Shop > Category (لو متفلتر)
+    pharaohsLegacy.Models.Category? selectedCat = selectedCategoryId != null
+        ? ((List<pharaohsLegacy.Models.Category>)ViewBag.Categories).FirstOrDefault(c => c.Id == selectedCategoryId)
+        : null;
+    var selectedCatName = selectedCat != null
+        ? ((lang == "ar" && !string.IsNullOrEmpty(selectedCat.NameAr)) ? selectedCat.NameAr : selectedCat.Name)
+        : null;
+}
+
 <div class="shop-wrap">
+    <nav class="breadcrumbs">
+        @if (selectedCat == null)
+        {
+            <span class="crumb-current">@Html.L("Shop_Title")</span>
+        }
+        else
+        {
+            <a href="/Shop/Index">@Html.L("Shop_Title")</a>
+            <span class="crumb-sep">/</span>
+            <span class="crumb-current">@selectedCatName</span>
+        }
+    </nav>
+
     <h1 class="shop-page-title">@Html.L("Shop_Title")</h1>
 
     <div class="shop-filters">
@@ -70,6 +93,9 @@
             var hasDiscount = p.OriginalPrice.HasValue && p.OriginalPrice.Value > p.Price;
             var discountPct = hasDiscount ? (int)Math.Round((1 - (p.Price / p.OriginalPrice.Value)) * 100) : 0;
             const int lowStockThreshold = 5;
+            var favMap = (Dictionary<int, int>)ViewBag.FavoriteMap;
+            bool canFav = ViewBag.CanFavorite == true;
+            bool isFav = canFav && favMap.ContainsKey(p.Id);
             <a class="shop-card" href="/Shop/Details/@p.Id">
                 <div class="shop-card-img">
                     <img src="@p.ImageUrl" alt="@name" />
@@ -91,6 +117,15 @@
                             <span class="shop-badge badge-featured">@Html.L("Shop_Badge_Featured")</span>
                         }
                     </div>
+                    @if (canFav)
+                    {
+                        var favId = isFav ? favMap[p.Id].ToString() : "";
+                        <button type="button" class="shop-fav-btn @(isFav ? "active" : "")"
+                                data-product-id="@p.Id" data-fav-id="@favId"
+                                data-title-add="@Html.L("Fav_Add_Title")" data-title-remove="@Html.L("Fav_Remove_Title")"
+                                onclick="toggleWishlist(event, this)"
+                                title="@Html.L(isFav ? "Fav_Remove_Title" : "Fav_Add_Title")">@(isFav ? "♥" : "♡")</button>
+                    }
                 </div>
                 <div class="shop-card-body">
                     <h3>@name</h3>
@@ -164,4 +199,62 @@
     .shop-filter-new { border-color: #3478f6; color: #3478f6; }
     .shop-filter-new.active { background: #3478f6; color: #fff; border-color: #3478f6; }
     .shop-sort-select { background: var(--dark3); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: .8rem; cursor: pointer; }
+
+    /* 🆕 المرحلة 4 — Breadcrumbs */
+    .breadcrumbs { font-size: .8rem; color: var(--muted); margin-bottom: 1rem; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .breadcrumbs a { color: var(--muted); text-decoration: none; transition: color .2s; }
+    .breadcrumbs a:hover { color: var(--gold); }
+    .breadcrumbs .crumb-sep { color: var(--border); }
+    .breadcrumbs .crumb-current { color: var(--gold); }
+
+    /* 🆕 المرحلة 4 — Wishlist heart */
+    .shop-fav-btn { position: absolute; top: 8px; right: 8px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.55); border: none; border-radius: 50%; font-size: 1.1rem; color: #fff; text-decoration: none; z-index: 2; cursor: pointer; padding: 0; font-family: inherit; line-height: 1; transition: transform .2s, color .2s; }
+    .shop-fav-btn:hover { transform: scale(1.15); }
+    .shop-fav-btn.active { color: #e0435b; }
 </style>
+
+<script>
+    // 🆕 المرحلة 4 — Wishlist toggle بـ AJAX من غير أي Refresh للصفحة
+    async function toggleWishlist(e, btn) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (btn.disabled) return;
+        btn.disabled = true;
+
+        const productId = btn.getAttribute('data-product-id');
+        const favId = btn.getAttribute('data-fav-id');
+        const isFav = btn.classList.contains('active');
+        const titleAdd = btn.getAttribute('data-title-add');
+        const titleRemove = btn.getAttribute('data-title-remove');
+
+        const url = isFav
+            ? `/Favorite/Remove/${favId}`
+            : `/Favorite/Add?type=product&itemId=${productId}`;
+
+        try {
+            const res = await fetch(url, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                credentials: 'same-origin'
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                if (isFav) {
+                    btn.classList.remove('active');
+                    btn.textContent = '♡';
+                    btn.setAttribute('data-fav-id', '');
+                    btn.title = titleAdd;
+                } else {
+                    btn.classList.add('active');
+                    btn.textContent = '♥';
+                    btn.setAttribute('data-fav-id', data.favoriteId);
+                    btn.title = titleRemove;
+                }
+            }
+        } catch (err) {
+            console.error('Wishlist toggle failed:', err);
+        } finally {
+            btn.disabled = false;
+        }
+    }
+</script>

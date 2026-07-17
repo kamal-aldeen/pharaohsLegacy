@@ -52,11 +52,18 @@ namespace pharaohsLegacy.Controllers
                 .Join(context.Artifacts, f => f.ItemId, a => a.Id, (f, a) => a)
                 .ToList();
 
+            // 🆕 المرحلة 4 — Wishlist للمنتجات (بـ Include للكاتيجوري عشان تبان في الكارت)
+            var favProducts = context.Favorites
+                .Where(f => f.UserEmail == userEmail && f.Type == "product")
+                .Join(context.Products.Include(p => p.Category), f => f.ItemId, p => p.Id, (f, p) => p)
+                .ToList();
+
             ViewBag.Museums = favMuseums;
             ViewBag.Gods = favGods;
             ViewBag.Pharaohs = favPharaohs;
             ViewBag.Temples = favTemples;
             ViewBag.Artifacts = favArtifacts;
+            ViewBag.Products = favProducts;
 
             return View();
         }
@@ -81,24 +88,30 @@ namespace pharaohsLegacy.Controllers
                 "god" => await context.Gods.AnyAsync(g => g.Id == itemId),
                 "museum" => await context.Museums.AnyAsync(m => m.Id == itemId),
                 "artifact" => await context.Artifacts.AnyAsync(a => a.Id == itemId),
+                "product" => await context.Products.AnyAsync(p => p.Id == itemId), // 🆕 المرحلة 4
                 _ => false
             };
 
             if (!exists) return NotFound();
 
-            var already = await context.Favorites
-                .AnyAsync(f => f.UserEmail == email && f.Type == type && f.ItemId == itemId);
+            Favorite fav = await context.Favorites
+                .FirstOrDefaultAsync(f => f.UserEmail == email && f.Type == type.ToLower() && f.ItemId == itemId);
 
-            if (!already)
+            if (fav == null)
             {
-                context.Favorites.Add(new Favorite
+                fav = new Favorite
                 {
                     UserEmail = email,
                     Type = type.ToLower(),
                     ItemId = itemId
-                });
+                };
+                context.Favorites.Add(fav);
                 await context.SaveChangesAsync();
             }
+
+            // 🆕 لو الطلب جاي بـ AJAX (fetch من غير Refresh) بنرجع JSON بس، مش Redirect لصفحة كاملة
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                return Json(new { success = true, favoriteId = fav.Id });
 
             if (!string.IsNullOrEmpty(returnUrl))
                 return Redirect(returnUrl);
@@ -111,6 +124,7 @@ namespace pharaohsLegacy.Controllers
                 "god" => RedirectToAction("Details", "God", new { id = itemId }),
                 "museum" => RedirectToAction("Details", "Museum", new { id = itemId }),
                 "artifact" => RedirectToAction("Details", "Artifact", new { id = itemId }),
+                "product" => RedirectToAction("Details", "Shop", new { id = itemId }), // 🆕 المرحلة 4
                 _ => RedirectToAction("Index", "Home")
             };
         }
@@ -131,10 +145,18 @@ namespace pharaohsLegacy.Controllers
                 f.Id == id && f.UserEmail == email);
 
             if (fav == null)
+            {
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    return Json(new { success = false });
                 return RedirectToAction("Dashboard", "User", new { tab = "favorites" });
+            }
 
             context.Favorites.Remove(fav);
             await context.SaveChangesAsync();
+
+            // 🆕 لو الطلب جاي بـ AJAX (fetch من غير Refresh) بنرجع JSON بس، مش Redirect لصفحة كاملة
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                return Json(new { success = true });
 
             if (!string.IsNullOrEmpty(returnUrl))
                 return Redirect(returnUrl);

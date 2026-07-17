@@ -10,6 +10,22 @@
 }
 
 <div class="details-wrap">
+    @{
+        var prodCategoryName = Model.Category != null
+            ? ((lang == "ar" && !string.IsNullOrEmpty(Model.Category.NameAr)) ? Model.Category.NameAr : Model.Category.Name)
+            : null;
+    }
+    <nav class="breadcrumbs">
+        <a href="/Shop/Index">@Html.L("Shop_Title")</a>
+        @if (Model.CategoryId.HasValue && prodCategoryName != null)
+        {
+            <span class="crumb-sep">/</span>
+            <a href="/Shop/Index?categoryId=@Model.CategoryId">@prodCategoryName</a>
+        }
+        <span class="crumb-sep">/</span>
+        <span class="crumb-current">@ViewBag.ProductName</span>
+    </nav>
+
     <a href="javascript:history.back()" class="btn-back">@arrowBack @Html.L("Common_Back")</a>
 
     <div class="details-card">
@@ -38,6 +54,15 @@
                     <span class="shop-badge badge-featured">@Html.L("Shop_Badge_Featured")</span>
                 }
             </div>
+            @{
+                bool isFav = ViewBag.IsFav == true;
+                int? favId = ViewBag.FavoriteId;
+            }
+            <button type="button" class="shop-fav-btn details-fav-btn @(isFav ? "active" : "")"
+                    data-product-id="@Model.Id" data-fav-id="@favId"
+                    data-title-add="@Html.L("Fav_Add_Title")" data-title-remove="@Html.L("Fav_Remove_Title")"
+                    onclick="toggleWishlist(event, this)"
+                    title="@Html.L(isFav ? "Fav_Remove_Title" : "Fav_Add_Title")">@(isFav ? "♥" : "♡")</button>
         </div>
         <div class="details-body">
             <span class="card-tag">@Html.L("Shop_Title")</span>
@@ -71,7 +96,7 @@
                 var material = lang == "ar" && !string.IsNullOrEmpty(Model.MaterialAr) ? Model.MaterialAr : Model.Material;
                 var dimensions = lang == "ar" && !string.IsNullOrEmpty(Model.DimensionsAr) ? Model.DimensionsAr : Model.Dimensions;
                 var origin = lang == "ar" && !string.IsNullOrEmpty(Model.OriginRegionAr) ? Model.OriginRegionAr : Model.OriginRegion;
-                var hasSpecs = !string.IsNullOrEmpty(material) || !string.IsNullOrEmpty(dimensions) || !string.IsNullOrEmpty(origin);
+                var hasSpecs = !string.IsNullOrEmpty(material) || !string.IsNullOrEmpty(dimensions) || !string.IsNullOrEmpty(origin) || !string.IsNullOrEmpty(Model.SKU);
             }
             @if (hasSpecs)
             {
@@ -89,6 +114,10 @@
                         @if (!string.IsNullOrEmpty(origin))
                         {
                             <div class="spec-item"><span class="spec-label">@Html.L("Shop_Specs_Origin")</span><span class="spec-value">@origin</span></div>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.SKU))
+                        {
+                            <div class="spec-item"><span class="spec-label">@Html.L("Shop_Specs_SKU")</span><span class="spec-value">@Model.SKU</span></div>
                         }
                     </div>
                 </div>
@@ -251,9 +280,66 @@
     .badge-featured { background: var(--gold); color: #1a0a00; }
     .details-price-old { display: block; text-decoration: line-through; color: var(--muted); font-size: .85rem; font-weight: 400; }
     .details-lowstock { color: #d98c00; font-size: .85rem; margin-inline-start: .4rem; }
+
+    /* 🆕 المرحلة 4 — Breadcrumbs */
+    .breadcrumbs { font-size: .8rem; color: var(--muted); margin-bottom: 1rem; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .breadcrumbs a { color: var(--muted); text-decoration: none; transition: color .2s; }
+    .breadcrumbs a:hover { color: var(--gold); }
+    .breadcrumbs .crumb-sep { color: var(--border); }
+    .breadcrumbs .crumb-current { color: var(--gold); }
+
+    /* 🆕 المرحلة 4 — Wishlist heart */
+    .shop-fav-btn { position: absolute; top: 8px; right: 8px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.55); border: none; border-radius: 50%; font-size: 1.1rem; color: #fff; text-decoration: none; z-index: 2; cursor: pointer; padding: 0; font-family: inherit; line-height: 1; transition: transform .2s, color .2s; }
+    .shop-fav-btn:hover { transform: scale(1.15); }
+    .shop-fav-btn.active { color: #e0435b; }
+    .details-fav-btn { top: 14px; right: 14px; width: 38px; height: 38px; font-size: 1.4rem; }
 </style>
 
 <script>
+    // 🆕 المرحلة 4 — Wishlist toggle بـ AJAX من غير أي Refresh للصفحة
+    async function toggleWishlist(e, btn) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (btn.disabled) return;
+        btn.disabled = true;
+
+        const productId = btn.getAttribute('data-product-id');
+        const favId = btn.getAttribute('data-fav-id');
+        const isFav = btn.classList.contains('active');
+        const titleAdd = btn.getAttribute('data-title-add');
+        const titleRemove = btn.getAttribute('data-title-remove');
+
+        const url = isFav
+            ? `/Favorite/Remove/${favId}`
+            : `/Favorite/Add?type=product&itemId=${productId}`;
+
+        try {
+            const res = await fetch(url, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                credentials: 'same-origin'
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                if (isFav) {
+                    btn.classList.remove('active');
+                    btn.textContent = '♡';
+                    btn.setAttribute('data-fav-id', '');
+                    btn.title = titleAdd;
+                } else {
+                    btn.classList.add('active');
+                    btn.textContent = '♥';
+                    btn.setAttribute('data-fav-id', data.favoriteId);
+                    btn.title = titleRemove;
+                }
+            }
+        } catch (err) {
+            console.error('Wishlist toggle failed:', err);
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
     var unitPrice = @ViewBag.UnitPrice;
     var maxQty = @ViewBag.MaxQuantity;
     var qty = 1;

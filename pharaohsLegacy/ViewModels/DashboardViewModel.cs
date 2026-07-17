@@ -24,6 +24,7 @@ namespace pharaohsLegacy.ViewModels
         public List<FavoriteCardViewModel> FavoriteGods { get; set; } = new();
         public List<FavoriteCardViewModel> FavoriteMuseums { get; set; } = new();
         public List<FavoriteCardViewModel> FavoriteArtifacts { get; set; } = new();
+        public List<FavoriteCardViewModel> FavoriteProducts { get; set; } = new();
 
     }
 
