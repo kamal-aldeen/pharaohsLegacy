@@ -26,6 +26,10 @@ namespace pharaohsLegacy.Models
         public DbSet<HistoricalEvent> HistoricalEvents { get; set; }
 
         public DbSet<DailyFact> DailyFacts { get; set; }
+        public DbSet<Product> Products { get; set; }
+        public DbSet<Category> Categories { get; set; }
+        public DbSet<ShopOrder> ShopOrders { get; set; }
+        public DbSet<ShopPayment> ShopPayments { get; set; }
 
 
 

@@ -383,6 +383,7 @@ body {
 }
 .adm-name-cell { font-weight: 500; color: var(--gold-light); }
 .adm-sub-cell  { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+.adm-stock-zero { color: var(--red); font-weight: 700; }
 
 
 .adm-actions { display: flex; gap: 6px; align-items: center; }
@@ -717,6 +718,11 @@ body {
                     onclick="switchPanel('gods',this)">
                 <span class="nav-icon">⚡</span> Gods
                 <span class="nav-count">@Model.TotalGods</span>
+            </button>
+            <button class="adm-nav-item @(activeTab == "shop" ? "active" : "")"
+                    onclick="switchPanel('shop',this)">
+                <span class="nav-icon">🛍️</span> Shop
+                <span class="nav-count">@Model.TotalProducts</span>
             </button>
             <button class="adm-nav-item @(activeTab == "artifacts" ? "active" : "")"
                     onclick="switchPanel('artifacts',this)">
@@ -1238,7 +1244,116 @@ JavaScript تفتح Modal التعديل.       *@
             </div>
         </div>
 
-        <!-- USERS  -->
+        <!-- SHOP -->
+        <div id="panel-shop" class="adm-panel @(activeTab=="shop"?"active":"")">
+            <div class="adm-sec-head">
+                <div class="adm-sec-title">Shop</div>
+                <div style="display:flex;gap:12px;align-items:center;">
+                    <div class="adm-search-wrap">
+                        <span class="adm-search-icon">🔍</span>
+                        <input class="adm-search" placeholder="Search products..."
+                               oninput="searchTable('shopTable',this.value)" />
+                    </div>
+                    <button class="adm-btn adm-btn-add" onclick="openModal('modalAddProduct')">+ Add Product</button>
+                </div>
+            </div>
+            <div class="adm-table-wrap">
+                <table class="adm-table" id="shopTable">
+                    <thead><tr>
+                        <th style="width:60px;">Image</th>
+                        <th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Badges</th><th style="width:140px;">Actions</th>
+                    </tr></thead>
+                    <tbody>
+                    @foreach (var p in Model.Products)
+                    {
+                        <tr>
+                            <td><img class="adm-thumb" src="@(p.ImageUrl ?? "/images/placeholder.jpg")"
+                                     onerror="this.src='/images/placeholder.jpg'" /></td>
+                            <td><div class="adm-name-cell">@p.Name</div></td>
+                            <td><div class="adm-sub-cell">@(p.Category?.Name ?? "—")</div></td>
+                            <td>
+                                <div class="adm-sub-cell">
+                                    @p.Price EGP
+                                    @if (p.OriginalPrice.HasValue)
+                                    {
+                                        <br /><span style="text-decoration:line-through;color:var(--muted);font-size:11px;">@p.OriginalPrice EGP</span>
+                                    }
+                                </div>
+                            </td>
+                            <td><div class="adm-sub-cell @(p.StockQuantity <= 0 ? "adm-stock-zero" : "")">@p.StockQuantity</div></td>
+                            <td>
+                                <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                                    @if (p.IsFeatured) { <span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;background:rgba(201,168,76,0.15);color:var(--gold);">Featured</span> }
+                                    @if (p.IsBestSeller) { <span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;background:rgba(46,139,87,0.15);color:#2e8b57;">Best Seller</span> }
+                                    @if (p.IsNew) { <span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;background:rgba(52,120,246,0.15);color:#3478f6;">New</span> }
+                                </div>
+                            </td>
+                            <td>
+                                <div class="adm-actions">
+                                    <button class="adm-btn adm-btn-edit"
+                                            data-id="@p.Id"
+                                            data-name="@p.Name"
+                                            data-price="@p.Price"
+                                            data-stock="@p.StockQuantity"
+                                            data-img="@p.ImageUrl"
+                                            data-desc="@p.Description"
+                                            data-namear="@p.NameAr"
+                                            data-descar="@p.DescriptionAr"
+                                            data-categoryid="@(p.CategoryId?.ToString() ?? "")"
+                                            data-material="@p.Material"
+                                            data-materialar="@p.MaterialAr"
+                                            data-dimensions="@p.Dimensions"
+                                            data-dimensionsar="@p.DimensionsAr"
+                                            data-origin="@p.OriginRegion"
+                                            data-originar="@p.OriginRegionAr"
+                                            data-originalprice="@p.OriginalPrice"
+                                            data-isfeatured="@p.IsFeatured.ToString().ToLower()"
+                                            data-isbestseller="@p.IsBestSeller.ToString().ToLower()"
+                                            data-isnew="@p.IsNew.ToString().ToLower()"
+                                            onclick="openEditProductBtn(this)">
+                                        ✏ Edit
+                                    </button>
+                                    <form method="post" action="/Admin/DeleteProduct" style="display:inline;" onsubmit="return false;">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@p.Id" />
+                                        <button type="button" class="adm-btn adm-btn-del"
+                                                onclick="showDeleteConfirm(this.closest('form'),'@Html.Raw(p.Name?.Replace("'","\\'")??"")' )">🗑</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="adm-sec-head" style="margin-top:28px;">
+                <div class="adm-sec-title">Categories</div>
+            </div>
+            <div style="display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start;">
+                <form method="post" action="/Admin/AddCategory" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                    @Html.AntiForgeryToken()
+                    <input class="adm-input" name="Name" placeholder="e.g. Jewelry" required style="max-width:200px;" />
+                    <input class="adm-input adm-input-ar" name="NameAr" dir="rtl" placeholder="مثال: مجوهرات" style="max-width:200px;" />
+                    <button type="submit" class="adm-btn adm-btn-add">+ Add Category</button>
+                </form>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    @foreach (var c in Model.Categories)
+                    {
+                        <span style="display:flex; align-items:center; gap:6px; background:rgba(201,168,76,0.08); border:1px solid var(--border); border-radius:20px; padding:5px 6px 5px 14px; font-size:13px; color:var(--text);">
+                            @c.Name
+                            <form method="post" action="/Admin/DeleteCategory" style="display:inline;" onsubmit="return false;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@c.Id" />
+                                <button type="button"
+                                        style="background:none; border:none; color:var(--red); cursor:pointer; font-size:13px; padding:2px 6px;"
+                                        onclick="showDeleteConfirm(this.closest('form'),'@Html.Raw(c.Name?.Replace("'","\\'")??"")')">✕</button>
+                            </form>
+                        </span>
+                    }
+                </div>
+            </div>
+        </div>
         <div id="panel-users" class="adm-panel @(activeTab=="users"?"active":"")">
             <div class="adm-sec-head">
                 <div class="adm-sec-title">All Users</div>
@@ -1300,6 +1415,7 @@ JavaScript تفتح Modal التعديل.       *@
                             <option value="museum">🏛️ Museum</option>
                             <option value="god">⚡ God</option>
                             <option value="artifact">𓏠 Artifact</option>
+                            <option value="product">🛍️ Product</option>
                         </select>
                         <select id="filterDate" onchange="filterReviews()"
                                 style="background:#1a0a00; color:#d4af37; border:1px solid rgba(212,175,55,0.3); padding:7px 12px; border-radius:6px; cursor:pointer;">
@@ -1345,6 +1461,7 @@ JavaScript تفتح Modal التعديل.       *@
                                                 "pharaoh" => $"/Pharaoh/Details/{r.ItemId}",
                                                 "god" => $"/God/Details/{r.ItemId}",
                                                 "artifact" => $"/Artifact/Details/{r.ItemId}",
+                                                "product" => $"/Shop/Details/{r.ItemId}",
                                                 _ => "#"
                                             };
                                         }
@@ -2145,6 +2262,197 @@ JavaScript تفتح Modal التعديل.       *@
       </div>
       <div class="adm-modal-foot">
         <button type="button" class="adm-btn adm-btn-del" onclick="closeModal('modalEditGod')">Cancel</button>
+        <button type="submit" class="adm-btn adm-btn-add">Update</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ADD PRODUCT -->
+<div class="adm-overlay" id="modalAddProduct">
+  <div class="adm-modal">
+    <div class="adm-modal-head">
+      <div class="adm-modal-title">🛍️ Add New Product</div>
+      <div class="adm-modal-close" onclick="closeModal('modalAddProduct')">✕</div>
+    </div>
+    <form method="post" action="/Admin/AddProduct">
+      @Html.AntiForgeryToken()
+      <div class="adm-modal-body">
+        <div class="adm-form-row-2">
+          <div><label class="adm-label">Name *</label><input class="adm-input" name="Name" required placeholder="e.g. Anubis Statue" /></div>
+          <div><label class="adm-label">Price (EGP) *</label><input class="adm-input" type="number" step="0.01" min="0" name="Price" required placeholder="e.g. 250" /></div>
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Stock Quantity *</label>
+          <input class="adm-input" type="number" min="0" name="StockQuantity" required placeholder="e.g. 30" />
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Category</label>
+          <select class="adm-input" name="CategoryId">
+            <option value="">— None —</option>
+            @foreach (var c in Model.Categories)
+            {
+                <option value="@c.Id">@c.Name</option>
+            }
+          </select>
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Image URL</label>
+          <input class="adm-input" name="ImageUrl" id="addProductImgUrl"
+                 oninput="previewImg('addProductImgUrl','addProductImgPreview')" placeholder="https://..." />
+          <img id="addProductImgPreview" class="adm-img-preview" style="display:none;" />
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Description *</label>
+          <textarea class="adm-textarea" name="Description" required placeholder="About this product..."></textarea>
+        </div>
+
+        <div class="adm-lang-divider">📐 Specifications <small>(optional)</small></div>
+        <div class="adm-form-row-2">
+          <div><label class="adm-label">Material</label><input class="adm-input" name="Material" placeholder="e.g. Silver / Resin / Cotton" /></div>
+          <div><label class="adm-label">Dimensions</label><input class="adm-input" name="Dimensions" placeholder="e.g. 15cm x 10cm" /></div>
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Origin Region</label>
+          <input class="adm-input" name="OriginRegion" placeholder="e.g. Luxor" />
+        </div>
+
+        <div class="adm-lang-divider">🏷️ Offers &amp; Badges <small>(optional)</small></div>
+        <div class="adm-form-row">
+          <label class="adm-label">Original Price (EGP) <small>— leave empty if no discount</small></label>
+          <input class="adm-input" type="number" step="0.01" min="0" name="OriginalPrice" placeholder="e.g. 350 (must be higher than Price)" />
+        </div>
+        <div class="adm-form-row" style="display:flex;gap:20px;flex-wrap:wrap;align-items:center;">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+            <input type="checkbox" name="IsFeatured" value="true" />
+            <input type="hidden" name="IsFeatured" value="false" /> Featured
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+            <input type="checkbox" name="IsBestSeller" value="true" />
+            <input type="hidden" name="IsBestSeller" value="false" /> Best Seller
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+            <input type="checkbox" name="IsNew" value="true" />
+            <input type="hidden" name="IsNew" value="false" /> New
+          </label>
+        </div>
+
+        <div class="adm-lang-divider">🇪🇬 Arabic Translation <small>(optional — falls back to English if empty)</small></div>
+        <div class="adm-form-row">
+          <label class="adm-label">Name (AR)</label>
+          <input class="adm-input adm-input-ar" name="NameAr" dir="rtl" placeholder="مثال: تمثال أنوبيس" />
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Description (AR)</label>
+          <textarea class="adm-textarea adm-textarea-ar" name="DescriptionAr" dir="rtl" placeholder="نبذة عن هذا المنتج..."></textarea>
+        </div>
+        <div class="adm-form-row-2">
+          <div><label class="adm-label">Material (AR)</label><input class="adm-input adm-input-ar" name="MaterialAr" dir="rtl" placeholder="مثال: فضة" /></div>
+          <div><label class="adm-label">Dimensions (AR)</label><input class="adm-input adm-input-ar" name="DimensionsAr" dir="rtl" placeholder="مثال: ١٥ سم × ١٠ سم" /></div>
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Origin Region (AR)</label>
+          <input class="adm-input adm-input-ar" name="OriginRegionAr" dir="rtl" placeholder="مثال: الأقصر" />
+        </div>
+      </div>
+      <div class="adm-modal-foot">
+        <button type="button" class="adm-btn adm-btn-del" onclick="closeModal('modalAddProduct')">Cancel</button>
+        <button type="submit" class="adm-btn adm-btn-add">Save Product</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- EDIT PRODUCT -->
+<div class="adm-overlay" id="modalEditProduct">
+  <div class="adm-modal">
+    <div class="adm-modal-head">
+      <div class="adm-modal-title">✏ Edit Product</div>
+      <div class="adm-modal-close" onclick="closeModal('modalEditProduct')">✕</div>
+    </div>
+    <form method="post" action="/Admin/EditProduct">
+      @Html.AntiForgeryToken()
+      <input type="hidden" name="Id" id="editProductId" />
+      <div class="adm-modal-body">
+        <div class="adm-form-row-2">
+          <div><label class="adm-label">Name *</label><input class="adm-input" name="Name" id="editProductName" required /></div>
+          <div><label class="adm-label">Price (EGP) *</label><input class="adm-input" type="number" step="0.01" min="0" name="Price" id="editProductPrice" required /></div>
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Stock Quantity *</label>
+          <input class="adm-input" type="number" min="0" name="StockQuantity" id="editProductStock" required />
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Category</label>
+          <select class="adm-input" name="CategoryId" id="editProductCategory">
+            <option value="">— None —</option>
+            @foreach (var c in Model.Categories)
+            {
+                <option value="@c.Id">@c.Name</option>
+            }
+          </select>
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Image URL</label>
+          <input class="adm-input" name="ImageUrl" id="editProductImg"
+                 oninput="previewImg('editProductImg','editProductImgPreview')" />
+          <img id="editProductImgPreview" class="adm-img-preview" />
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Description *</label>
+          <textarea class="adm-textarea" name="Description" id="editProductDesc" required></textarea>
+        </div>
+
+        <div class="adm-lang-divider">📐 Specifications <small>(optional)</small></div>
+        <div class="adm-form-row-2">
+          <div><label class="adm-label">Material</label><input class="adm-input" name="Material" id="editProductMaterial" /></div>
+          <div><label class="adm-label">Dimensions</label><input class="adm-input" name="Dimensions" id="editProductDimensions" /></div>
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Origin Region</label>
+          <input class="adm-input" name="OriginRegion" id="editProductOrigin" />
+        </div>
+
+        <div class="adm-lang-divider">🏷️ Offers &amp; Badges <small>(optional)</small></div>
+        <div class="adm-form-row">
+          <label class="adm-label">Original Price (EGP) <small>— leave empty if no discount</small></label>
+          <input class="adm-input" type="number" step="0.01" min="0" name="OriginalPrice" id="editProductOriginalPrice" placeholder="must be higher than Price" />
+        </div>
+        <div class="adm-form-row" style="display:flex;gap:20px;flex-wrap:wrap;align-items:center;">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+            <input type="checkbox" name="IsFeatured" value="true" id="editProductIsFeatured" />
+            <input type="hidden" name="IsFeatured" value="false" /> Featured
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+            <input type="checkbox" name="IsBestSeller" value="true" id="editProductIsBestSeller" />
+            <input type="hidden" name="IsBestSeller" value="false" /> Best Seller
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+            <input type="checkbox" name="IsNew" value="true" id="editProductIsNew" />
+            <input type="hidden" name="IsNew" value="false" /> New
+          </label>
+        </div>
+
+        <div class="adm-lang-divider">🇪🇬 Arabic Translation <small>(optional — falls back to English if empty)</small></div>
+        <div class="adm-form-row">
+          <label class="adm-label">Name (AR)</label>
+          <input class="adm-input adm-input-ar" name="NameAr" id="editProductNameAr" dir="rtl" />
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Description (AR)</label>
+          <textarea class="adm-textarea adm-textarea-ar" name="DescriptionAr" id="editProductDescAr" dir="rtl"></textarea>
+        </div>
+        <div class="adm-form-row-2">
+          <div><label class="adm-label">Material (AR)</label><input class="adm-input adm-input-ar" name="MaterialAr" id="editProductMaterialAr" dir="rtl" /></div>
+          <div><label class="adm-label">Dimensions (AR)</label><input class="adm-input adm-input-ar" name="DimensionsAr" id="editProductDimensionsAr" dir="rtl" /></div>
+        </div>
+        <div class="adm-form-row">
+          <label class="adm-label">Origin Region (AR)</label>
+          <input class="adm-input adm-input-ar" name="OriginRegionAr" id="editProductOriginAr" dir="rtl" />
+        </div>
+      </div>
+      <div class="adm-modal-foot">
+        <button type="button" class="adm-btn adm-btn-del" onclick="closeModal('modalEditProduct')">Cancel</button>
         <button type="submit" class="adm-btn adm-btn-add">Update</button>
       </div>
     </form>
@@ -3238,6 +3546,7 @@ const panelTitles = {
     temples:  '🛕 Manage Temples',
     museums:  '🏛️ Manage Museums',
     gods:     '𓂀 Manage Gods',
+    shop:     '🛍️ Manage Shop',
     facts:    '📜 Daily Facts',
     users:    '👥 Users',
     bookings: '📅 Bookings'
@@ -3388,6 +3697,60 @@ function openEditGod(id, name, role, symbol, img, desc, nameAr, roleAr, descAr, 
     const prev = document.getElementById('editGodImgPreview');
     prev.src = img; prev.style.display = img ? 'block' : 'none';
     openModal('modalEditGod');
+}
+
+//  Edit Product
+
+function openEditProductBtn(btn) {
+    const id     = btn.getAttribute('data-id');
+    const name   = btn.getAttribute('data-name');
+    const price  = btn.getAttribute('data-price');
+    const stock  = btn.getAttribute('data-stock');
+    const img    = btn.getAttribute('data-img');
+    const desc   = btn.getAttribute('data-desc');
+    const nameAr = btn.getAttribute('data-namear');
+    const descAr = btn.getAttribute('data-descar');
+    const categoryId = btn.getAttribute('data-categoryid');
+    const material = btn.getAttribute('data-material');
+    const materialAr = btn.getAttribute('data-materialar');
+    const dimensions = btn.getAttribute('data-dimensions');
+    const dimensionsAr = btn.getAttribute('data-dimensionsar');
+    const origin = btn.getAttribute('data-origin');
+    const originAr = btn.getAttribute('data-originar');
+    const originalPrice = btn.getAttribute('data-originalprice');
+    const isFeatured = btn.getAttribute('data-isfeatured') === 'true';
+    const isBestSeller = btn.getAttribute('data-isbestseller') === 'true';
+    const isNew = btn.getAttribute('data-isnew') === 'true';
+    openEditProduct(id, name, price, stock, img, desc, nameAr, descAr, categoryId,
+        material, materialAr, dimensions, dimensionsAr, origin, originAr,
+        originalPrice, isFeatured, isBestSeller, isNew);
+}
+
+function openEditProduct(id, name, price, stock, img, desc, nameAr, descAr, categoryId,
+    material, materialAr, dimensions, dimensionsAr, origin, originAr,
+    originalPrice, isFeatured, isBestSeller, isNew) {
+    document.getElementById('editProductId').value    = id;
+    document.getElementById('editProductName').value  = name;
+    document.getElementById('editProductPrice').value = price;
+    document.getElementById('editProductStock').value = stock;
+    document.getElementById('editProductImg').value   = img;
+    document.getElementById('editProductDesc').value  = desc;
+    document.getElementById('editProductNameAr').value = nameAr || '';
+    document.getElementById('editProductDescAr').value = descAr || '';
+    document.getElementById('editProductCategory').value = categoryId || '';
+    document.getElementById('editProductMaterial').value = material || '';
+    document.getElementById('editProductMaterialAr').value = materialAr || '';
+    document.getElementById('editProductDimensions').value = dimensions || '';
+    document.getElementById('editProductDimensionsAr').value = dimensionsAr || '';
+    document.getElementById('editProductOrigin').value = origin || '';
+    document.getElementById('editProductOriginAr').value = originAr || '';
+    document.getElementById('editProductOriginalPrice').value = (originalPrice && originalPrice !== '') ? originalPrice : '';
+    document.getElementById('editProductIsFeatured').checked = isFeatured;
+    document.getElementById('editProductIsBestSeller').checked = isBestSeller;
+    document.getElementById('editProductIsNew').checked = isNew;
+    const prev = document.getElementById('editProductImgPreview');
+    prev.src = img; prev.style.display = img ? 'block' : 'none';
+    openModal('modalEditProduct');
 }
 
 //  Edit Daily Fact

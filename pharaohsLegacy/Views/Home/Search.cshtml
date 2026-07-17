@@ -8,6 +8,7 @@
     var museums = ViewBag.Museums as List<pharaohsLegacy.Models.Museum>;
     var artifacts = ViewBag.Artifacts as List<pharaohsLegacy.Models.Artifact>;
     var dynasties = ViewBag.Dynasties as List<pharaohsLegacy.Models.Dynasty>;
+    var products = ViewBag.Products as List<pharaohsLegacy.Models.Product>;
     var lang = Context.Session.GetString("Lang") ?? "en";
 }
 
@@ -131,12 +132,34 @@
         </div>
     }
 
+    @if (products != null && products.Count > 0)
+    {
+        <h3 style="font-family:'Cinzel',serif; color:var(--gold); margin:2rem 0 1rem;">@Html.L("Common_ProductsPlural")</h3>
+        <div class="cards-grid">
+            @foreach (var pr in products)
+            {
+                var prName = (lang == "ar" && !string.IsNullOrEmpty(pr.NameAr)) ? pr.NameAr : pr.Name;
+                var prTag = pr.Category != null
+                    ? ((lang == "ar" && !string.IsNullOrEmpty(pr.Category.NameAr)) ? pr.Category.NameAr : pr.Category.Name)
+                    : $"{pr.Price} {Html.L("Common_EGP")}";
+                <a href="/Shop/Details/@pr.Id" class="card">
+                    <div class="card-img"><img src="@pr.ImageUrl" alt="@prName" /></div>
+                    <div class="card-body">
+                        <span class="card-tag">@prTag</span>
+                        <h3 class="card-title">@prName</h3>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+
     @if ((pharaohs == null || pharaohs.Count == 0) &&
          (temples == null || temples.Count == 0) &&
          (gods == null || gods.Count == 0) &&
          (museums == null || museums.Count == 0) &&
          (artifacts == null || artifacts.Count == 0) &&
-         (dynasties == null || dynasties.Count == 0))
+         (dynasties == null || dynasties.Count == 0) &&
+         (products == null || products.Count == 0))
     {
         <div style="text-align:center; padding:3rem; color:var(--muted); font-style:italic;">
             <p style="font-size:3rem; margin-bottom:1rem;">𓂀</p>

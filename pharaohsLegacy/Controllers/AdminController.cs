@@ -90,6 +90,18 @@ namespace pharaohsLegacy.Controllers
                 TotalFacts = await _context.DailyFacts.CountAsync(),
                 Facts = await _context.DailyFacts.OrderBy(f => f.Id).ToListAsync(),
 
+                // 🆕 Shop
+                TotalProducts = await _context.Products.CountAsync(),
+                Products = await _context.Products.Include(p => p.Category).OrderBy(p => p.Name).ToListAsync(),
+                TotalShopOrders = await _context.ShopOrders.CountAsync(o => o.Status != "PendingPayment"),
+                TotalShopRevenue = await _context.ShopOrders
+                    .Where(o => o.Status == "Confirmed")
+                    .SumAsync(o => o.TotalPrice),
+
+                // 🆕 Categories
+                TotalCategories = await _context.Categories.CountAsync(),
+                Categories = await _context.Categories.OrderBy(c => c.Name).ToListAsync(),
+
                 Bookings = bookingRows,
 
 
@@ -410,6 +422,127 @@ namespace pharaohsLegacy.Controllers
             if (item != null) { _context.Gods.Remove(item); await _context.SaveChangesAsync(); }
             TempData["Success"] = "God deleted.";
             return RedirectToAction("Index", new { tab = "gods" });
+        }
+
+        // ──────────────────────────────
+        // 🆕 SHOP / PRODUCT CRUD — نفس باترن الـ Gods بالظبط
+        // ──────────────────────────────
+
+        [HttpPost]
+        public async Task<IActionResult> AddProduct(Product model)
+        {
+            if (!IsAdmin()) return Unauthorized();
+
+            model.Description = model.Description ?? "";
+            model.DescriptionAr = model.DescriptionAr ?? "";
+            model.NameAr = model.NameAr ?? "";
+            model.ImageUrl = model.ImageUrl ?? "";
+            model.Material = model.Material ?? "";        // 🆕
+            model.MaterialAr = model.MaterialAr ?? "";      // 🆕
+            model.Dimensions = model.Dimensions ?? "";      // 🆕
+            model.DimensionsAr = model.DimensionsAr ?? "";    // 🆕
+            model.OriginRegion = model.OriginRegion ?? "";    // 🆕
+            model.OriginRegionAr = model.OriginRegionAr ?? "";  // 🆕
+
+            // 🆕 المرحلة 3 — لو OriginalPrice أقل من أو يساوي Price (خصم وهمي/غلط) بنتجاهلها
+            // عشان الـ View مايبينش Strikethrough أو نسبة خصم غلط
+            if (model.OriginalPrice.HasValue && model.OriginalPrice.Value <= model.Price)
+                model.OriginalPrice = null;
+
+            _context.Products.Add(model);
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "Product added successfully!";
+            return RedirectToAction("Index", new { tab = "shop" });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditProduct(Product model)
+        {
+            if (!IsAdmin()) return Unauthorized();
+
+            var existing = await _context.Products.FindAsync(model.Id);
+            if (existing == null) return NotFound();
+
+            existing.Name = model.Name;
+            existing.NameAr = model.NameAr ?? "";
+            existing.Description = model.Description ?? "";
+            existing.DescriptionAr = model.DescriptionAr ?? "";
+            existing.Price = model.Price;
+            existing.ImageUrl = model.ImageUrl ?? "";
+            existing.StockQuantity = model.StockQuantity;
+            existing.CategoryId = model.CategoryId;   // 🆕
+            existing.Material = model.Material ?? "";        // 🆕
+            existing.MaterialAr = model.MaterialAr ?? "";      // 🆕
+            existing.Dimensions = model.Dimensions ?? "";      // 🆕
+            existing.DimensionsAr = model.DimensionsAr ?? "";    // 🆕
+            existing.OriginRegion = model.OriginRegion ?? "";    // 🆕
+            existing.OriginRegionAr = model.OriginRegionAr ?? "";  // 🆕
+
+            // 🆕 المرحلة 3 — عروض وخصومات وشارات
+            existing.OriginalPrice = (model.OriginalPrice.HasValue && model.OriginalPrice.Value > model.Price)
+                ? model.OriginalPrice
+                : null;
+            existing.IsFeatured = model.IsFeatured;
+            existing.IsBestSeller = model.IsBestSeller;
+            existing.IsNew = model.IsNew;
+
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "Product updated successfully!";
+            return RedirectToAction("Index", new { tab = "shop" });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteProduct(int id)
+        {
+            if (!IsAdmin()) return Unauthorized();
+
+            // 🆕 لو المنتج ده اتباع قبل كده (فيه ShopOrders مرتبطة)، حذفه المباشر هيبوّظ
+            // الـ Foreign Key / سجل الطلبات القديمة في MyOrders (ProductId هيفضل يشاور على حاجة مش موجودة).
+            // بنمنع الحذف في الحالة دي بدل ما نكسر بيانات تاريخية، زي ما بنعمل مع أي جدول مرتبط بحجوزات.
+            var hasOrders = await _context.ShopOrders.AnyAsync(o => o.ProductId == id && o.Status != "PendingPayment");
+            if (hasOrders)
+            {
+                TempData["Error"] = "Can't delete a product with existing orders.";
+                return RedirectToAction("Index", new { tab = "shop" });
+            }
+
+            var item = await _context.Products.FindAsync(id);
+            if (item != null) { _context.Products.Remove(item); await _context.SaveChangesAsync(); }
+            TempData["Success"] = "Product deleted.";
+            return RedirectToAction("Index", new { tab = "shop" });
+        }
+
+        // ──────────────────────────────
+        // 🆕 CATEGORY CRUD — lookup table بسيطة (Name + NameAr بس)
+        // ──────────────────────────────
+
+        [HttpPost]
+        public async Task<IActionResult> AddCategory(Category model)
+        {
+            if (!IsAdmin()) return Unauthorized();
+
+            model.NameAr = model.NameAr ?? "";
+            _context.Categories.Add(model);
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "Category added successfully!";
+            return RedirectToAction("Index", new { tab = "shop" });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteCategory(int id)
+        {
+            if (!IsAdmin()) return Unauthorized();
+
+            // 🆕 منمنعش الحذف زي المنتجات — بس نفك ربط أي منتج مرتبط (CategoryId يرجع null)
+            // بدل ما نكسر بيانات، لأن التصنيف هنا تسمية تنظيمية مش جزء أساسي من المنتج
+            var linkedProducts = await _context.Products.Where(p => p.CategoryId == id).ToListAsync();
+            foreach (var p in linkedProducts) p.CategoryId = null;
+
+            var cat = await _context.Categories.FindAsync(id);
+            if (cat != null) { _context.Categories.Remove(cat); await _context.SaveChangesAsync(); }
+
+            TempData["Success"] = "Category deleted.";
+            return RedirectToAction("Index", new { tab = "shop" });
         }
 
         // ──────────────────────────────

@@ -12,7 +12,7 @@ namespace pharaohsLegacy.Models
         [Required]
         public string UserName { get; set; } = "";
 
-        // pharaoh / temple / museum / god / artifact
+        // pharaoh / temple / museum / god / artifact / product
         [Required]
         public string Type { get; set; } = "";
 

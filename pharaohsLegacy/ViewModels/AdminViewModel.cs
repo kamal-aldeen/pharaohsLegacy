@@ -47,6 +47,13 @@ namespace pharaohsLegacy.ViewModels
         public int TotalFacts { get; set; }
         public List<DailyFact> Facts { get; set; }
 
+        public int TotalProducts { get; set; }
+        public List<Product> Products { get; set; }
+        public int TotalShopOrders { get; set; }
+        public decimal TotalShopRevenue { get; set; }
+
+        public int TotalCategories { get; set; }
+        public List<Category> Categories { get; set; }
 
 
     }

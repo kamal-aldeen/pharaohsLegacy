@@ -1568,6 +1568,9 @@
                     <span class="tab-badge">@Html.Digits(Model.TotalBookings)</span>
                 }
             </button>
+            @* 🆕 Shop: مش تاب جوه الداشبورد زي Bookings/Favorites (عشان كده محتاج تعديل الـ ViewModel/
+               UserController.Dashboard اللي مش متاحين عندي) — لينك مباشر لصفحة /Shop/MyOrders المستقلة بدل كده *@
+            <a class="db-tab" href="/Shop/MyOrders">🛍️ @Html.L("Shop_MyOrders")</a>
             <button class="db-tab" onclick="switchTab('favorites', this)">
                 𓆣 @Html.L("Dash_Tab_Favorites")
                 @if (Model.TotalFavorites > 0)

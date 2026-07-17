@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using pharaohsLegacy.Models;
 
 namespace pharaohsLegacy.Controllers
@@ -131,6 +132,14 @@ namespace pharaohsLegacy.Controllers
                          || (d.CapitalCityAr != null && d.CapitalCityAr.Contains(q)))
                 .ToList();
 
+            var products = _context.Products
+                .Include(p => p.Category)
+                .Where(p => p.Name.Contains(q)
+                         || (p.NameAr != null && p.NameAr.Contains(q))
+                         || (p.Category != null && p.Category.Name.Contains(q))
+                         || (p.Category != null && p.Category.NameAr != null && p.Category.NameAr.Contains(q)))
+                .ToList();
+
             ViewBag.Query = q;
             ViewBag.Pharaohs = pharaohs;
             ViewBag.Temples = temples;
@@ -138,6 +147,7 @@ namespace pharaohsLegacy.Controllers
             ViewBag.Museums = museums;
             ViewBag.Artifacts = artifacts;
             ViewBag.Dynasties = dynasties;
+            ViewBag.Products = products;
 
             return View();
         }

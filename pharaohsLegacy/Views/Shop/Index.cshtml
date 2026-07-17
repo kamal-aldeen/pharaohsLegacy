@@ -1,0 +1,167 @@
+@model List<pharaohsLegacy.Models.Product>
+@using pharaohsLegacy.Extensions
+@{
+    ViewData["Title"] = "Shop";
+    var lang = Context.Session.GetString("Lang") ?? "en";
+    bool onSaleSelected = ViewBag.OnSale == true;
+    bool bestSellerSelected = ViewBag.BestSeller == true;
+    bool isNewSelected = ViewBag.IsNewFilter == true;
+    int? selectedCategoryId = ViewBag.SelectedCategoryId;
+    string selectedSort = ViewBag.SelectedSort;
+}
+@functions {
+    // 🆕 بتبني query string لصفحة الشوب وبتحافظ على كل الفلاتر التلاتة (عروض/Best Seller/New) مع بعض،
+    // فبتقدر تجمع بينهم في نفس الوقت من غير ما تفصل فلتر عن التاني
+    string BuildShopQs(bool onSale, bool bestSeller, bool isNew, int? categoryId, string sort)
+    {
+        var qs = "";
+        if (onSale) qs += "onSale=true&";
+        if (bestSeller) qs += "bestSeller=true&";
+        if (isNew) qs += "isNew=true&";
+        if (categoryId.HasValue) qs += $"categoryId={categoryId}&";
+        qs += $"sort={sort}";
+        return qs;
+    }
+}
+
+<div class="shop-wrap">
+    <h1 class="shop-page-title">@Html.L("Shop_Title")</h1>
+
+    <div class="shop-filters">
+        <div class="shop-filter-cats">
+            <a class="shop-filter-btn @(selectedCategoryId == null ? "active" : "")"
+               href="/Shop/Index?@BuildShopQs(onSaleSelected, bestSellerSelected, isNewSelected, null, selectedSort)">@Html.L("Shop_AllCategories")</a>
+            @foreach (var c in (List<pharaohsLegacy.Models.Category>)ViewBag.Categories)
+            {
+                var cName = (lang == "ar" && !string.IsNullOrEmpty(c.NameAr)) ? c.NameAr : c.Name;
+                <a class="shop-filter-btn @(selectedCategoryId != null && selectedCategoryId == c.Id ? "active" : "")"
+                   href="/Shop/Index?@BuildShopQs(onSaleSelected, bestSellerSelected, isNewSelected, c.Id, selectedSort)">@cName</a>
+            }
+        </div>
+
+        <div class="shop-filter-badges">
+            <a class="shop-filter-btn shop-filter-onsale @(onSaleSelected ? "active" : "")"
+               href="/Shop/Index?@BuildShopQs(!onSaleSelected, bestSellerSelected, isNewSelected, selectedCategoryId, selectedSort)">
+                🔥 @Html.L("Shop_Filter_OnSale")
+            </a>
+            <a class="shop-filter-btn shop-filter-bestseller @(bestSellerSelected ? "active" : "")"
+               href="/Shop/Index?@BuildShopQs(onSaleSelected, !bestSellerSelected, isNewSelected, selectedCategoryId, selectedSort)">
+                ⭐ @Html.L("Shop_Filter_BestSeller")
+            </a>
+            <a class="shop-filter-btn shop-filter-new @(isNewSelected ? "active" : "")"
+               href="/Shop/Index?@BuildShopQs(onSaleSelected, bestSellerSelected, !isNewSelected, selectedCategoryId, selectedSort)">
+                ✨ @Html.L("Shop_Filter_New")
+            </a>
+        </div>
+
+        <select class="shop-sort-select" onchange="location.href=this.value">
+            <option value="/Shop/Index?@BuildShopQs(onSaleSelected, bestSellerSelected, isNewSelected, selectedCategoryId, "newest")" selected="@(selectedSort == "newest")">@Html.L("Shop_Sort_Newest")</option>
+            <option value="/Shop/Index?@BuildShopQs(onSaleSelected, bestSellerSelected, isNewSelected, selectedCategoryId, "price_asc")" selected="@(selectedSort == "price_asc")">@Html.L("Shop_Sort_PriceLow")</option>
+            <option value="/Shop/Index?@BuildShopQs(onSaleSelected, bestSellerSelected, isNewSelected, selectedCategoryId, "price_desc")" selected="@(selectedSort == "price_desc")">@Html.L("Shop_Sort_PriceHigh")</option>
+            <option value="/Shop/Index?@BuildShopQs(onSaleSelected, bestSellerSelected, isNewSelected, selectedCategoryId, "bestselling")" selected="@(selectedSort == "bestselling")">@Html.L("Shop_Sort_BestSelling")</option>
+        </select>
+    </div>
+
+
+    <div class="shop-grid">
+        @foreach (var p in Model)
+        {
+            var name = (lang == "ar" && !string.IsNullOrEmpty(p.NameAr)) ? p.NameAr : p.Name;
+            var hasDiscount = p.OriginalPrice.HasValue && p.OriginalPrice.Value > p.Price;
+            var discountPct = hasDiscount ? (int)Math.Round((1 - (p.Price / p.OriginalPrice.Value)) * 100) : 0;
+            const int lowStockThreshold = 5;
+            <a class="shop-card" href="/Shop/Details/@p.Id">
+                <div class="shop-card-img">
+                    <img src="@p.ImageUrl" alt="@name" />
+                    <div class="shop-card-badges">
+                        @if (hasDiscount)
+                        {
+                            <span class="shop-badge badge-sale">-@discountPct%</span>
+                        }
+                        @if (p.IsNew)
+                        {
+                            <span class="shop-badge badge-new">@Html.L("Shop_Badge_New")</span>
+                        }
+                        @if (p.IsBestSeller)
+                        {
+                            <span class="shop-badge badge-bestseller">@Html.L("Shop_Badge_BestSeller")</span>
+                        }
+                        @if (p.IsFeatured)
+                        {
+                            <span class="shop-badge badge-featured">@Html.L("Shop_Badge_Featured")</span>
+                        }
+                    </div>
+                </div>
+                <div class="shop-card-body">
+                    <h3>@name</h3>
+                    <div class="shop-card-footer">
+                        <div class="shop-price-wrap">
+                            @if (hasDiscount)
+                            {
+                                <span class="shop-price-old">@Html.Digits((object)p.OriginalPrice) @Html.L("Common_EGP")</span>
+                            }
+                            <span class="shop-price">@Html.Digits((object)p.Price) @Html.L("Common_EGP")</span>
+                        </div>
+                        @if (p.StockQuantity <= 0)
+                        {
+                            <span class="shop-stock out">@Html.L("Shop_OutOfStock")</span>
+                        }
+                        else if (p.StockQuantity <= lowStockThreshold)
+                        {
+                            <span class="shop-stock low">@Html.L("Shop_LowStock"): @Html.Digits((object)p.StockQuantity)</span>
+                        }
+                        else
+                        {
+                            <span class="shop-stock">@Html.L("Shop_InStock"): @Html.Digits((object)p.StockQuantity)</span>
+                        }
+                    </div>
+                </div>
+            </a>
+        }
+    </div>
+
+    @if (!Model.Any())
+    {
+        <p class="shop-empty">@Html.L("Shop_NoProducts")</p>
+    }
+</div>
+
+<style>
+    .shop-wrap { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .shop-page-title { font-family: 'Cinzel', serif; color: var(--gold); text-align: center; margin-bottom: 2rem; letter-spacing: 2px; }
+    .shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 1.5rem; }
+    .shop-card { display: block; background: var(--dark3); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; text-decoration: none; color: var(--text); transition: transform .25s, border-color .25s; }
+    .shop-card:hover { transform: translateY(-4px); border-color: var(--gold); }
+    .shop-card-img { aspect-ratio: 1/1; overflow: hidden; }
+    .shop-card-img img { width: 100%; height: 100%; object-fit: cover; }
+    .shop-card-body { padding: 1rem; }
+    .shop-card-body h3 { font-family: 'Cinzel', serif; font-size: .95rem; margin: 0 0 .75rem; color: var(--text); }
+    .shop-card-footer { display: flex; justify-content: space-between; align-items: center; font-size: .8rem; }
+    .shop-price-wrap { display: flex; flex-direction: column; gap: 2px; }
+    .shop-price { color: var(--gold); font-weight: 700; }
+    .shop-price-old { color: var(--muted); text-decoration: line-through; font-size: .72rem; }
+    .shop-stock { color: var(--muted); }
+    .shop-stock.out { color: #c0392b; }
+    .shop-stock.low { color: #d98c00; }
+    .shop-card-img { position: relative; }
+    .shop-card-badges { position: absolute; top: 8px; left: 8px; display: flex; flex-direction: column; gap: 4px; z-index: 1; }
+    .shop-badge { padding: 3px 8px; border-radius: 4px; font-size: .65rem; font-weight: 700; letter-spacing: .3px; color: #fff; text-transform: uppercase; }
+    .badge-sale { background: #c0392b; }
+    .badge-new { background: #3478f6; }
+    .badge-bestseller { background: #2e8b57; }
+    .badge-featured { background: var(--gold); color: #1a0a00; }
+    .shop-empty { text-align: center; color: var(--muted); margin-top: 2rem; }
+    .shop-filters { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 1.5rem; }
+    .shop-filter-cats { display: flex; flex-wrap: wrap; gap: 8px; }
+    .shop-filter-btn { padding: 6px 14px; border: 1px solid var(--border); border-radius: 20px; color: var(--text); text-decoration: none; font-size: .8rem; transition: all .2s; }
+    .shop-filter-btn:hover { border-color: var(--gold); }
+    .shop-filter-btn.active { background: var(--gold); color: #1a0a00; border-color: var(--gold); font-weight: 600; }
+    .shop-filter-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+    .shop-filter-onsale { border-color: #c0392b; color: #c0392b; }
+    .shop-filter-onsale.active { background: #c0392b; color: #fff; border-color: #c0392b; }
+    .shop-filter-bestseller { border-color: #2e8b57; color: #2e8b57; }
+    .shop-filter-bestseller.active { background: #2e8b57; color: #fff; border-color: #2e8b57; }
+    .shop-filter-new { border-color: #3478f6; color: #3478f6; }
+    .shop-filter-new.active { background: #3478f6; color: #fff; border-color: #3478f6; }
+    .shop-sort-select { background: var(--dark3); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: .8rem; cursor: pointer; }
+</style>

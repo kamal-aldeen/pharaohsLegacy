@@ -894,7 +894,7 @@ bank_service/
 
 **🐛 غلطة Razor صغيرة اتصححت بعد أول build:** `@js("Booking_Coupon_Applied").replace('{0}', ...)` كانت بتخلي الـ Razor يفتكر إن `.replace(...)` كمان جزء من كود C# (مش JS)، فطلعت أخطاء `CS0103`/`CS1012`. الحل: تطويق الاستدعاء بقوسين صريحين `@(js("..."))` عشان الـ Razor يعرف بالظبط فين الكود بينتهي. كمان اتضاف `@using Microsoft.AspNetCore.Html` أعلى الملف (كان ناقص عشان `IHtmlContent`).
 
-**⚠️ خطوة يدوية واحدة لسه لازم تتعمل:** لزق الـ JSON اللي في `NEW_LOCALIZATION_KEYS.md` جوه `wwwroot/lang/ar.json` و `en.json` الحاليين — من غيرها أي Key جديد هيرجع اسمه هو نفسه بدل الترجمة (بسبب سطر الـ fallback في `LocalizationService.Get()`).
+**✅ الخطوة اليدوية اتعملت:** الـ JSON اللي كان في `NEW_LOCALIZATION_KEYS.md` اتلزق فعليًا جوه `wwwroot/lang/ar.json` و `en.json`، والمشروع اتعمله Build والتستنج اليدوي خلص بنجاح.
 
 **✅ `HtmlHelperExtensions.cs`:** اتفحص ومحتاجش أي تعديل — الميثودز فيه (`L`, `D`, `Digits`, `DateLoc`, `Num`) بتستخدم الـ `HtmlEncoder` المسجّل في الـ DI، فاستفادت أوتوماتيك من إصلاح `Program.cs` من غير ما تتلمس.
 
@@ -908,12 +908,16 @@ bank_service/
 [x] 3. تعديل BookingController.cs الحقيقي (Confirm + Cancel + ValidateCoupon) ✅ خلص
 [x] 3.5. فيلدز Create.cshtml + Program.cs HttpClient ✅ خلص (كانت اتعملت فعلاً)
 [x] 3.6. Cancel/Refund State Machine + إصلاحات لوجيك الأدمن (BookingStatusService + Background Job + منع Refund مزدوج) ✅ خلص ومتستنج يدويًا
-[x] 3.7. إصلاح شامل لصفحة Create.cshtml: مشكلة ترميز العربي (&#x627;) + ترجمة رسائل OTP/البنك + Validation/UX ✅ خلص الكود، لسه محتاج (أ) دمج JSON keys في ar.json/en.json، (ب) تستنج يدوي بعد الـ build
-[ ] 4. بناء نظام المتجر (Shop):
-        - Model: Product (اسم، صورة، سعر، وصف، كمية متاحة)
-        - Model: ShopOrder (بيستخدم /payments/charge بنفس منطق الحجز بالظبط)
-        - Admin CRUD للمنتجات (نفس باترن Gods/Daily Facts)
-        - صفحة عرض المنتجات + صفحة تفاصيل + نفس فورم الدفع
+[x] 3.7. إصلاح شامل لصفحة Create.cshtml: مشكلة ترميز العربي (&#x627;) + ترجمة رسائل OTP/البنك + Validation/UX ✅ خلص بالكامل (الكود + دمج JSON keys في ar.json/en.json + تستنج يدوي بعد الـ Build)
+[x] 4. بناء نظام المتجر (Shop) — خلص بالكامل ✅ (الكود + اللصق + Navigation + Admin Panel Tab)،
+        تفاصيل كاملة تحت في "🛍️ Shop System — الكود جاهز (قيد اللصق)":
+        - [x] Model: Product (اسم، صورة، سعر، وصف، كمية متاحة) ✅
+        - [x] Model: ShopOrder (بيستخدم /payments/charge بنفس منطق الحجز بالظبط) ✅
+        - [x] Admin CRUD للمنتجات (نفس باترن Gods) ✅
+        - [x] صفحة عرض المنتجات + صفحة تفاصيل + نفس فورم الدفع ✅
+        - [x] كل خطوات اللصق (1→9): Models + DbSets + Migration + Controllers + ViewModel +
+              Views + Navigation + Localization + Bank Service (مفيهاش تعديل) ✅
+        - [x] تاب "Shop" في Admin Panel (Views/Admin/Index.cshtml) بنفس شكل تاب Gods ✅
 [ ] 5. بناء الكويز (Quiz):
         - أسئلة بتتولد من الداتابيز الموجودة (فراعنة/أسر/آلهة/أحداث)
         - مستويات صعوبة (كل ما الداتابيز تكبر، الأسئلة تتنوع)
@@ -931,6 +935,165 @@ bank_service/
 - الكوبون مربوط بـ `user_email` — يعني كود اليوزر A مينفعش يستخدمه اليوزر B حتى لو عنده الكود.
 - الـ Refund بيدور على آخر عملية Purchase ناجحة بنفس `related_type` + `related_id` ويرجع نفس قيمتها بالظبط — مفيش حاجة بتتحسب يدويًا.
 - أي تعديل مستقبلي في نسبة الخصم الافتراضية أو مدة الصلاحية يتم من `CouponCreate` schema (`discount_percent`, `valid_days`) — مش Hardcoded جوه المنطق.
+
+---
+
+## 🛍️ Shop System — الكود جاهز (قيد اللصق)
+
+> ده تفصيل بند "4. بناء نظام المتجر" فوق. الكود اتبنى بالكامل بناءً على `BookingController.cs`،
+> `AdminController.cs`، `Booking.cs`، `Payment.cs`، و`Create.cshtml` الحقيقيين (مش تخمين) — بس
+> **لسه محتاج لصق يدوي** في المشروع + شوية حاجات ملقيتش الملفات بتاعتها (تحت في "لسه محتاج يدويًا").
+
+### ✅ اللي خلص فعليًا (كود جاهز للصق)
+
+```
+Models/
+├── Product.cs         ← Id, Name, NameAr, Description, DescriptionAr, Price, ImageUrl, StockQuantity
+├── ShopOrder.cs        ← نفس شكل Booking.cs بالظبط (UserEmail, ProductId, Quantity, TotalPrice,
+│                          Status, CreatedAt, CancelledAt, [NotMapped] ProductName/ProductImage)
+└── ShopPayment.cs      ← 🆕 جدول مستقل عن Payment.cs الأصلي (مش استخدمناه) لأنه مربوط بـ
+                           BookingId كـ FK إجباري + navigation property Booking، مفيش مكان فيه
+                           لـ ShopOrderId من غير ما نكسره أو نضيفله حقل. نفس شكل Payment.cs بالظبط
+                           بس لـ ShopOrderId بدل BookingId.
+
+Controllers/
+├── ShopController.cs   ← مطابق لـ BookingController.cs حرفيًا في المنطق:
+│                          - Index() → عرض المنتجات
+│                          - Details(id) → صفحة المنتج + فورم الدفع (بديل Booking/Create)
+│                          - ValidateCoupon(code) → نفس endpoint البنك، بدون أي تغيير
+│                          - RequestOtp(productId, quantity, existingOrderId) → بينشئ/يحدّث
+│                            ShopOrder كـ PendingPayment وبيتحقق من الـ Stock مرتين (وقت الطلب
+│                            الأول ووقت أي إعادة طلب كود)
+│                          - Confirm(...) → نفس الـ Validation بتاع الحجز بالظبط (Card/CVV/OTP) +
+│                            نفس منطق قراءة أخطاء البنك (Coupon/OTP/NoAccount) + فحص Stock تالت
+│                            مرة قبل الخصم مباشرة (Race condition safety) + خصم StockQuantity
+│                            فعليًا بعد نجاح الدفع بس
+│                          - MyOrders() → سجل الطلبات (بديل MyBookings)
+└── AdminController.cs  ← نفس الملف الأصلي + إضافات:
+                           - AddProduct / EditProduct / DeleteProduct (نفس باترن AddGod/EditGod/
+                             DeleteGod بالظبط) — DeleteProduct بيرفض الحذف لو فيه ShopOrders
+                             مرتبطة (زي حماية FK) بدل ما يكسر بيانات تاريخية
+                           - Index(): إضافة TotalProducts, Products, TotalShopOrders,
+                             TotalShopRevenue لبيانات الـ Dashboard
+
+Views/Shop/
+├── Index.cshtml        ← Grid عرض المنتجات (صورة + اسم + سعر + الكمية المتاحة)
+├── Details.cshtml       ← نفس هيكل Booking/Create.cshtml بالظبط (نفس الـ CSS classes: book-field,
+│                           card-row, coupon-row, total-price, btn-gold) — بس Quantity counter
+│                           بدل Date/Tickets، ومربوط بـ /Shop/RequestOtp و /Shop/Confirm
+└── MyOrders.cshtml      ← سجل طلبات بسيط (صورة + اسم المنتج + الكمية + السعر + الحالة)
+
+NEW_LOCALIZATION_KEYS_SHOP.md   ← كل مفاتيح الترجمة الجديدة (Shop_Title, Shop_UnitPrice,
+                                    Shop_InStock, Shop_Quantity_Label, Shop_BuyBtn, Shop_OutOfStock,
+                                    Shop_InvalidQuantity, Shop_ProductNotFound, Shop_PurchaseSuccess,
+                                    Shop_MyOrders, Shop_NoOrders, Shop_NoProducts) — الباقي بيستخدم
+                                    مفاتيح الحجز الموجودة أصلاً (Booking_CardDetails_Label، إلخ)
+                                    من غير أي تكرار.
+
+INTEGRATION_STEPS_SHOP.md       ← خطوات اللصق كاملة بالترتيب.
+```
+
+### 🆕 قرارات تصميم اتاخدت وقت البناء
+- **البنك مش محتاج يعرف الفرق بين Booking وShop:** استخدمنا نفس الـ Endpoints
+  (`/payments/request-otp`, `/payments/charge`, `/coupons/validate`) بالظبط، وبس غيّرنا
+  `related_type` لـ `"ShopOrder"` بدل `"Booking"` — مفيش أي تعديل مطلوب في `bank_service/`.
+- **الـ Stock بيتفحص 3 مرات:** أول طلب OTP، أي إعادة طلب OTP (لو اليوزر غيّر الكمية)، وآخر لحظة
+  قبل نداء `/payments/charge` مباشرة — عشان نمنع سيناريو إن 2 يوزر يشتروا آخر قطعة في نفس الوقت.
+  الخصم الفعلي لـ `StockQuantity` بيحصل بعد نجاح الدفع بس، زي أي متجر حقيقي.
+- **الكوبون شغال في المتجر من غير أي تعديل:** لأنه أصلاً مربوط بـ `user_email` مش بنوع العملية.
+
+### ✅ اللصق في المشروع الحقيقي — خلص بالكامل (خطوات 1→8 من INTEGRATION_STEPS_SHOP.md)
+- Models, DbSets في `AppDbContext.cs`, Migration (`AddShopSystem`) + `database update`,
+  Controllers, حقول `AdminOverviewViewModel.cs`, Views، والـ Localization Keys — كل ده خلص.
+- Navigation (خطوة 7) خلصت كمان بعد ما بعتلي `_Layout.cshtml` و`Dashboard.cshtml` الحقيقيين:
+  - `_Layout.cshtml`: لينك "🛍️ Shop" في الـ `nav-links` الرئيسي (بعد Translator مباشرة)،
+    بيودي على `/Shop/Index` ونفس منطق الـ `active` class المستخدم في باقي اللينكات.
+  - `Dashboard.cshtml`: لينك "🛍️ My Orders" جنب تاب Bookings في شريط `db-tabs`.
+    **مش تاب داخلي** زي Bookings/Favorites (دول بيحتاجوا بيانات من `UserController.Dashboard()`
+    والـ ViewModel بتاعتهم اللي مش متاحين عندي) — عملته لينك مباشر بيودي على صفحة
+    `/Shop/MyOrders` المستقلة، وبياخد نفس كلاس `db-tab` عشان يبقى متسق بصريًا مع باقي التابز.
+  - مفتاح `Nav_Shop` اتضاف لـ `NEW_LOCALIZATION_KEYS_SHOP.md` (عربي/إنجليزي).
+- خطوة 9 (Bank Service) مكانتش محتاجة أي تعديل من الأصل.
+
+### ✅ Admin Panel Tab (خلص فعليًا — بعد ما بعتلي Views/Admin/Index.cshtml الحقيقي)
+اتبنى بنفس شكل تاب Gods حرفيًا (نفس الـ classes: `adm-nav-item`, `adm-panel`, `adm-table`,
+`adm-overlay`, `adm-modal`...):
+- Nav item جديد "🛍️ Shop" في الـ Sidebar بعد Gods مباشرة، بعدد المنتجات (`Model.TotalProducts`)
+- Panel جدول (`panel-shop`) بأعمدة Image/Name/Price/Stock/Actions — عمود الـ Stock بيتلوّن أحمر
+  لو وصل صفر (`adm-stock-zero`)
+- Modal إضافة (`modalAddProduct`) وتعديل (`modalEditProduct`) بنفس هيكل مودالات الـ Gods
+  بالظبط (حقول EN + قسم Arabic Translation اختياري) — الفرق الوحيد إن Gods عندها Role/Symbol
+  والمنتجات عندها Price/StockQuantity بدلهم
+- JS: `openEditProductBtn`/`openEditProduct` (نسخة من `openEditGodBtn`/`openEditGod`) + إضافة
+  `shop: '🛍️ Manage Shop'` لخريطة `panelTitles`
+- الحذف (`DeleteProduct`) بيستخدم نفس `showDeleteConfirm` الموجود، والبحث بيستخدم نفس
+  `searchTable('shopTable', ...)` الجنريك — مفيش أي JS جديد غير اللي اتذكر فوق
+
+### ⚠️ الوحيد المتبقي فعليًا
+مفيش — كل بنود "🛍️ Shop System" خلصت (الكود + اللصق في المشروع + الـ Navigation + الـ Admin
+Panel Tab). لو حابب نضيف Cancel/Refund للمتجر (زي الـ 48hr rule بتاعة الحجز)، ده الحاجة الوحيدة
+اللي لسه برا النطاق الحالي عمدًا (شوف "مش في النطاق الحالي" تحت).
+
+### 🕐 مش في النطاق الحالي (اتقال صراحة، مش نسيان)
+- **مفيش Cancel/Refund للمتجر** في النسخة دي — الطلب كان بس "بناء نظام المتجر" (Model +
+  Controller + Admin CRUD + عرض/تفاصيل بنفس فورم الدفع). حقل `CancelledAt` في `ShopOrder.cs`
+  جاهز أصلاً عشان لو حبينا نضيف نفس منطق `BookingRefundBackgroundService` بعدين من غير أي
+  Migration إضافية.
+
+---
+
+## 🎯 خطة احتراف الـ Shop (🚧 قيد التنفيذ — المرحلة 1 جزئيًا + المرحلة 2 خلصت بالكامل)
+
+> الهدف: الشوب يبان زي مواقع تسوق حقيقية (تفاصيل منتج غنية + تصنيفات وفلاتر + عروض وشارات).
+> اتفقنا نبدأ بالترتيب ده بالظبط لأن كل مرحلة مبنية على اللي قبلها ومفيش تعارض مع Bank/Coupon الشغالين حاليًا.
+> **ترتيب البدء المتفق عليه: 1) Reviews → 2) Categories → 3) صور متعددة → 4) العروض والشارات.**
+> ⚠️ **قرار اتاخد بعدين:** الـ **Gallery (صور متعددة) اتلغت خالص من الخطة** — مش هتتعمل. بدالها هنعمل بس **المواصفات + منتجات مشابهة** من باقي المرحلة 1، بعد ما خلصنا Categories.
+
+### المرحلة 1️⃣ — تفاصيل المنتج (Product Page)
+
+**✅ التقييمات والريفيوهات — خلصت بالكامل (100% مؤكدة):**
+- `ReviewController.cs` و `AppDbContext.cs`: **مفيش أي تعديل احتاجوه** — الـ `Type` أصلاً string حر مش محكوم بقايمة ثابتة في الكود، فـ `"product"` اشتغل من غير أي لمسة.
+- `ShopController.cs` → `Details(int id)`: بقى بيجيب ريفيوهات المنتج (`Type == "product" && ItemId == id`) في `ViewBag.Reviews` + `ViewBag.UserReviewed`.
+- `Views/Shop/Details.cshtml`: بقى بيعرض الـ `_Reviews` partial بعد كارت المنتج (كتابة/تعديل/حذف/هيلبفل/ريبورت — كله شغال زي أي صفحة تانية).
+- `Review.cs`: تعليق توضيحي بس اتحدث (`pharaoh / temple / museum / god / artifact / product`) — مفيش لوجيك اتغير.
+- **My Reviews في البروفايل:** اتأكد بعد ما بعتلي `Dashboard.cshtml` الحقيقي — **مفيش تاب "My Reviews" في البروفايل خالص أصلاً** (الموجود بس: Overview / Bookings / Favorites / Journey / Profile)، فمفيش حاجة كانت محتاجة تتصلح.
+- **Admin Dashboard — تبويب Reports:** اتأكد بعد ما بعتلي `Views/Admin/Index.cshtml` الحقيقي — بانل `panel-reports` **مفيهوش أي lookup باسم العنصر حسب الـ Type أصلاً**، بيعرض بس `review.Comment` مباشرة، فمفيش مشكلة هنا.
+- **Admin Dashboard — تبويب "All Reviews" (`panel-reviews`):** ده كان فيه المشكلة الحقيقية ✅ **اتصلحت** — الـ `switch` بتاع `r.Type` اللي بيبني لينك للعنصر كان ناقصه `case "product"` (كان بيرجع `#`)، وضفنا الـ `case` + خيار "Product" في dropdown الفلترة (`filterType`). الـ JS (`filterReviews`) مكنش محتاج تعديل لأنه أصلاً جنيريك على `data-type`.
+- ⚠️ **ملحوظة مش باج:** صفحة Shop/Details بترفض الـ Guest (Redirect للـ Login) والـ Admin (Redirect للـ Home) قبل حتى ما توصل لجزء الريفيوهات — يعني حالة "سجّل دخول عشان تكتب ريفيو" مش هتظهر أبدًا هناك. لسه مش اتقرر نغيّرها ولا نسيبها.
+- **متوسط التقييم ⭐ في `Shop/Index.cshtml`:** اختياري (لمسة شكل بس، مش أساسي وظيفيًا) — لسه ملمسناهوش.
+
+**⏳ باقي بنود المرحلة 1 (لسه هيتعملوا — بعد Categories):**
+| الإضافة | التفاصيل |
+|---|---|
+| ~~صور متعددة~~ | ❌ **اتلغت من الخطة نهائيًا** — مش هتتعمل |
+| المواصفات | حقول إضافية في `Product`: `Material` (زي "فضة/راتنج/قطن")، `Dimensions`، `OriginRegion` |
+| منتجات مشابهة | Query بسيط في `Details()`: دلوقتي هيبقى ممكن يعتمد على نفس الـ `Category` (بعد ما خلصت) بدل أقرب سعر بس |
+
+### المرحلة 2️⃣ — تصنيفات وفلاتر وبحث ✅ خلصت بالكامل
+| الإضافة | الحالة |
+|---|---|
+| جدول Categories | ✅ `Models/Category.cs` (Id, Name, NameAr) + Migration `AddProductCategories` |
+| ربط المنتج بالتصنيف | ✅ `CategoryId` (FK, nullable) في `Product.cs` + navigation property `Category` |
+| Admin CRUD للتصنيفات | ✅ mini-section جوه تاب Shop الموجود في `Views/Admin/Index.cshtml` (مفيش تاب Sidebar جديد بقرار مقصود) — `AddCategory`/`DeleteCategory` في `AdminController.cs` (الحذف بيفك الربط مش بيرفض زي المنتجات) |
+| ربط الـ Category بالمنتج من الأدمن | ✅ `<select>` في مودالي Add/Edit Product + تحديث `openEditProductBtn`/`openEditProduct` JS + `existing.CategoryId = model.CategoryId` في `EditProduct` |
+| فلترة | ✅ `ShopController.Index(int? categoryId, string? sort)` + شريط فلتر بالتصنيفات في `Views/Shop/Index.cshtml` |
+| بحث | ✅ اتضاف لـ `HomeController.Search()` (بالاسم + اسم التصنيف) + سكشن عرض في `Views/Home/Search.cshtml` (مفتاح ترجمة جديد `Common_ProductsPlural`) |
+| ترتيب (Sort) | ✅ الأحدث (بـ `Id` تنازليًا — الموديل مفيهوش `CreatedAt`) / الأقل سعر / الأعلى سعر / الأكثر مبيعًا (بيتحسب من `ShopOrders` الـ Confirmed) — `<select>` في `Views/Shop/Index.cshtml` |
+| تصنيف الـ 82 منتج الموجودين | ✅ سكريبت SQL (`INSERT` لـ 12 تصنيف + `UPDATE` بالـ Id لكل منتج) اتشغّل يدويًا في SSMS — كل المنتجات بقى ليها `CategoryId` |
+| مفاتيح ترجمة جديدة | `Shop_AllCategories`, `Shop_Sort_Newest`, `Shop_Sort_PriceLow`, `Shop_Sort_PriceHigh`, `Shop_Sort_BestSelling`, `Common_ProductsPlural` |
+
+### المرحلة 3️⃣ — عروض وخصومات وشارات
+| الإضافة | التفاصيل |
+|---|---|
+| سعر مخفّض | `OriginalPrice` (nullable) بجانب `Price` — لو موجود يبان Strikethrough + نسبة الخصم |
+| شارات | `IsFeatured`, `IsBestSeller`, `IsNew` (bool) — تتحط يدويًا من الأدمن أو تلقائي (IsNew لو CreatedAt أقل من 30 يوم) |
+| الكوبون | شغال أصلاً في المتجر من غير أي تعديل ✅ |
+| تنبيه المخزون | "باقي 3 بس!" لو `StockQuantity` أقل من رقم معين — نفس منطق التلوين الأحمر الموجود في Admin |
+
+### المرحلة 4️⃣ — لمسات احترافية إضافية (اختيارية)
+- **Wishlist للمنتجات**: تستخدم جدول `Favorites` الموجود، تضيف `Type = "product"`
+- **Breadcrumbs**: Home > Shop > Category > Product
+- **SKU / رقم منتج**: حقل بسيط للتنظيم الداخلي
 
 ---
 
@@ -954,6 +1117,8 @@ bank_service/
 ✅ 9.  Multi-language (عربي/إنجليزي)
 ✅ 10. Dark / Light Mode (كل الصفحات عدا Admin بقرار مقصود — تفاصيل كاملة في قسم "🌗 Dark / Light Mode System" فوق)
 ✅ 11. Daily Fact (Home Page) — تفاصيل كاملة في قسم "Daily Fact" فوق
+✅ 12. Shop System (متجر) — تفاصيل كاملة في قسم "🛍️ Shop System" فوق
+✅ 13. Shop — Categories (تصنيفات + فلترة + ترتيب + بحث) — تفاصيل كاملة في قسم "🎯 خطة احتراف الـ Shop" فوق (المرحلة 2)
 ```
 
 ---
@@ -962,10 +1127,11 @@ bank_service/
 
 ```
 [x] 10. Daily Fact (Home Page) ✅ — تفاصيل كاملة في قسم "Daily Fact" تحت
+[x] Shop System ✅ — خلص بالكامل، تفاصيل في قسم "🛍️ Shop System" فوق
 
-🚧 دلوقتي شغالين على Bank + Shop + Quiz مع بعض كـ Ecosystem واحد
+🚧 دلوقتي شغالين على باقي Bank + Quiz Ecosystem (الـ Shop خلص وطلع بره القايمة دي)
     (تفاصيل كاملة في قسم "🏦 Bank + Shop + Quiz Ecosystem" فوق)
-    ده بيغطي البنود 11 و18 تحت مع بعض، وبيضيف كمان Shop System جديد
+    ده بيغطي البنود 11 و18 تحت مع بعض
 
 [ ] 11. Quiz تفاعلي            → جزء من الـ Ecosystem الجديد فوق
 [ ] 12. Email Confirmation + QR Code
