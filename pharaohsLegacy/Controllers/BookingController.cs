@@ -344,14 +344,30 @@ namespace pharaohsLegacy.Controllers
                 note = $"{booking.PlaceType} #{booking.PlaceId} — {booking.NumberOfTickets} تذكرة"
             });
 
-            // 400/404 = بيانات الكارت أو الكود غلط أو مفيش حساب بنكي أصلاً لهذا الإيميل
+            // 400/404 = بيانات الكارت أو الكود غلط أو مفيش حساب بنكي أصلاً أو مشكلة في الكوبون
             if (chargeResponse.StatusCode == System.Net.HttpStatusCode.BadRequest ||
                 chargeResponse.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
-                // 🆕 هنا برضه بنستبدل نص الخطأ الخام من البنك برسالة مترجمة حسب status code
-                var key = chargeResponse.StatusCode == System.Net.HttpStatusCode.NotFound
-                    ? "Booking_NoAccount"
-                    : "Booking_PaymentDataInvalid";
+                var error = await chargeResponse.Content.ReadFromJsonAsync<BankErrorResult>();
+
+                // 🆕 مهم: /payments/charge في البايثون بترجع الـ status code 404/400 نفسهم
+                // في أكتر من حالة مختلفة تمامًا (مفيش حساب / كوبون غير موجود / كوبون مستخدم / كوبون
+                // منتهي / كارت غلط / OTP غلط). لو اعتمدنا على الـ status code بس زي ما كان في
+                // النسخة اللي فاتت، هنقول "مفيش حساب بنكي" لليوزر حتى لو المشكلة الحقيقية إنه
+                // كتب كود كوبون غلط — وده معلومة خاطئة تمامًا. فبنطابق هنا على النص الحرفي الثابت
+                // اللي البايثون بيرجّعه (مش حاجة اليوزر بيكتبها، هي Hardcoded في main.py) عشان نميّز
+                // بين الحالات فعليًا — من غير ما نعرض النص ده لليوزر خالص، بنستخدمه بس داخليًا
+                // لاختيار الـ Key الصحيح من عندنا.
+                string key = error?.detail switch
+                {
+                    "كود الخصم غير موجود لهذا المستخدم" => "Booking_Coupon_Invalid",
+                    "الكود ده اتستخدم قبل كده" => "Booking_Coupon_Invalid",
+                    "الكود ده منتهي الصلاحية" => "Booking_Coupon_Invalid",
+                    "كود التحقق غير صحيح أو منتهي الصلاحية" => "Booking_InvalidOtp",
+                    _ => chargeResponse.StatusCode == System.Net.HttpStatusCode.NotFound
+                        ? "Booking_NoAccount"
+                        : "Booking_PaymentDataInvalid"
+                };
 
                 _db.Bookings.Remove(booking);   // مفيش حجز من غير دفع ناجح — لازم يدوس "ابعت كود" تاني لو عايز يعيد المحاولة
                 await _db.SaveChangesAsync();
