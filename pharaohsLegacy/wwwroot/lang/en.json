@@ -435,6 +435,30 @@
   "Dash_Stat_WalletBalance": "Wallet Balance",
   "Dash_NoBankAccount_Title": "Payment account not set up yet",
   "Dash_NoBankAccount_Body": "To book a visit, please contact us to activate your payment account:",
-  "Dash_NoBankAccount_Cta": "Contact Us"
+  "Dash_NoBankAccount_Cta": "Contact Us",
+  
+    "Booking_LoginRequired": "You must log in first",
+    "Booking_Coupon_EnterCode": "Enter a coupon code",
+    "Booking_NotFoundRetry": "Booking not found, please start again",
+    "Booking_InvalidDate": "Invalid visit date",
+    "Booking_InvalidTickets": "Invalid number of tickets",
+    "Booking_NoAccount": "No bank account is linked to this email",
+    "Booking_Otp_SendFailed": "Could not send the verification code, please try again",
+    "Booking_Otp_Sent": "A verification code has been sent to your email",
+    "Booking_MustRequestOtpFirst": "You must click \"Send verification code\" before confirming the booking",
+    "Booking_InvalidCardNumber": "Invalid card number — must be 16 digits",
+    "Booking_CardHolderRequired": "Cardholder name is required",
+    "Booking_InvalidCVV": "Invalid CVV — must be 3 digits",
+    "Booking_InvalidOtp": "Invalid verification code — must be 6 digits",
+    "Booking_PaymentDataInvalid": "Invalid payment details",
+    "Booking_PaymentFailed": "Payment failed, please check your card details and balance",
+    "Booking_Success": "Booking and payment completed successfully",
+    "Booking_SuccessWithCoupon": "Booking and payment completed successfully — you saved {0} EGP with the coupon 🎉",
+    "Booking_Cancel_NotFound": "Booking not found",
+    "Booking_Cancel_NotConfirmed": "This booking cannot be cancelled in its current state",
+    "Booking_Cancel_Expired": "The cancellation window has expired (48 hours from booking time)",
+    "Booking_ResendOtpHint": "Booking details changed — please request a new verification code",
+    "Booking_ConfirmDisabledHint": "Send and verify the OTP code first to confirm your booking"
+  
 
 }

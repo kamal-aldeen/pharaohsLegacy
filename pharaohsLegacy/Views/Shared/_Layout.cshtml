@@ -818,6 +818,48 @@
                 display: block;
             }
     </style>
+    <style>
+        /* 🆕 Toast مشترك — TempData["Message"]/["Error"] */
+        .pl-toast {
+            position: fixed;
+            top: 90px;
+            inset-inline-end: 24px;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            max-width: 380px;
+            padding: 14px 18px;
+            border-radius: 8px;
+            background: var(--dark2);
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 30px rgba(0,0,0,.35);
+            font-family: 'Crimson Pro', serif;
+            font-size: .95rem;
+            color: var(--text);
+            animation: pl-toast-in .35s ease;
+        }
+        .pl-toast.success { border-color: var(--green); }
+        .pl-toast.success .pl-toast-icon { color: var(--green); }
+        .pl-toast.error { border-color: var(--red); }
+        .pl-toast.error .pl-toast-icon { color: var(--red); }
+        .pl-toast-icon { font-size: 1.1rem; flex-shrink: 0; }
+        .pl-toast-text { flex: 1; line-height: 1.4; }
+        .pl-toast-close {
+            background: none; border: none; color: var(--muted);
+            cursor: pointer; font-size: .9rem; flex-shrink: 0;
+        }
+        @@keyframes pl-toast-in {
+            from { opacity: 0; transform: translateY(-12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @@keyframes pl-toast-out {
+            to { opacity: 0; transform: translateY(-12px); }
+        }
+        @@media (max-width: 560px) {
+            .pl-toast { inset-inline-end: 12px; inset-inline-start: 12px; max-width: none; top: 78px; }
+        }
+    </style>
     @RenderSection("Styles", required: false)
 </head>
 
@@ -943,6 +985,21 @@
         </div>
     </nav>
 
+    @{
+        // 🆕 Toast مشترك لكل الموقع — بيقرأ TempData["Message"] (نجاح) و TempData["Error"] (فشل)
+        // ويعرضهم تلقائيًا فوق أي صفحة. قبل كده الاتنين كانوا بيتحطوا في الكنترولرز بس من
+        // غير أي View بيعرضهم فعليًا، فكانوا بيضيعوا صامتين.
+        var flashMessage = TempData["Message"] as string;
+        var flashError = TempData["Error"] as string;
+    }
+    @if (!string.IsNullOrEmpty(flashMessage) || !string.IsNullOrEmpty(flashError))
+    {
+        <div class="pl-toast @(string.IsNullOrEmpty(flashError) ? "success" : "error")" id="plToast">
+            <span class="pl-toast-icon">@(string.IsNullOrEmpty(flashError) ? "✓" : "⚠")</span>
+            <span class="pl-toast-text">@(flashError ?? flashMessage)</span>
+            <button class="pl-toast-close" onclick="document.getElementById('plToast').remove()" aria-label="Close">✕</button>
+        </div>
+    }
 
     <div class="main-content">
         @RenderBody()
@@ -1553,6 +1610,17 @@
     </div>
 
     <script>
+        // 🆕 اختفاء تلقائي للـ Toast بعد 5 ثواني
+        document.addEventListener('DOMContentLoaded', function () {
+            var toast = document.getElementById('plToast');
+            if (toast) {
+                setTimeout(function () {
+                    toast.style.animation = 'pl-toast-out .3s ease forwards';
+                    setTimeout(function () { toast.remove(); }, 300);
+                }, 5000);
+            }
+        });
+
         const aiErrorMsg = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Html.L("Chat_ErrorMessage")));
         // Dropdown — close on outside click
 document.addEventListener('click', function(e) {

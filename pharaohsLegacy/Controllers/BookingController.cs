@@ -10,12 +10,17 @@ namespace pharaohsLegacy.Controllers
     {
         private readonly AppDbContext _db;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly LocalizationService _loc;
 
-        public BookingController(AppDbContext db, IHttpClientFactory httpClientFactory)
+        public BookingController(AppDbContext db, IHttpClientFactory httpClientFactory, LocalizationService loc)
         {
             _db = db;
             _httpClientFactory = httpClientFactory;
+            _loc = loc;
         }
+
+        // 🆕 بدل ما نكرر HttpContext.Session.GetString("Lang") ?? "en" في كل Action
+        private string Lang() => HttpContext.Session.GetString("Lang") ?? "en";
 
         public async Task<IActionResult> MyBookings()
         {
@@ -28,7 +33,7 @@ namespace pharaohsLegacy.Controllers
                 .OrderByDescending(b => b.CreatedAt)
                 .ToListAsync();
 
-            var lang = HttpContext.Session.GetString("Lang") ?? "en";
+            var lang = Lang();
 
             foreach (var b in bookings)
             {
@@ -55,20 +60,34 @@ namespace pharaohsLegacy.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Cancel(int id)
         {
+            var lang = Lang();
             var userEmail = HttpContext.Session.GetString("UserEmail");
             if (string.IsNullOrEmpty(userEmail))
-                return Content("❌ NO SESSION");
+            {
+                // 🆕 كانت Content("❌ NO SESSION") — رسالة ديباج مش مترجمة، بدلناها بتحويل مع رسالة واضحة لليوزر
+                TempData["Error"] = _loc.Get("Booking_LoginRequired", lang);
+                return RedirectToAction("Login", "User");
+            }
 
             var booking = await _db.Bookings
                 .FirstOrDefaultAsync(b => b.Id == id && b.UserEmail == userEmail);
             if (booking == null)
-                return Content($"❌ NOT FOUND — id={id} | email={userEmail}");
+            {
+                TempData["Error"] = _loc.Get("Booking_Cancel_NotFound", lang);
+                return RedirectToAction("Dashboard", "User", new { tab = "bookings" });
+            }
 
             if (booking.Status != "Confirmed")
-                return Content($"❌ STATUS = {booking.Status}");
+            {
+                TempData["Error"] = _loc.Get("Booking_Cancel_NotConfirmed", lang);
+                return RedirectToAction("Dashboard", "User", new { tab = "bookings" });
+            }
 
             if ((DateTime.Now - booking.CreatedAt).TotalHours > 48)
-                return Content($"❌ EXPIRED — CreatedAt={booking.CreatedAt}");
+            {
+                TempData["Error"] = _loc.Get("Booking_Cancel_Expired", lang);
+                return RedirectToAction("Dashboard", "User", new { tab = "bookings" });
+            }
 
             // 🆕 الإلغاء بقى بس يسجل CancelledAt — الفلوس بترجع فعليًا (نداء البنك)
             // بعد 24 ساعة أوتوماتيك عن طريق BookingRefundBackgroundService، مش فورًا هنا.
@@ -77,9 +96,9 @@ namespace pharaohsLegacy.Controllers
             var statusService = new BookingStatusService(_db, _httpClientFactory);
             var result = await statusService.ChangeStatusAsync(booking, "Cancelled");
 
-            TempData["Message"] = result.Success
-                ? result.Message
-                : $"❌ {result.Message}";
+            // 🆕 result.Message جاي من BookingStatusService — لو مش مترجم أصلاً هيفضل زي ما هو،
+            // لكن على الأقل بطلنا نلزق "❌" يدويًا فوق رسالة ممكن تبقى مترجمة فعلاً
+            TempData["Message"] = result.Message;
 
             return RedirectToAction("Dashboard", "User", new { tab = "bookings" });
         }
@@ -99,7 +118,7 @@ namespace pharaohsLegacy.Controllers
 
             string? placeName = null;
             string? placeImage = null;
-            var lang = HttpContext.Session.GetString("Lang") ?? "en";
+            var lang = Lang();
 
             if (placeType == "Temple")
             {
@@ -130,12 +149,13 @@ namespace pharaohsLegacy.Controllers
         [HttpGet]
         public async Task<IActionResult> ValidateCoupon(string code)
         {
+            var lang = Lang();
             var userEmail = HttpContext.Session.GetString("UserEmail");
             if (string.IsNullOrEmpty(userEmail))
-                return Json(new { valid = false, message = "لازم تسجل دخول الأول" });
+                return Json(new { valid = false, message = _loc.Get("Booking_LoginRequired", lang) });
 
             if (string.IsNullOrWhiteSpace(code))
-                return Json(new { valid = false, message = "اكتب كود الخصم" });
+                return Json(new { valid = false, message = _loc.Get("Booking_Coupon_EnterCode", lang) });
 
             var client = _httpClientFactory.CreateClient("BankService");
             var response = await client.PostAsJsonAsync("coupons/validate", new
@@ -146,8 +166,9 @@ namespace pharaohsLegacy.Controllers
 
             if (!response.IsSuccessStatusCode)
             {
-                var error = await response.Content.ReadFromJsonAsync<BankErrorResult>();
-                return Json(new { valid = false, message = error?.detail ?? "كود غير صالح" });
+                // 🆕 مبنعرضش نص الخطأ الجاي من خدمة البنك زي ما هو (بيكون عربي دايمًا مهما كانت لغة اليوزر) —
+                // بنترجم رسالتنا احنا بدله
+                return Json(new { valid = false, message = _loc.Get("Booking_Coupon_Invalid", lang) });
             }
 
             var result = await response.Content.ReadFromJsonAsync<CouponValidateResult>();
@@ -165,9 +186,10 @@ namespace pharaohsLegacy.Controllers
             int numberOfTickets,
             int? existingBookingId)
         {
+            var lang = Lang();
             var userEmail = HttpContext.Session.GetString("UserEmail");
             if (string.IsNullOrEmpty(userEmail) || userEmail == "guest")
-                return Json(new { success = false, message = "لازم تسجل دخول الأول" });
+                return Json(new { success = false, message = _loc.Get("Booking_LoginRequired", lang) });
 
             Booking booking;
 
@@ -178,15 +200,30 @@ namespace pharaohsLegacy.Controllers
                     b.Id == existingBookingId.Value && b.UserEmail == userEmail && b.Status == "PendingPayment");
 
                 if (booking == null)
-                    return Json(new { success = false, message = "الحجز غير موجود، حاول تاني من الأول" });
+                    return Json(new { success = false, message = _loc.Get("Booking_NotFoundRetry", lang) });
+
+                // 🆕 باگ كان موجود: لو اليوزر غيّر التاريخ أو عدد التذاكر بعد أول "ابعت كود"،
+                // الحجز المبدئي كان بيفضل بالبيانات القديمة وميتحدّثش، فيتحجز بتاريخ/سعر غلط
+                // عن اللي شايفه على الشاشة. دلوقتي بنعيد التحقق ونحدّث الحجز بالبيانات الجديدة.
+                if (visitDate < DateTime.Today.AddDays(1) || visitDate > DateTime.Today.AddMonths(1))
+                    return Json(new { success = false, message = _loc.Get("Booking_InvalidDate", lang) });
+
+                if (numberOfTickets < 1 || numberOfTickets > 10)
+                    return Json(new { success = false, message = _loc.Get("Booking_InvalidTickets", lang) });
+
+                int existingTicketPrice = booking.PlaceType == "Temple" ? 150 : 100;
+                booking.VisitDate = visitDate;
+                booking.NumberOfTickets = numberOfTickets;
+                booking.TotalPrice = existingTicketPrice * numberOfTickets;
+                await _db.SaveChangesAsync();
             }
             else
             {
                 if (visitDate < DateTime.Today.AddDays(1) || visitDate > DateTime.Today.AddMonths(1))
-                    return Json(new { success = false, message = "تاريخ الزيارة غير صحيح" });
+                    return Json(new { success = false, message = _loc.Get("Booking_InvalidDate", lang) });
 
                 if (numberOfTickets < 1 || numberOfTickets > 10)
-                    return Json(new { success = false, message = "عدد التذاكر غير صحيح" });
+                    return Json(new { success = false, message = _loc.Get("Booking_InvalidTickets", lang) });
 
                 int ticketPrice = placeType == "Temple" ? 150 : 100;
 
@@ -215,12 +252,16 @@ namespace pharaohsLegacy.Controllers
 
             if (!otpResponse.IsSuccessStatusCode)
             {
-                var error = await otpResponse.Content.ReadFromJsonAsync<BankErrorResult>();
+                // 🆕 404 من البنك = مفيش حساب بنكي بالإيميل ده أصلاً، غير كده = فشل عام في الإرسال —
+                // منفرقش هنا حسب نص عربي جاي من البنك، بنفرق حسب status code ونترجم إحنا
+                var key = otpResponse.StatusCode == System.Net.HttpStatusCode.NotFound
+                    ? "Booking_NoAccount"
+                    : "Booking_Otp_SendFailed";
                 return Json(new
                 {
                     success = false,
                     bookingId = booking.Id,
-                    message = error?.detail ?? "تعذر إرسال كود التحقق، حاول مرة أخرى"
+                    message = _loc.Get(key, lang)
                 });
             }
 
@@ -228,7 +269,7 @@ namespace pharaohsLegacy.Controllers
             {
                 success = true,
                 bookingId = booking.Id,
-                message = "تم إرسال كود التحقق إلى بريدك الإلكتروني"
+                message = _loc.Get("Booking_Otp_Sent", lang)
             });
         }
 
@@ -243,6 +284,7 @@ namespace pharaohsLegacy.Controllers
             string otpCode,
             string? couponCode)
         {
+            var lang = Lang();
             var userEmail = HttpContext.Session.GetString("UserEmail");
             if (string.IsNullOrEmpty(userEmail) || userEmail == "guest")
                 return RedirectToAction("Login", "User");
@@ -259,7 +301,7 @@ namespace pharaohsLegacy.Controllers
 
             if (booking == null)
             {
-                TempData["Error"] = "لازم تدوس \"ابعت كود تحقق\" الأول قبل ما تأكد الحجز";
+                TempData["Error"] = _loc.Get("Booking_MustRequestOtpFirst", lang);
                 return RedirectToAction("Index", "Home");
             }
 
@@ -267,22 +309,22 @@ namespace pharaohsLegacy.Controllers
             cardNumber = (cardNumber ?? "").Replace(" ", "");
             if (cardNumber.Length != 16 || !cardNumber.All(char.IsDigit))
             {
-                TempData["Error"] = "رقم الكارت غير صحيح — لازم يكون 16 رقم";
+                TempData["Error"] = _loc.Get("Booking_InvalidCardNumber", lang);
                 return RedirectToAction("Create", new { placeType = booking.PlaceType, placeId = booking.PlaceId });
             }
             if (string.IsNullOrWhiteSpace(cardHolderName))
             {
-                TempData["Error"] = "اسم حامل الكارت مطلوب";
+                TempData["Error"] = _loc.Get("Booking_CardHolderRequired", lang);
                 return RedirectToAction("Create", new { placeType = booking.PlaceType, placeId = booking.PlaceId });
             }
             if (cvv == null || cvv.Length != 3 || !cvv.All(char.IsDigit))
             {
-                TempData["Error"] = "CVV غير صحيح — لازم يكون 3 أرقام";
+                TempData["Error"] = _loc.Get("Booking_InvalidCVV", lang);
                 return RedirectToAction("Create", new { placeType = booking.PlaceType, placeId = booking.PlaceId });
             }
             if (otpCode == null || otpCode.Length != 6 || !otpCode.All(char.IsDigit))
             {
-                TempData["Error"] = "كود التحقق غير صحيح — لازم يكون 6 أرقام";
+                TempData["Error"] = _loc.Get("Booking_InvalidOtp", lang);
                 return RedirectToAction("Create", new { placeType = booking.PlaceType, placeId = booking.PlaceId });
             }
 
@@ -306,11 +348,15 @@ namespace pharaohsLegacy.Controllers
             if (chargeResponse.StatusCode == System.Net.HttpStatusCode.BadRequest ||
                 chargeResponse.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
-                var error = await chargeResponse.Content.ReadFromJsonAsync<BankErrorResult>();
+                // 🆕 هنا برضه بنستبدل نص الخطأ الخام من البنك برسالة مترجمة حسب status code
+                var key = chargeResponse.StatusCode == System.Net.HttpStatusCode.NotFound
+                    ? "Booking_NoAccount"
+                    : "Booking_PaymentDataInvalid";
+
                 _db.Bookings.Remove(booking);   // مفيش حجز من غير دفع ناجح — لازم يدوس "ابعت كود" تاني لو عايز يعيد المحاولة
                 await _db.SaveChangesAsync();
 
-                TempData["Error"] = error?.detail ?? "بيانات الدفع غير صحيحة";
+                TempData["Error"] = _loc.Get(key, lang);
                 return RedirectToAction("Create", new { placeType = booking.PlaceType, placeId = booking.PlaceId });
             }
 
@@ -321,7 +367,7 @@ namespace pharaohsLegacy.Controllers
                 _db.Bookings.Remove(booking);   // فشل الخصم (زي رصيد غير كافٍ) — نلغي الحجز المبدئي
                 await _db.SaveChangesAsync();
 
-                TempData["Error"] = chargeResult?.message ?? "فشلت عملية الدفع";
+                TempData["Error"] = _loc.Get("Booking_PaymentFailed", lang);
                 return RedirectToAction("Create", new { placeType = booking.PlaceType, placeId = booking.PlaceId });
             }
 
@@ -340,8 +386,8 @@ namespace pharaohsLegacy.Controllers
             await _db.SaveChangesAsync();
 
             TempData["Message"] = chargeResult.discount_applied > 0
-                ? $"تم الحجز والدفع بنجاح — وفرت {chargeResult.discount_applied:N2} EGP بالكوبون 🎉"
-                : "تم الحجز والدفع بنجاح";
+                ? _loc.GetFormatted("Booking_SuccessWithCoupon", lang, chargeResult.discount_applied.ToString("N2"))
+                : _loc.Get("Booking_Success", lang);
 
             return RedirectToAction("MyBookings");
         }

@@ -1,10 +1,17 @@
 ﻿@using pharaohsLegacy.Extensions
+@using Microsoft.AspNetCore.Html
 @{
     ViewData["Title"] = "Book a Visit";
     var lang = Context.Session.GetString("Lang") ?? "en";
     var arrowBack = lang == "ar" ? "→" : "←";
     string placeTypeStr = (string)ViewBag.PlaceType;
     var placeTypeLabel = Html.L("Common_" + placeTypeStr);
+
+    // 🆕 أي نص عربي هيتحط جوه <script> كـ JS string لازم يعدي من هنا بدل ما يتحط
+    // مباشرة بين علامتين ' ' — الـ JsonSerializer بيعمل Escape صحيح لعلامات التنصيص/الرموز
+    // الخاصة، وده كمان طبقة حماية إضافية مستقلة عن إعداد الـ HtmlEncoder في Program.cs
+    // (يعني حتى لو حد نسي يظبط الـ Encoder، النص هيفضل سليم في الـ JS).
+    Func<string, IHtmlContent> js = key => Html.Raw(System.Text.Json.JsonSerializer.Serialize(Html.L(key)));
 }
 
 <div class="details-wrap">
@@ -25,7 +32,7 @@
                 </div>
             </div>
 
-            <form method="post" action="/Booking/Confirm" id="bookingForm">
+            <form method="post" action="/Booking/Confirm" id="bookingForm" novalidate>
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="placeType" value="@ViewBag.PlaceType" />
                 <input type="hidden" name="placeId" value="@ViewBag.PlaceId" />
@@ -64,7 +71,10 @@
                     </div>
                     <div>
                         <label>CVV</label>
-                        <input type="text" name="cvv" id="cvv" placeholder="123" maxlength="4" required />
+                        <!-- 🆕 كان maxlength="4" بينما السيرفر بيرفض أي حاجة غير 3 أرقام بالظبط —
+                             ده كان بيخلي اليوزر يكتب 4 أرقام وتتقبل في الفورم لحد ما يوصل للسيرفر
+                             ويترفض بدون سبب واضح ليه. اتظبطت لـ 3 عشان تبقى متسقة مع الفاليديشن. -->
+                        <input type="text" name="cvv" id="cvv" placeholder="123" maxlength="3" required />
                     </div>
                 </div>
 
@@ -95,6 +105,9 @@
                 <button type="submit" class="btn-gold" style="width:100%; margin-top:1rem;" id="confirmBtn" disabled>
                     ✓ @Html.L("Booking_ConfirmBtn")
                 </button>
+                <!-- 🆕 تلميح ثابت تحت الزرار المعطل يوضح ليه هو معطل ومطلوب إيه بالظبط،
+                     بدل ما اليوزر يدوس عليه ومحصلش حاجة من غير أي تفسير -->
+                <small id="confirmHint" class="confirm-hint">@Html.L("Booking_ConfirmDisabledHint")</small>
             </form>
         </div>
     </div>
@@ -118,6 +131,8 @@
         outline: none; transition: border-color .3s;
     }
     .book-field input[type="date"]:focus { border-color: var(--gold); }
+    .book-field input.invalid,
+    .book-field input[type="date"].invalid { border-color: #c0392b; }
     .ticket-counter {
         display: flex; align-items: center; gap: 1rem;
     }
@@ -171,9 +186,15 @@
         letter-spacing: 1px; border-radius: 4px;
         background: transparent; cursor: pointer;
     }
+    .coupon-row .btn-outline:disabled { opacity: .5; cursor: not-allowed; }
     .coupon-msg { margin-top: .5rem; font-size: .85rem; min-height: 1.2em; }
     .coupon-msg.success { color: #3fae5a; }
     .coupon-msg.error { color: #c0392b; }
+    /* 🆕 تلميح الزرار المعطل */
+    .confirm-hint {
+        display: block; text-align: center; margin-top: .5rem;
+        font-size: .8rem; color: var(--muted);
+    }
     @@media (max-width: 560px) {
         .card-row { grid-template-columns: 1fr; }
     }
@@ -183,7 +204,7 @@
     var ticketPrice = @ViewBag.TicketPrice;
     var count = 1;
     var currentLang = '@lang';
-    var currencyLabel = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Html.L("Common_EGP")));
+    var currencyLabel = @js("Common_EGP");
     var arabicDigitsMap = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
 
     function toLocalDigits(num) {
@@ -200,12 +221,44 @@
         document.getElementById('totalPrice').textContent = toLocalDigits(Math.round(finalTotal * 100) / 100) + ' ' + currencyLabel;
     }
 
+    // 🆕 بيتنادى لما اليوزر يغيّر التاريخ أو عدد التذاكر بعد ما يكون طلب كود تحقق قبل كده —
+    // لازم يبعت كود جديد لأن تفاصيل الحجز (والمبلغ) اتغيرت
+    function resetOtpStateIfChanged() {
+        var otpInput = document.getElementById('otpCode');
+        var confirmBtn = document.getElementById('confirmBtn');
+        var msgEl = document.getElementById('otpMsg');
+
+        if (!otpInput.disabled) {
+            otpInput.disabled = true;
+            otpInput.value = '';
+            confirmBtn.disabled = true;
+            msgEl.textContent = @js("Booking_ResendOtpHint");
+            msgEl.className = 'coupon-msg error';
+        } else if (msgEl.textContent) {
+            // كانت فيه رسالة قديمة (زي "من فضلك اختر التاريخ أولاً") — امسحها بعد ما اليوزر عدّل
+            msgEl.textContent = '';
+            msgEl.className = 'coupon-msg';
+        }
+        updateConfirmHint();
+    }
+
+    function updateConfirmHint() {
+        var hintEl = document.getElementById('confirmHint');
+        hintEl.style.display = document.getElementById('confirmBtn').disabled ? 'block' : 'none';
+    }
+
     function changeTickets(val) {
         count = Math.max(1, Math.min(10, count + val));
         document.getElementById('ticketCount').textContent = toLocalDigits(count);
         document.getElementById('numberOfTickets').value = count;
         updateTotal();
+        resetOtpStateIfChanged();
     }
+
+    document.getElementById('visitDate').addEventListener('change', function () {
+        this.classList.remove('invalid');
+        resetOtpStateIfChanged();
+    });
 
     // ---- Card input formatting ----
     document.getElementById('cardNumber').addEventListener('input', function (e) {
@@ -219,7 +272,7 @@
     });
 
     document.getElementById('cvv').addEventListener('input', function (e) {
-        e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4);
+        e.target.value = e.target.value.replace(/\D/g, '').slice(0, 3);
     });
 
     // ---- Coupon validation ----
@@ -229,7 +282,7 @@
         var msgEl = document.getElementById('couponMsg');
 
         if (!code) {
-            msgEl.textContent = '@Html.L("Booking_Coupon_Empty")';
+            msgEl.textContent = @js("Booking_Coupon_Empty");
             msgEl.className = 'coupon-msg error';
             return;
         }
@@ -243,16 +296,16 @@
 
             if (data.valid) {
                 discountPercent = data.discountPercent;
-                msgEl.textContent = '@Html.L("Booking_Coupon_Applied")'.replace('{0}', toLocalDigits(discountPercent));
+                msgEl.textContent = @(js("Booking_Coupon_Applied")).replace('{0}', toLocalDigits(discountPercent));
                 msgEl.className = 'coupon-msg success';
             } else {
                 discountPercent = 0;
-                msgEl.textContent = data.message || '@Html.L("Booking_Coupon_Invalid")';
+                msgEl.textContent = data.message || @js("Booking_Coupon_Invalid");
                 msgEl.className = 'coupon-msg error';
             }
         } catch (err) {
             discountPercent = 0;
-            msgEl.textContent = '@Html.L("Booking_Coupon_Error")';
+            msgEl.textContent = @js("Booking_Coupon_Error");
             msgEl.className = 'coupon-msg error';
         }
 
@@ -277,16 +330,20 @@
     document.getElementById('sendOtpBtn').addEventListener('click', async function () {
         var btn = this;
         var msgEl = document.getElementById('otpMsg');
-        var visitDate = document.getElementById('visitDate').value;
+        var visitDateEl = document.getElementById('visitDate');
+        var visitDate = visitDateEl.value;
         var numberOfTickets = document.getElementById('numberOfTickets').value;
         var existingBookingId = document.getElementById('bookingId').value;
         var otpBtnOriginalText = btn.textContent;
 
         if (!visitDate) {
-            msgEl.textContent = '@Html.L("Booking_Otp_NeedDate")';
+            msgEl.textContent = @js("Booking_Otp_NeedDate");
             msgEl.className = 'coupon-msg error';
+            visitDateEl.classList.add('invalid');
+            visitDateEl.focus();
             return;
         }
+        visitDateEl.classList.remove('invalid');
 
         btn.disabled = true;
         msgEl.textContent = '...';
@@ -317,24 +374,32 @@
                 msgEl.className = 'coupon-msg success';
                 otpCooldown(btn, 60);
             } else {
-                msgEl.textContent = data.message || '@Html.L("Booking_Otp_Error")';
+                msgEl.textContent = data.message || @js("Booking_Otp_Error");
                 msgEl.className = 'coupon-msg error';
                 btn.disabled = false;
                 btn.textContent = otpBtnOriginalText;
             }
         } catch (err) {
-            msgEl.textContent = '@Html.L("Booking_Otp_Error")';
+            msgEl.textContent = @js("Booking_Otp_Error");
             msgEl.className = 'coupon-msg error';
             btn.disabled = false;
             btn.textContent = otpBtnOriginalText;
         }
+
+        updateConfirmHint();
     });
 
     // ---- منع تأكيد الحجز من غير ما يتبعت ويتاكد كود التحقق الأول ----
     document.getElementById('bookingForm').addEventListener('submit', function (e) {
-        if (!document.getElementById('bookingId').value) {
+        if (!document.getElementById('bookingId').value || document.getElementById('confirmBtn').disabled) {
             e.preventDefault();
-            alert('@Html.L("Booking_Otp_Required")');
+            var msgEl = document.getElementById('otpMsg');
+            msgEl.textContent = @js("Booking_Otp_Required");
+            msgEl.className = 'coupon-msg error';
+            msgEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     });
+
+    // حالة أولية عند تحميل الصفحة
+    updateConfirmHint();
 </script>

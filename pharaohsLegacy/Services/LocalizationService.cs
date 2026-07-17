@@ -22,5 +22,13 @@ namespace pharaohsLegacy.Services
                 return value;
             return key; // fallback لو المفتاح مش موجود
         }
+
+        // 🆕 لرسائل فيها قيمة متغيرة (زي "وفرت {0} EGP بالكوبون") — بيجيب النص المترجم
+        // ويعمله Format بالقيم اللي جاية من الكود، بدل ما نبني الرسالة يدويًا بلغة واحدة بس
+        public string GetFormatted(string key, string lang, params object[] args)
+        {
+            var template = Get(key, lang);
+            return args.Length > 0 ? string.Format(template, args) : template;
+        }
     }
 }

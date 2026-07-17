@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using pharaohsLegacy.Models;
 using pharaohsLegacy.Services;
+using System.Text.Encodings.Web;
+using System.Text.Unicode;
 
 namespace pharaohsLegacy
 {
@@ -9,6 +11,20 @@ namespace pharaohsLegacy
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            // 🆕 الإصلاح الأساسي لمشكلة "&#x627;&#x62E;..." بدل الحروف العربية:
+            // الـ HtmlEncoder الافتراضي بيحول أي حرف مش Basic Latin (زي العربي) لـ HTML entity
+            // كإجراء أمان افتراضي. ده شغال تمام لو اتحط في نص HTML عادي (المتصفح بيفكه ويعرضه صح)،
+            // لكن لو نفس القيمة اتحطت جوه JS string (زي '@Html.L("...")' في <script>) هتفضل
+            // زي ما هي حرفيًا (entity مش متفكوكة) لأنها مش HTML text node أصلاً.
+            // بنوسع نطاق الترميز هنا ليشمل العربي فيتوقف عن عمل Encode لحروفها.
+            builder.Services.AddSingleton(HtmlEncoder.Create(
+                UnicodeRanges.BasicLatin,
+                UnicodeRanges.Arabic,
+                UnicodeRanges.ArabicSupplement,
+                UnicodeRanges.ArabicExtendedA,
+                UnicodeRanges.ArabicPresentationFormsA,
+                UnicodeRanges.ArabicPresentationFormsB));
 
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
