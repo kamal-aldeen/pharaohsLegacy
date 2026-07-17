@@ -1,4 +1,4 @@
-  # 🏺 Pharaohs Legacy — Project Progress & Ultimate Roadmap
+# 🏺 Pharaohs Legacy — Project Progress & Ultimate Roadmap
 
 > **الهدف:** تحويل Pharaohs Legacy من مشروع تخرج إلى منصة سياحية/ثقافية/ذكية متكاملة بمستوى Startup أو Enterprise Platform.
 
@@ -868,14 +868,47 @@ bank_service/
 
 ---
 
+### ✅ اللي خلص فعليًا (Create.cshtml — إصلاح شامل للترجمة + الـ OTP + الـ Validation)
+
+**السياق:** بعد ما اتأكد إن فيلدز الكارت في `Create.cshtml` و`HttpClient("BankService")` في `Program.cs` كانوا موجودين فعلاً (خطوة 3.5 كانت خلصت)، صاحب المشروع رجع بـ 3 مشاكل حقيقية طلعت من التجربة الفعلية لصفحة الحجز:
+
+1. طلب الـ OTP بالعربي كان بيطلع نص مبعثر شكل `&#x627;&#x62E;...` بدل الحروف العربية.
+2. نفس الرسالة ("لا يوجد حساب بنكي لهذا المستخدم") كانت بتظهر عربي حتى واليوزر شغّال بالإنجليزي.
+3. رسالة "Please select a visit date first" كانت بتفضل عالقة على الشاشة حتى بعد ما اليوزر يعدّل التاريخ فعلاً، من غير أي تفسير ليه زرار "تأكيد الحجز" لسه معطل.
+
+**🐛 السبب الجذري (حاجة واحدة وراها المشكلتين 1 و2):**
+- الـ `HtmlEncoder` الافتراضي بتاع ASP.NET Core بيحول أي حرف مش Basic Latin (زي العربي) لـ HTML numeric entity (`&#x627;`) كإجراء أمان افتراضي. ده شغال عادي لو النص اتحط في HTML markup عادي (المتصفح بيفكه صح)، لكن لو نفس القيمة اتحطت جوه `<script>` كـ JS string (زي `'@Html.L("...")'`)، بتفضل زي ما هي حرفيًا لأنها مش HTML text node.
+- الرسالة التانية ("لا يوجد حساب بنكي...") مكانتش أصلاً بتعدي على `LocalizationService` — كانت نص Hardcoded عربي جاي مباشرة من خدمة البنك (Python) وبيتمرر زي ما هو في `BookingController.cs` (`error?.detail`) من غير أي ترجمة حسب لغة الجلسة.
+
+**🆕 باگ لوجيك إضافي اتلاقى أثناء التفصيص (مش في الرسالة الأصلية):** لو اليوزر داس "ابعت كود تحقق" وبعدين غيّر التاريخ أو عدد التذاكر **قبل** ما يأكد الحجز، `RequestOtp` (مسار `existingBookingId`) كان بيتجاهل التغيير تمامًا ومبيحدّثش `VisitDate`/`NumberOfTickets`/`TotalPrice` — يعني ممكن يتحجز بتاريخ أو سعر مختلف عن اللي ظاهر على الشاشة.
+
+**✅ الإصلاحات اللي اتعملت:**
+- `Program.cs`: تسجيل `HtmlEncoder` بيسمح بنطاقات اليونيكود العربي (Basic Latin + Arabic + Arabic Supplement + Extended-A + Presentation Forms A/B) — ده الحل الجذري لمشكلة الـ `&#x627;`.
+- `LocalizationService.cs`: إضافة `GetFormatted(key, lang, params args)` للرسائل اللي فيها قيمة متغيرة (زي مبلغ الخصم بالكوبون).
+- `BookingController.cs`: كل الرسائل (`RequestOtp`, `ValidateCoupon`, `Confirm`, `Cancel`) بقت بتيجي من `LocalizationService` حسب لغة الجلسة — وبطلنا نعرض نص الخطأ الخام من خدمة البنك؛ بدل كده بنفرّق حسب الـ **HTTP status code بس** (404 = مفيش حساب بنكي، 400 = بيانات دفع غلط) ونعرض رسالتنا احنا. كمان اتصلح باگ عدم تحديث الحجز عند تغيير التاريخ/التذاكر بعد أول طلب OTP، واتنضّفت رسائل الـ Debug اللي كانت في `Cancel` (`❌ NO SESSION` وغيرها) واتحولت لرسائل مترجمة حقيقية.
+- `Create.cshtml`:
+  - كل نص بيتحط جوه `<script>` بقى بيعدي من خلال `Func<string, IHtmlContent> js = key => Html.Raw(JsonSerializer.Serialize(Html.L(key)))` بدل ما يتحط مباشرة بين `' '` — طبقة حماية إضافية مستقلة عن إعداد الـ Encoder (بتحل مشكلة الـ escaping وكسر الـ JS syntax مع بعض).
+  - إضافة `novalidate` على الفورم + مسح تلقائي لرسالة الـ OTP القديمة لما اليوزر يعدّل التاريخ أو عدد التذاكر + تلميح ثابت (`confirmHint`) تحت زرار "تأكيد الحجز" يوضح ليه هو معطل.
+  - تصحيح `maxlength="4"` في فيلد الـ CVV لـ `maxlength="3"` عشان يتماشى مع الـ Validation الحقيقي في السيرفر (كان بيقبل اليوزر يكتب 4 أرقام وترفض بعدين من غير سبب واضح).
+- `NEW_LOCALIZATION_KEYS.md`: ملف مرجعي فيه كل الـ Keys الجديدة (عربي/إنجليزي) اللي لازم تتضاف في `wwwroot/lang/ar.json` و `en.json`.
+
+**🐛 غلطة Razor صغيرة اتصححت بعد أول build:** `@js("Booking_Coupon_Applied").replace('{0}', ...)` كانت بتخلي الـ Razor يفتكر إن `.replace(...)` كمان جزء من كود C# (مش JS)، فطلعت أخطاء `CS0103`/`CS1012`. الحل: تطويق الاستدعاء بقوسين صريحين `@(js("..."))` عشان الـ Razor يعرف بالظبط فين الكود بينتهي. كمان اتضاف `@using Microsoft.AspNetCore.Html` أعلى الملف (كان ناقص عشان `IHtmlContent`).
+
+**⚠️ خطوة يدوية واحدة لسه لازم تتعمل:** لزق الـ JSON اللي في `NEW_LOCALIZATION_KEYS.md` جوه `wwwroot/lang/ar.json` و `en.json` الحاليين — من غيرها أي Key جديد هيرجع اسمه هو نفسه بدل الترجمة (بسبب سطر الـ fallback في `LocalizationService.Get()`).
+
+**✅ `HtmlHelperExtensions.cs`:** اتفحص ومحتاجش أي تعديل — الميثودز فيه (`L`, `D`, `Digits`, `DateLoc`, `Num`) بتستخدم الـ `HtmlEncoder` المسجّل في الـ DI، فاستفادت أوتوماتيك من إصلاح `Program.cs` من غير ما تتلمس.
+
+---
+
 ### ⏳ اللي لسه هيتعمل (بالترتيب)
 
 ```
 [x] 1. Python Bank Service (Models + API + Dashboard) ✅ خلص ومتستنج
 [x] 2. Card-Validated Payments (/payments/charge) + Refund (/payments/refund) ✅ خلص ومتستنج
 [x] 3. تعديل BookingController.cs الحقيقي (Confirm + Cancel + ValidateCoupon) ✅ خلص
+[x] 3.5. فيلدز Create.cshtml + Program.cs HttpClient ✅ خلص (كانت اتعملت فعلاً)
 [x] 3.6. Cancel/Refund State Machine + إصلاحات لوجيك الأدمن (BookingStatusService + Background Job + منع Refund مزدوج) ✅ خلص ومتستنج يدويًا
-[ ] 3.5. خطوات يدوية متبقية: فيلدز Create.cshtml + Program.cs HttpClient (تفاصيل في INTEGRATION_STEPS.md)
+[x] 3.7. إصلاح شامل لصفحة Create.cshtml: مشكلة ترميز العربي (&#x627;) + ترجمة رسائل OTP/البنك + Validation/UX ✅ خلص الكود، لسه محتاج (أ) دمج JSON keys في ar.json/en.json، (ب) تستنج يدوي بعد الـ build
 [ ] 4. بناء نظام المتجر (Shop):
         - Model: Product (اسم، صورة، سعر، وصف، كمية متاحة)
         - Model: ShopOrder (بيستخدم /payments/charge بنفس منطق الحجز بالظبط)
