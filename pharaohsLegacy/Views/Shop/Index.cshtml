@@ -48,7 +48,19 @@
         }
     </nav>
 
-    <h1 class="shop-page-title">@Html.L("Shop_Title")</h1>
+    <div class="shop-hero">
+        <div class="shop-title-row">
+            <h1 class="shop-page-title">@Html.L("Shop_Title")</h1>
+            @if (ViewBag.CanFavorite == true)
+            {
+                <a href="/Shop/Cart" class="cart-icon-link" title="@Html.L("Shop_Cart_Title")">
+                    <span class="cart-icon-glyph"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.3"/><circle cx="17.5" cy="20" r="1.3"/><path d="M2.5 3h2l2.1 12a2 2 0 0 0 2 1.6h8a2 2 0 0 0 2-1.6L20.5 7H6.2"/></svg></span>
+                    <span id="cartCountBadge" class="cart-count-badge" style="display:@((int)ViewBag.CartCount > 0 ? "inline-flex" : "none")">@Html.Digits((object)ViewBag.CartCount)</span>
+                </a>
+            }
+        </div>
+        <div class="shop-hero-divider"><span>𓋹</span></div>
+    </div>
 
     <div class="shop-filters">
         <div class="shop-filter-cats">
@@ -65,15 +77,15 @@
         <div class="shop-filter-badges">
             <a class="shop-filter-btn shop-filter-onsale @(onSaleSelected ? "active" : "")"
                href="/Shop/Index?@BuildShopQs(!onSaleSelected, bestSellerSelected, isNewSelected, selectedCategoryId, selectedSort)">
-                🔥 @Html.L("Shop_Filter_OnSale")
+<svg class="icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12.6 3.5l7.9 7.9-9 9-7.9-7.9V4.5a1 1 0 0 1 1-1h8z"/><circle cx="8" cy="8" r="1.3" fill="currentColor" stroke="none"/></svg> @Html.L("Shop_Filter_OnSale")
             </a>
             <a class="shop-filter-btn shop-filter-bestseller @(bestSellerSelected ? "active" : "")"
                href="/Shop/Index?@BuildShopQs(onSaleSelected, !bestSellerSelected, isNewSelected, selectedCategoryId, selectedSort)">
-                ⭐ @Html.L("Shop_Filter_BestSeller")
+                <svg class="icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" stroke="none"><path d="M12 2.7l2.8 6.1 6.7.7-5 4.6 1.4 6.6L12 17.2 6.1 20.7l1.4-6.6-5-4.6 6.7-.7L12 2.7z"/></svg> @Html.L("Shop_Filter_BestSeller")
             </a>
             <a class="shop-filter-btn shop-filter-new @(isNewSelected ? "active" : "")"
                href="/Shop/Index?@BuildShopQs(onSaleSelected, bestSellerSelected, !isNewSelected, selectedCategoryId, selectedSort)">
-                ✨ @Html.L("Shop_Filter_New")
+                <svg class="icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" stroke="none"><path d="M12 2c.6 4 2.3 5.7 6.3 6.3-4 .6-5.7 2.3-6.3 6.3-.6-4-2.3-5.7-6.3-6.3C9.7 7.7 11.4 6 12 2z"/><path d="M19 15.2c.3 1.6.9 2.2 2.5 2.5-1.6.3-2.2.9-2.5 2.5-.3-1.6-.9-2.2-2.5-2.5 1.6-.3 2.2-.9 2.5-2.5z"/></svg> @Html.L("Shop_Filter_New")
             </a>
         </div>
 
@@ -97,7 +109,7 @@
             bool canFav = ViewBag.CanFavorite == true;
             bool isFav = canFav && favMap.ContainsKey(p.Id);
             <a class="shop-card" href="/Shop/Details/@p.Id">
-                <div class="shop-card-img">
+                <div class="shop-card-img @(p.StockQuantity <= 0 ? "is-out" : "")">
                     <img src="@p.ImageUrl" alt="@name" />
                     <div class="shop-card-badges">
                         @if (hasDiscount)
@@ -150,6 +162,12 @@
                             <span class="shop-stock">@Html.L("Shop_InStock"): @Html.Digits((object)p.StockQuantity)</span>
                         }
                     </div>
+                    @if (p.StockQuantity > 0 && canFav)
+                    {
+                        <button type="button" class="shop-addcart-btn" data-product-id="@p.Id" onclick="addToCart(event, this)">
+                            <svg class="icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.3"/><circle cx="17.5" cy="20" r="1.3"/><path d="M2.5 3h2l2.1 12a2 2 0 0 0 2 1.6h8a2 2 0 0 0 2-1.6L20.5 7H6.2"/></svg> @Html.L("Shop_AddToCart")
+                        </button>
+                    }
                 </div>
             </a>
         }
@@ -162,56 +180,93 @@
 </div>
 
 <style>
-    .shop-wrap { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
-    .shop-page-title { font-family: 'Cinzel', serif; color: var(--gold); text-align: center; margin-bottom: 2rem; letter-spacing: 2px; }
-    .shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 1.5rem; }
-    .shop-card { display: block; background: var(--dark3); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; text-decoration: none; color: var(--text); transition: transform .25s, border-color .25s; }
-    .shop-card:hover { transform: translateY(-4px); border-color: var(--gold); }
-    .shop-card-img { aspect-ratio: 1/1; overflow: hidden; }
-    .shop-card-img img { width: 100%; height: 100%; object-fit: cover; }
-    .shop-card-body { padding: 1rem; }
-    .shop-card-body h3 { font-family: 'Cinzel', serif; font-size: .95rem; margin: 0 0 .75rem; color: var(--text); }
-    .shop-card-footer { display: flex; justify-content: space-between; align-items: center; font-size: .8rem; }
+    .shop-wrap { max-width: 1280px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+
+    /* 🎨 Hero header */
+    .shop-hero { margin-bottom: 2.75rem; }
+    .shop-title-row { display: flex; align-items: center; justify-content: center; gap: 1rem; position: relative; }
+    .shop-page-title { font-family: 'Cinzel', serif; font-size: clamp(2rem, 4vw, 2.6rem); font-weight: 600; color: var(--gold); text-align: center; letter-spacing: 3px; margin: 0; text-shadow: 0 2px 18px rgba(var(--gold-rgb), .18); }
+    .shop-hero-divider { display: flex; align-items: center; justify-content: center; gap: .9rem; margin-top: 1rem; color: var(--gold); }
+    .shop-hero-divider::before, .shop-hero-divider::after { content: ''; flex: 1; max-width: 90px; height: 1px; background: linear-gradient(90deg, transparent, rgba(var(--gold-rgb),.55)); }
+    .shop-hero-divider::after { background: linear-gradient(90deg, rgba(var(--gold-rgb),.55), transparent); }
+    .shop-hero-divider span { font-size: 1.1rem; opacity: .85; }
+
+    .cart-icon-link { position: absolute; inset-inline-end: 0; text-decoration: none; color: var(--text); display: inline-flex; align-items: center; width: 46px; height: 46px; justify-content: center; border-radius: 50%; background: rgba(var(--gold-rgb),.08); border: 1px solid var(--border); transition: border-color .25s, background .25s, transform .25s; }
+    .cart-icon-link:hover { border-color: var(--gold); background: rgba(var(--gold-rgb),.14); transform: translateY(-2px); }
+    .cart-icon-glyph { display: inline-flex; }
+    .btn-loading-dots { letter-spacing: 2px; opacity: .7; }
+    .cart-count-badge { position: absolute; top: -4px; inset-inline-end: -4px; background: var(--gold); color: #1a0a00; font-size: .68rem; font-weight: 800; border-radius: 999px; min-width: 19px; height: 19px; display: inline-flex; align-items: center; justify-content: center; padding: 0 4px; border: 2px solid var(--dark); }
+
+    /* 🎨 Filters toolbar */
+    .shop-filters { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 2.25rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+    .shop-filter-cats { display: flex; flex-wrap: wrap; gap: 10px; }
+    .shop-filter-btn { padding: 9px 20px; border: 1px solid var(--border); border-radius: 24px; color: var(--text); text-decoration: none; font-size: .85rem; font-weight: 500; letter-spacing: .2px; transition: all .22s; }
+    .shop-filter-btn:hover { border-color: var(--gold); color: var(--gold); }
+    .shop-filter-btn.active { background: var(--gold); color: #1a0a00; border-color: var(--gold); font-weight: 700; box-shadow: 0 4px 14px rgba(var(--gold-rgb),.25); }
+    .shop-filter-badges { display: flex; gap: 10px; flex-wrap: wrap; }
+    .shop-filter-btn .icon { vertical-align: -1px; margin-inline-end: 1px; }
+    .shop-filter-onsale { border-color: rgba(178,58,42,.4); color: #d9856f; }
+    .shop-filter-onsale.active { background: #a8342a; color: #fff; border-color: #a8342a; box-shadow: 0 4px 14px rgba(168,52,42,.3); }
+    .shop-filter-bestseller { border-color: rgba(31,143,122,.4); color: #4fc9ae; }
+    .shop-filter-bestseller.active { background: #17685a; color: #fff; border-color: #17685a; box-shadow: 0 4px 14px rgba(23,104,90,.3); }
+    .shop-filter-new { border-color: rgba(61,111,168,.4); color: #86aed9; }
+    .shop-filter-new.active { background: #2d5580; color: #fff; border-color: #2d5580; box-shadow: 0 4px 14px rgba(45,85,128,.3); }
+    .shop-sort-select { background: var(--dark3); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 9px 14px; font-size: .85rem; cursor: pointer; font-family: 'Cinzel', serif; letter-spacing: .5px; }
+    .shop-sort-select:hover { border-color: var(--gold); }
+
+    /* 🎨 Product grid & cards */
+    .shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(255px, 1fr)); gap: 1.75rem; }
+    .shop-card { display: block; background: linear-gradient(160deg, var(--dark3), var(--dark)); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; text-decoration: none; color: var(--text); transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease; }
+    .shop-card:hover { transform: translateY(-6px); border-color: var(--gold); box-shadow: 0 18px 40px -12px rgba(0,0,0,.55), 0 0 0 1px rgba(var(--gold-rgb),.15); }
+    .shop-card-img { position: relative; aspect-ratio: 1/1; overflow: hidden; background: var(--dark); }
+    .shop-card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s ease; }
+    .shop-card:hover .shop-card-img img { transform: scale(1.07); }
+    .shop-card-img.is-out img { filter: grayscale(.6) brightness(.55); }
+    .shop-card-body { padding: 1.15rem 1.25rem 1.3rem; }
+    .shop-card-body h3 { font-family: 'Cinzel', serif; font-size: 1.02rem; font-weight: 600; line-height: 1.35; margin: 0 0 .9rem; color: var(--text); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.7em; }
+    .shop-card-footer { display: flex; justify-content: space-between; align-items: flex-end; font-size: .82rem; gap: .5rem; }
     .shop-price-wrap { display: flex; flex-direction: column; gap: 2px; }
-    .shop-price { color: var(--gold); font-weight: 700; }
-    .shop-price-old { color: var(--muted); text-decoration: line-through; font-size: .72rem; }
-    .shop-stock { color: var(--muted); }
-    .shop-stock.out { color: #c0392b; }
-    .shop-stock.low { color: #d98c00; }
-    .shop-card-img { position: relative; }
-    .shop-card-badges { position: absolute; top: 8px; left: 8px; display: flex; flex-direction: column; gap: 4px; z-index: 1; }
-    .shop-badge { padding: 3px 8px; border-radius: 4px; font-size: .65rem; font-weight: 700; letter-spacing: .3px; color: #fff; text-transform: uppercase; }
-    .badge-sale { background: #c0392b; }
-    .badge-new { background: #3478f6; }
-    .badge-bestseller { background: #2e8b57; }
-    .badge-featured { background: var(--gold); color: #1a0a00; }
-    .shop-empty { text-align: center; color: var(--muted); margin-top: 2rem; }
-    .shop-filters { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 1.5rem; }
-    .shop-filter-cats { display: flex; flex-wrap: wrap; gap: 8px; }
-    .shop-filter-btn { padding: 6px 14px; border: 1px solid var(--border); border-radius: 20px; color: var(--text); text-decoration: none; font-size: .8rem; transition: all .2s; }
-    .shop-filter-btn:hover { border-color: var(--gold); }
-    .shop-filter-btn.active { background: var(--gold); color: #1a0a00; border-color: var(--gold); font-weight: 600; }
-    .shop-filter-badges { display: flex; gap: 8px; flex-wrap: wrap; }
-    .shop-filter-onsale { border-color: #c0392b; color: #c0392b; }
-    .shop-filter-onsale.active { background: #c0392b; color: #fff; border-color: #c0392b; }
-    .shop-filter-bestseller { border-color: #2e8b57; color: #2e8b57; }
-    .shop-filter-bestseller.active { background: #2e8b57; color: #fff; border-color: #2e8b57; }
-    .shop-filter-new { border-color: #3478f6; color: #3478f6; }
-    .shop-filter-new.active { background: #3478f6; color: #fff; border-color: #3478f6; }
-    .shop-sort-select { background: var(--dark3); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: .8rem; cursor: pointer; }
+    .shop-price { color: var(--gold); font-weight: 800; font-size: 1.12rem; font-family: 'Cinzel', serif; }
+    .shop-price-old { color: var(--muted); text-decoration: line-through; font-size: .75rem; }
+    .shop-stock { color: var(--muted); font-size: .78rem; text-align: end; }
+    .shop-stock.out { color: #e0685a; font-weight: 600; }
+    .shop-stock.low { color: #e0a733; font-weight: 600; }
+    .shop-empty { text-align: center; color: var(--muted); margin-top: 3rem; font-size: 1.05rem; }
+
+    /* 🎨 Badges — refined medallion pills */
+    .shop-card-badges { position: absolute; top: 10px; left: 10px; display: flex; flex-direction: column; gap: 6px; z-index: 1; }
+    .shop-badge { padding: 4px 11px; border-radius: 20px; font-size: .64rem; font-weight: 800; letter-spacing: .5px; color: #fff; text-transform: uppercase; box-shadow: 0 3px 10px rgba(0,0,0,.35); backdrop-filter: blur(2px); }
+    .badge-sale { background: linear-gradient(135deg, #c23f2e, #7f2318); }
+    .badge-new { background: linear-gradient(135deg, #3d6fa8, #1f3f66); }
+    .badge-bestseller { background: linear-gradient(135deg, #1f8f7a, #0f5a4c); }
+    .badge-featured { background: linear-gradient(135deg, #f0c96e, #c9a227); color: #1a0a00; }
+    .icon { display: inline-block; vertical-align: -3px; flex-shrink: 0; }
 
     /* 🆕 المرحلة 4 — Breadcrumbs */
-    .breadcrumbs { font-size: .8rem; color: var(--muted); margin-bottom: 1rem; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .breadcrumbs { font-size: .82rem; color: var(--muted); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .breadcrumbs a { color: var(--muted); text-decoration: none; transition: color .2s; }
     .breadcrumbs a:hover { color: var(--gold); }
     .breadcrumbs .crumb-sep { color: var(--border); }
-    .breadcrumbs .crumb-current { color: var(--gold); }
+    .breadcrumbs .crumb-current { color: var(--gold); font-weight: 600; }
 
     /* 🆕 المرحلة 4 — Wishlist heart */
-    .shop-fav-btn { position: absolute; top: 8px; right: 8px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.55); border: none; border-radius: 50%; font-size: 1.1rem; color: #fff; text-decoration: none; z-index: 2; cursor: pointer; padding: 0; font-family: inherit; line-height: 1; transition: transform .2s, color .2s; }
-    .shop-fav-btn:hover { transform: scale(1.15); }
+    .shop-fav-btn { position: absolute; top: 10px; right: 10px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; background: rgba(10,8,4,.6); backdrop-filter: blur(3px); border: 1px solid rgba(255,255,255,.12); border-radius: 50%; font-size: 1.2rem; color: #fff; text-decoration: none; z-index: 2; cursor: pointer; padding: 0; font-family: inherit; line-height: 1; transition: transform .2s, color .2s, background .2s; }
+    .shop-fav-btn:hover { transform: scale(1.15); background: rgba(10,8,4,.8); }
     .shop-fav-btn.active { color: #e0435b; }
+
+    /* 🎨 زرار Add to Cart في الكارت */
+    .shop-addcart-btn { margin-top: .8rem; width: 100%; padding: 10px; background: transparent; border: 1.5px solid var(--gold); color: var(--gold); border-radius: 8px; font-size: .8rem; font-weight: 600; font-family: 'Cinzel', serif; letter-spacing: .8px; cursor: pointer; transition: all .25s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .shop-addcart-btn:hover { background: var(--gold); color: #1a0a00; box-shadow: 0 6px 16px rgba(var(--gold-rgb),.3); }
+    .shop-addcart-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    @@media (max-width: 640px) {
+        .shop-wrap { padding: 1.75rem 1.1rem 3rem; }
+        .cart-icon-link { position: static; margin-inline-start: auto; }
+        .shop-title-row { justify-content: space-between; }
+    }
 </style>
+
+<form style="display:none">@Html.AntiForgeryToken()</form>
 
 <script>
     // 🆕 المرحلة 4 — Wishlist toggle بـ AJAX من غير أي Refresh للصفحة
@@ -254,6 +309,51 @@
         } catch (err) {
             console.error('Wishlist toggle failed:', err);
         } finally {
+            btn.disabled = false;
+        }
+    }
+
+    // 🆕 إضافة منتج للسلة من صفحة الـ Index — الكارت كله لينك، فلازم نوقف الـ propagation
+    async function addToCart(e, btn) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (btn.disabled) return;
+        btn.disabled = true;
+        var originalHtml = btn.innerHTML;
+        btn.innerHTML = '<span class="btn-loading-dots">···</span>';
+
+        var productId = btn.getAttribute('data-product-id');
+        var token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+        try {
+            var body = new URLSearchParams();
+            body.append('productId', productId);
+            body.append('quantity', 1);
+            if (token) body.append('__RequestVerificationToken', token);
+
+            var res = await fetch('/Shop/AddToCart', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: body.toString()
+            });
+            var data = await res.json();
+
+            if (data.success) {
+                var badge = document.getElementById('cartCountBadge');
+                if (badge) {
+                    badge.textContent = data.cartCount;
+                    badge.style.display = 'inline-flex';
+                }
+                btn.innerHTML = '<svg class="icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5L20 6"/></svg>';
+                setTimeout(function () { btn.innerHTML = originalHtml; btn.disabled = false; }, 1200);
+            } else {
+                alert(data.message || '');
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            }
+        } catch (err) {
+            console.error('Add to cart failed:', err);
+            btn.innerHTML = originalHtml;
             btn.disabled = false;
         }
     }

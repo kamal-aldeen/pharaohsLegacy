@@ -1,0 +1,224 @@
+@model List<pharaohsLegacy.Models.CartItem>
+@using pharaohsLegacy.Extensions
+@{
+    ViewData["Title"] = "Shop";
+    var lang = Context.Session.GetString("Lang") ?? "en";
+    decimal subtotal = ViewBag.Subtotal;
+}
+
+<div class="shop-wrap">
+    <nav class="breadcrumbs">
+        <a href="/Shop/Index">@Html.L("Shop_Title")</a>
+        <span class="crumb-sep">/</span>
+        <span class="crumb-current">@Html.L("Shop_Cart_Title")</span>
+    </nav>
+
+    <div class="shop-hero">
+        <h1 class="shop-page-title">@Html.L("Shop_Cart_Title")</h1>
+        <div class="shop-hero-divider"><span>𓋹</span></div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="cart-empty">
+            <div class="cart-empty-glyph">𓆃</div>
+            <p>@Html.L("Shop_Cart_Empty")</p>
+            <a href="/Shop/Index" class="btn-gold">@Html.L("Shop_Cart_ContinueShopping")</a>
+        </div>
+    }
+    else
+    {
+        <div class="cart-layout">
+            <div class="cart-items" id="cartItemsList">
+                @foreach (var c in Model)
+                {
+                    var hasDiscount = c.ProductOriginalPrice.HasValue && c.ProductOriginalPrice.Value > c.ProductPrice;
+                    <div class="cart-item" data-cart-id="@c.Id" data-unit-price="@c.ProductPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)">
+                        <a href="/Shop/Details/@c.ProductId" class="cart-item-img">
+                            <img src="@c.ProductImage" alt="@c.ProductName" />
+                        </a>
+                        <div class="cart-item-body">
+                            <a href="/Shop/Details/@c.ProductId" class="cart-item-name">@c.ProductName</a>
+                            <div class="cart-item-price">
+                                @if (hasDiscount)
+                                {
+                                    <span class="shop-price-old">@Html.Digits((object)c.ProductOriginalPrice) @Html.L("Common_EGP")</span>
+                                }
+                                <span class="shop-price">@Html.Digits((object)c.ProductPrice) @Html.L("Common_EGP")</span>
+                            </div>
+
+                            <div class="cart-item-controls">
+                                <div class="ticket-counter cart-ticket-counter">
+                                    <button type="button" onclick="changeCartQty(@c.Id, -1)">−</button>
+                                    <span id="qty-@c.Id">@Html.Digits(c.Quantity)</span>
+                                    <button type="button" onclick="changeCartQty(@c.Id, 1)">+</button>
+                                </div>
+                                <button type="button" class="cart-remove-btn" onclick="removeCartItem(@c.Id)"><svg class="icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4.8A1.8 1.8 0 0 1 10.8 3h2.4A1.8 1.8 0 0 1 15 4.8V7M6 7l1 13.1A2 2 0 0 0 9 22h6a2 2 0 0 0 2-1.9L18 7M10 11v6M14 11v6"/></svg> @Html.L("Shop_Cart_Remove")</button>
+                            </div>
+                            <div id="cart-msg-@c.Id" class="coupon-msg"></div>
+                        </div>
+                        <div class="cart-item-subtotal" id="subtotal-@c.Id">
+                            @Html.Digits((object)(c.ProductPrice * c.Quantity)) @Html.L("Common_EGP")
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="cart-summary">
+                <span class="specs-title">@Html.L("Shop_Checkout_OrderSummary")</span>
+                <div class="cart-summary-row">
+                    <span>@Html.L("Shop_Cart_Subtotal")</span>
+                    <span id="cartSubtotalTotal">@Html.Digits((object)subtotal) @Html.L("Common_EGP")</span>
+                </div>
+                <p class="cart-summary-note">@Html.L("Shop_Cart_ShippingNote")</p>
+                <a href="/Shop/Checkout" class="btn-gold" style="width:100%; display:block; text-align:center; text-decoration:none;">
+                    @Html.L("Shop_Cart_ProceedCheckout")
+                </a>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .shop-wrap { max-width: 1280px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+    .shop-hero { margin-bottom: 2.25rem; }
+    .shop-page-title { font-family: 'Cinzel', serif; font-size: clamp(1.9rem, 4vw, 2.4rem); font-weight: 600; color: var(--gold); text-align: center; letter-spacing: 3px; margin: 0; }
+    .shop-hero-divider { display: flex; align-items: center; justify-content: center; gap: .9rem; margin-top: 1rem; color: var(--gold); }
+    .shop-hero-divider::before, .shop-hero-divider::after { content: ''; flex: 1; max-width: 90px; height: 1px; background: linear-gradient(90deg, transparent, rgba(var(--gold-rgb),.55)); }
+    .shop-hero-divider::after { background: linear-gradient(90deg, rgba(var(--gold-rgb),.55), transparent); }
+    .shop-hero-divider span { font-size: 1.1rem; opacity: .85; }
+
+    .cart-empty { text-align: center; padding: 5rem 1rem; color: var(--muted); }
+    .cart-empty-glyph { font-size: 2.6rem; margin-bottom: 1rem; opacity: .7; }
+    .cart-empty p { margin-bottom: 1.5rem; font-size: 1.05rem; }
+
+    .cart-layout { display: grid; grid-template-columns: 1fr 340px; gap: 2rem; align-items: start; }
+    .cart-items { display: flex; flex-direction: column; gap: 1.1rem; }
+    .cart-item { display: grid; grid-template-columns: 100px 1fr auto; gap: 1.25rem; background: linear-gradient(160deg, var(--dark3), var(--dark)); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; align-items: center; transition: border-color .25s; }
+    .cart-item:hover { border-color: rgba(var(--gold-rgb),.4); }
+    .cart-item-img { display: block; width: 100px; height: 100px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+    .cart-item-img img { width: 100%; height: 100%; object-fit: cover; }
+    .cart-item-name { color: var(--text); font-family: 'Cinzel', serif; font-size: 1.05rem; font-weight: 600; text-decoration: none; line-height: 1.3; }
+    .cart-item-name:hover { color: var(--gold); }
+    .cart-item-price { margin: .5rem 0; display: flex; gap: .7rem; align-items: baseline; font-size: .95rem; flex-wrap: wrap; }
+    .shop-price { color: var(--gold); font-weight: 800; font-family: 'Cinzel', serif; font-size: 1.05rem; }
+    .shop-price-old { color: var(--muted); text-decoration: line-through; font-size: .85rem; opacity: .75; }
+    .cart-item-controls { display: flex; align-items: center; gap: 1.4rem; margin-top: .6rem; flex-wrap: wrap; }
+    .ticket-counter { display: flex; align-items: center; gap: .9rem; }
+    .ticket-counter button { width: 32px; height: 32px; background: var(--dark3); border: 1px solid var(--border); border-radius: 50%; color: var(--gold); font-size: 1.05rem; font-family: 'Cinzel', serif; line-height: 1; cursor: pointer; transition: all .25s; display: flex; align-items: center; justify-content: center; padding: 0; }
+    .ticket-counter button:hover { border-color: var(--gold); background: rgba(var(--gold-rgb),.12); }
+    .ticket-counter span { font-family: 'Cinzel', serif; font-size: 1.05rem; color: var(--text); min-width: 22px; text-align: center; }
+    .cart-ticket-counter button { width: 30px; height: 30px; font-size: 1rem; }
+    .cart-ticket-counter span { font-size: 1.1rem; min-width: 22px; }
+    .icon { display: inline-block; vertical-align: -2px; flex-shrink: 0; }
+    .cart-remove-btn { background: none; border: none; color: #e0685a; cursor: pointer; font-size: .82rem; font-weight: 600; padding: 4px 0; transition: opacity .2s; display: inline-flex; align-items: center; gap: 5px; }
+    .cart-remove-btn:hover { opacity: .75; text-decoration: underline; }
+    .cart-item-subtotal { font-family: 'Cinzel', serif; color: var(--gold); font-weight: 800; font-size: 1.15rem; white-space: nowrap; align-self: center; }
+
+    .cart-summary { background: linear-gradient(160deg, var(--dark3), var(--dark)); border: 1px solid var(--border); border-radius: 14px; padding: 1.6rem; position: sticky; top: 1.5rem; box-shadow: 0 12px 32px -14px rgba(0,0,0,.5); }
+    .cart-summary .specs-title { margin-bottom: 1.1rem; }
+    .cart-summary-row { display: flex; justify-content: space-between; font-family: 'Cinzel', serif; margin-bottom: 1rem; font-size: 1.02rem; }
+    .cart-summary-row span:last-child { color: var(--gold); font-weight: 800; font-size: 1.15rem; }
+    .cart-summary-note { font-size: .8rem; color: var(--muted); margin-bottom: 1.3rem; line-height: 1.5; }
+
+    .specs-title { display: block; font-family: 'Cinzel', serif; font-size: .72rem; letter-spacing: 2.5px; text-transform: uppercase; color: var(--gold); }
+
+    .breadcrumbs { font-size: .82rem; color: var(--muted); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .breadcrumbs a { color: var(--muted); text-decoration: none; }
+    .breadcrumbs a:hover { color: var(--gold); }
+    .breadcrumbs .crumb-sep { color: var(--border); }
+    .breadcrumbs .crumb-current { color: var(--gold); font-weight: 600; }
+
+    @@media (max-width: 700px) {
+        .shop-wrap { padding: 1.75rem 1.1rem 3rem; }
+        .cart-layout { grid-template-columns: 1fr; }
+        .cart-item { grid-template-columns: 76px 1fr; }
+        .cart-item-subtotal { grid-column: 2; text-align: end; }
+    }
+</style>
+
+<script>
+    function updateCartBadge(count) {
+        var badge = document.getElementById('cartCountBadge');
+        if (!badge) return;
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'inline-flex' : 'none';
+    }
+
+    async function changeCartQty(cartId, delta) {
+        var qtyEl = document.getElementById('qty-' + cartId);
+        var current = parseInt(qtyEl.textContent, 10) || 1;
+        var newQty = Math.max(1, current + delta);
+        await sendCartUpdate(cartId, newQty);
+    }
+
+    async function sendCartUpdate(cartId, quantity) {
+        var msgEl = document.getElementById('cart-msg-' + cartId);
+        var token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        try {
+            var body = new URLSearchParams();
+            body.append('cartItemId', cartId);
+            body.append('quantity', quantity);
+            if (token) body.append('__RequestVerificationToken', token);
+
+            var res = await fetch('/Shop/UpdateCartItem', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: body.toString()
+            });
+            var data = await res.json();
+
+            if (data.success) {
+                document.getElementById('qty-' + cartId).textContent = data.quantity;
+                document.getElementById('subtotal-' + cartId).textContent =
+                    Number(data.itemSubtotal).toFixed(2) + ' @Html.L("Common_EGP")';
+                if (msgEl) msgEl.textContent = '';
+                updateCartBadge(data.cartCount);
+                recomputeGrandTotal();
+            } else if (msgEl) {
+                msgEl.textContent = data.message || '';
+                msgEl.className = 'coupon-msg error';
+            }
+        } catch (err) {
+            console.error('Cart update failed:', err);
+        }
+    }
+
+    async function removeCartItem(cartId) {
+        var token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        try {
+            var body = new URLSearchParams();
+            body.append('cartItemId', cartId);
+            if (token) body.append('__RequestVerificationToken', token);
+
+            var res = await fetch('/Shop/RemoveFromCart', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: body.toString()
+            });
+            var data = await res.json();
+
+            if (data.success) {
+                var el = document.querySelector('.cart-item[data-cart-id="' + cartId + '"]');
+                if (el) el.remove();
+                updateCartBadge(data.cartCount);
+                recomputeGrandTotal();
+                if (!document.querySelector('.cart-item')) location.reload();
+            }
+        } catch (err) {
+            console.error('Cart remove failed:', err);
+        }
+    }
+
+    function recomputeGrandTotal() {
+        var total = 0;
+        document.querySelectorAll('.cart-item').forEach(function (el) {
+            var unit = parseFloat(el.getAttribute('data-unit-price'));
+            var qty = parseInt(el.querySelector('[id^="qty-"]').textContent, 10) || 0;
+            total += unit * qty;
+        });
+        var totalEl = document.getElementById('cartSubtotalTotal');
+        if (totalEl) totalEl.textContent = total.toFixed(2) + ' @Html.L("Common_EGP")';
+    }
+</script>
+<form style="display:none">@Html.AntiForgeryToken()</form>

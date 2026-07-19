@@ -63,6 +63,27 @@ namespace pharaohsLegacy.Controllers
                 });
             }
 
+            // 🆕 Shop Orders — نفس فكرة bookingRows فوق، بس لأوردرات الشوب (بما فيها Items وتراك الشحن)
+            var shopOrders = await _context.ShopOrders
+                .Include(o => o.Items)
+                .Where(o => o.Status != "PendingPayment")
+                .OrderByDescending(o => o.CreatedAt)
+                .ToListAsync();
+
+            var shopOrderProductIds = shopOrders.SelectMany(o => o.Items.Select(i => i.ProductId)).Distinct().ToList();
+            var shopOrderProducts = await _context.Products
+                .Where(p => shopOrderProductIds.Contains(p.Id))
+                .ToDictionaryAsync(p => p.Id);
+
+            foreach (var o in shopOrders)
+            {
+                foreach (var item in o.Items)
+                {
+                    if (shopOrderProducts.TryGetValue(item.ProductId, out var p))
+                        item.ProductName = p.Name;
+                }
+            }
+
             var vm = new AdminOverviewViewModel
             {
                 TotalUsers = await _context.Users.CountAsync(u => u.Email != AdminEmail),
@@ -97,6 +118,7 @@ namespace pharaohsLegacy.Controllers
                 TotalShopRevenue = await _context.ShopOrders
                     .Where(o => o.Status == "Confirmed")
                     .SumAsync(o => o.TotalPrice),
+                ShopOrders = shopOrders, // 🆕 تراك + إدارة حالة أوردرات الشوب (راجع تحت قبل الـ Index)
 
                 // 🆕 Categories
                 TotalCategories = await _context.Categories.CountAsync(),
@@ -353,6 +375,69 @@ namespace pharaohsLegacy.Controllers
             return RedirectToAction("Index", new { tab = "bookings" });
         }
 
+        // 🆕 نفس فكرة ChangeBookingStatus بالظبط بس لأوردرات الشوب — بيغيّر حالة الدفع
+        // (Confirmed/Cancelled/Refunded) عن طريق ShopOrderStatusService (المصدر الوحيد للحقيقة)
+        [HttpPost]
+        public async Task<IActionResult> ChangeShopOrderStatus(int id, string status)
+        {
+            if (!IsAdmin()) return Unauthorized();
+
+            var order = await _context.ShopOrders.Include(o => o.Items).FirstOrDefaultAsync(o => o.Id == id);
+            if (order == null) return NotFound();
+
+            var statusService = new ShopOrderStatusService(_context, _httpClientFactory);
+            var result = await statusService.ChangeStatusAsync(order, status);
+
+            if (!result.Success)
+                TempData["Error"] = result.Message;
+            else
+                TempData["Success"] = result.Message;
+
+            return RedirectToAction("Index", new { tab = "shop-orders" });
+        }
+
+        // 🆕 تحديث تراك الشحن (Processing → Shipped → Delivered) — منفصل تمامًا عن حالة الدفع،
+        // مفيش نداء بنك هنا خالص، مجرد تحديث حقل عادي. بس متاح للأوردرات Confirmed
+        // (لو الأوردر اتلغى/اترفند، مفيش معنى إننا نحدّث تراك شحن لطلب أصلاً مش هيتشحن)
+        [HttpPost]
+        public async Task<IActionResult> UpdateShopOrderShipping(int id, string shippingStatus)
+        {
+            if (!IsAdmin()) return Unauthorized();
+
+            var validStatuses = new[] { "Processing", "Shipped", "Delivered" };
+            if (!validStatuses.Contains(shippingStatus))
+            {
+                TempData["Error"] = "Invalid shipping status.";
+                return RedirectToAction("Index", new { tab = "shop-orders" });
+            }
+
+            var order = await _context.ShopOrders.FindAsync(id);
+            if (order == null) return NotFound();
+
+            if (order.Status != "Confirmed")
+            {
+                TempData["Error"] = "Shipping status can only be updated for confirmed orders.";
+                return RedirectToAction("Index", new { tab = "shop-orders" });
+            }
+
+            order.ShippingStatus = shippingStatus;
+
+            // 🆕 لو الأدمن نقل الأوردر لـ Shipped يدويًا وShippedAt لسه فاضي، سجله دلوقتي —
+            // عشان الحساب التلقائي لـ Delivered (المعتمد على ShippedAt) في
+            // ShopOrderShippingBackgroundService يشتغل صح بعد كده
+            if (shippingStatus == "Shipped" && order.ShippedAt == null)
+                order.ShippedAt = DateTime.Now;
+
+            // 🆕 لو نقلها لـ Delivered مباشرة (تخطي Shipped)، سجل DeliveredAt للعرض بس في MyOrders
+            if (shippingStatus == "Delivered" && order.DeliveredAt == null)
+                order.DeliveredAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = $"Order #{order.Id} marked as {shippingStatus}.";
+            return RedirectToAction("Index", new { tab = "shop-orders" });
+        }
+
         [HttpPost]
         public async Task<IActionResult> DeleteUser(int id)
         {
@@ -498,10 +583,12 @@ namespace pharaohsLegacy.Controllers
         {
             if (!IsAdmin()) return Unauthorized();
 
-            // 🆕 لو المنتج ده اتباع قبل كده (فيه ShopOrders مرتبطة)، حذفه المباشر هيبوّظ
+            // 🆕 لو المنتج ده اتباع قبل كده (فيه ShopOrderItems مرتبطة بأوردر مؤكد)، حذفه المباشر هيبوّظ
             // الـ Foreign Key / سجل الطلبات القديمة في MyOrders (ProductId هيفضل يشاور على حاجة مش موجودة).
             // بنمنع الحذف في الحالة دي بدل ما نكسر بيانات تاريخية، زي ما بنعمل مع أي جدول مرتبط بحجوزات.
-            var hasOrders = await _context.ShopOrders.AnyAsync(o => o.ProductId == id && o.Status != "PendingPayment");
+            // 🔄 بعد تعدد المنتجات في الأوردر (ShopOrderItem)، الفحص بقى عن طريق join مع ShopOrder للحالة
+            var hasOrders = await _context.ShopOrderItems
+                .AnyAsync(oi => oi.ProductId == id && oi.ShopOrder!.Status != "PendingPayment");
             if (hasOrders)
             {
                 TempData["Error"] = "Can't delete a product with existing orders.";

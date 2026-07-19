@@ -1,0 +1,509 @@
+@model List<pharaohsLegacy.Models.CartItem>
+@using pharaohsLegacy.Extensions
+@using Microsoft.AspNetCore.Html
+@{
+    ViewData["Title"] = "Checkout";
+    var lang = Context.Session.GetString("Lang") ?? "en";
+    decimal subtotal = ViewBag.Subtotal;
+    var governorates = (List<pharaohsLegacy.Models.Governorates.GovernorateInfo>)ViewBag.Governorates;
+
+    Func<string, IHtmlContent> js = key => Html.Raw(System.Text.Json.JsonSerializer.Serialize(Html.L(key)));
+}
+
+<div class="shop-wrap">
+    <nav class="breadcrumbs">
+        <a href="/Shop/Index">@Html.L("Shop_Title")</a>
+        <span class="crumb-sep">/</span>
+        <a href="/Shop/Cart">@Html.L("Shop_Cart_Title")</a>
+        <span class="crumb-sep">/</span>
+        <span class="crumb-current">@Html.L("Shop_Checkout_Title")</span>
+    </nav>
+
+    <div class="shop-hero">
+        <h1 class="shop-page-title">@Html.L("Shop_Checkout_Title")</h1>
+        <div class="shop-hero-divider"><span>𓋹</span></div>
+    </div>
+
+    <div class="checkout-layout">
+        <div class="checkout-summary">
+            <span class="specs-title">@Html.L("Shop_Checkout_OrderSummary")</span>
+            @foreach (var c in Model)
+            {
+                <div class="checkout-item">
+                    <img src="@c.ProductImage" alt="@c.ProductName" />
+                    <div class="checkout-item-body">
+                        <div class="checkout-item-name">@c.ProductName</div>
+                        <div class="checkout-item-qty">@Html.L("Shop_Quantity_Label"): @Html.Digits(c.Quantity)</div>
+                    </div>
+                    <div class="checkout-item-price">@Html.Digits((object)(c.ProductPrice * c.Quantity)) @Html.L("Common_EGP")</div>
+                </div>
+            }
+
+            <div class="checkout-totals">
+                <div class="checkout-totals-row">
+                    <span>@Html.L("Shop_Cart_Subtotal")</span>
+                    <span id="ckSubtotal">@Html.Digits((object)subtotal) @Html.L("Common_EGP")</span>
+                </div>
+                <div class="checkout-totals-row">
+                    <span>@Html.L("Shop_Checkout_Shipping")</span>
+                    <span id="ckShipping">—</span>
+                </div>
+                <div class="checkout-totals-row checkout-grand-total">
+                    <span>@Html.L("Booking_Total_Label")</span>
+                    <span id="ckGrandTotal">@Html.Digits((object)subtotal) @Html.L("Common_EGP")</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="checkout-form-wrap">
+            <form method="post" action="/Shop/Confirm" id="checkoutForm" novalidate>
+                @Html.AntiForgeryToken()
+
+                <div class="checkout-step-head">
+                    <span class="checkout-step-num">01</span>
+                    <span class="specs-title">@Html.L("Shop_Checkout_DeliveryInfo")</span>
+                </div>
+
+                <div class="book-field">
+                    <label>@Html.L("Shop_Checkout_Phone")</label>
+                    <input type="text" id="phoneNumber" placeholder="01xxxxxxxxx" maxlength="11" required />
+                </div>
+
+                <div class="book-field">
+                    <label>@Html.L("Shop_Checkout_Governorate")</label>
+                    <select id="governorate" required>
+                        <option value="">— @Html.L("Shop_Checkout_SelectGovernorate") —</option>
+                        @foreach (var g in governorates)
+                        {
+                            <option value="@g.Key" data-fee="@g.ShippingFee.ToString(System.Globalization.CultureInfo.InvariantCulture)" data-name-en="@g.NameEn" data-name-ar="@g.NameAr">
+                                @(lang == "ar" ? g.NameAr : g.NameEn) (@Html.Digits((object)g.ShippingFee) @Html.L("Common_EGP"))
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="book-field">
+                    <div class="address-label-row">
+                        <label style="margin-bottom:0;">@Html.L("Shop_Checkout_Address")</label>
+                        <button type="button" id="useLocationBtn" class="use-location-btn">
+                            <svg class="icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/><circle cx="12" cy="12" r="7.5"/></svg>
+                            @Html.L("Shop_Checkout_UseLocation")
+                        </button>
+                    </div>
+                    <textarea id="address" rows="2" required style="width:100%; background:var(--dark); border:1px solid var(--border); border-radius:4px; padding:.75rem 1rem; color:var(--text); font-family:'Crimson Pro', serif; font-size:1rem; outline:none; resize:vertical;"></textarea>
+                    <div id="locationMsg" class="coupon-msg"></div>
+                </div>
+
+                <div class="checkout-step-head checkout-step-head-mt">
+                    <span class="checkout-step-num">02</span>
+                    <span class="specs-title">@Html.L("Booking_CardDetails_Label")</span>
+                </div>
+
+                <div class="book-field">
+                    <input type="text" id="cardNumber" name="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19" required />
+                </div>
+
+                <div class="book-field card-row">
+                    <div>
+                        <label>@Html.L("Booking_CardHolder_Label")</label>
+                        <input type="text" id="cardHolderName" name="cardHolderName" placeholder="John Doe" required />
+                    </div>
+                    <div>
+                        <label>@Html.L("Booking_Expiry_Label")</label>
+                        <input type="text" id="expiryDate" name="expiryDate" placeholder="MM/YY" maxlength="5" required />
+                    </div>
+                    <div>
+                        <label>CVV</label>
+                        <input type="text" id="cvv" name="cvv" placeholder="123" maxlength="3" required />
+                    </div>
+                </div>
+
+                <div class="checkout-step-head checkout-step-head-mt">
+                    <span class="checkout-step-num">03</span>
+                    <span class="specs-title">@Html.L("Shop_Checkout_PlaceOrder")</span>
+                </div>
+
+                <div class="book-field">
+                    <label>@Html.L("Booking_Coupon_Label")</label>
+                    <div class="coupon-row">
+                        <input type="text" id="couponCode" name="couponCode" placeholder="@Html.L("Booking_Coupon_Placeholder")" />
+                        <button type="button" id="applyCouponBtn" class="btn-outline">@Html.L("Booking_Coupon_Apply")</button>
+                    </div>
+                    <div id="couponMsg" class="coupon-msg"></div>
+                </div>
+
+                <div class="book-field">
+                    <label>@Html.L("Booking_Otp_Label")</label>
+                    <div class="coupon-row">
+                        <input type="text" name="otpCode" id="otpCode" placeholder="@Html.L("Booking_Otp_Placeholder")" maxlength="6" disabled />
+                        <button type="button" id="sendOtpBtn" class="btn-outline">@Html.L("Booking_Otp_Send")</button>
+                    </div>
+                    <div id="otpMsg" class="coupon-msg"></div>
+                    <input type="hidden" name="orderId" id="orderId" value="" />
+                </div>
+
+                <button type="submit" class="btn-gold" style="width:100%; margin-top:1rem; display:flex; align-items:center; justify-content:center; gap:7px;" id="confirmBtn" disabled>
+                    <svg class="icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5L20 6"/></svg> @Html.L("Shop_Checkout_PlaceOrder")
+                </button>
+                <small id="confirmHint" class="confirm-hint">@Html.L("Booking_ConfirmDisabledHint")</small>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .shop-wrap { max-width: 1280px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+    .shop-hero { margin-bottom: 2.25rem; }
+    .shop-page-title { font-family: 'Cinzel', serif; font-size: clamp(1.9rem, 4vw, 2.4rem); font-weight: 600; color: var(--gold); text-align: center; letter-spacing: 3px; margin: 0; }
+    .shop-hero-divider { display: flex; align-items: center; justify-content: center; gap: .9rem; margin-top: 1rem; color: var(--gold); }
+    .shop-hero-divider::before, .shop-hero-divider::after { content: ''; flex: 1; max-width: 90px; height: 1px; background: linear-gradient(90deg, transparent, rgba(var(--gold-rgb),.55)); }
+    .shop-hero-divider::after { background: linear-gradient(90deg, rgba(var(--gold-rgb),.55), transparent); }
+    .shop-hero-divider span { font-size: 1.1rem; opacity: .85; }
+
+    .checkout-layout { display: grid; grid-template-columns: 360px 1fr; gap: 2rem; align-items: start; }
+
+    .checkout-summary { background: linear-gradient(160deg, var(--dark3), var(--dark)); border: 1px solid var(--border); border-radius: 14px; padding: 1.6rem; position: sticky; top: 1.5rem; box-shadow: 0 12px 32px -14px rgba(0,0,0,.5); }
+    .checkout-item { display: flex; align-items: center; gap: 1rem; padding: .85rem 0; border-bottom: 1px solid var(--border); }
+    .checkout-item:last-of-type { border-bottom: none; }
+    .checkout-item img { width: 54px; height: 54px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); }
+    .checkout-item-body { flex: 1; }
+    .checkout-item-name { font-size: .92rem; color: var(--text); font-weight: 500; }
+    .checkout-item-qty { font-size: .78rem; color: var(--muted); margin-top: .15rem; }
+    .checkout-item-price { font-size: .88rem; color: var(--gold); font-family: 'Cinzel', serif; font-weight: 700; white-space: nowrap; }
+    .checkout-totals { margin-top: 1.2rem; padding-top: 1.2rem; border-top: 1px solid var(--border); }
+    .checkout-totals-row { display: flex; justify-content: space-between; font-size: .92rem; color: var(--muted); margin-bottom: .7rem; }
+    .checkout-grand-total { font-family: 'Cinzel', serif; font-size: 1.1rem; color: var(--text); margin-top: .7rem; }
+    .checkout-grand-total span:last-child { color: var(--gold); font-weight: 800; font-size: 1.25rem; }
+
+    .checkout-form-wrap { background: linear-gradient(160deg, var(--dark3), var(--dark)); border: 1px solid var(--border); border-radius: 14px; padding: 1.8rem 1.8rem 2rem; }
+
+    /* 🎨 ترقيم الخطوات — العملية فعليًا تسلسلية (توصيل → دفع → تأكيد)، فالترقيم هنا معناه حقيقي */
+    .checkout-step-head { display: flex; align-items: center; gap: .8rem; margin-bottom: 1.2rem; }
+    .checkout-step-head-mt { margin-top: 2.2rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+    .checkout-step-num { font-family: 'Cinzel', serif; font-size: .78rem; font-weight: 700; color: #1a0a00; background: var(--gold); width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .checkout-step-head .specs-title { margin-bottom: 0; }
+
+    .specs-title { display: block; font-family: 'Cinzel', serif; font-size: .74rem; letter-spacing: 2.5px; text-transform: uppercase; color: var(--gold); margin-bottom: 1.1rem; }
+    .book-field { margin-bottom: 1.35rem; }
+    .book-field label { display: block; font-family: 'Cinzel', serif; font-size: .68rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: .6rem; }
+    .address-label-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: .6rem; flex-wrap: wrap; }
+    .address-label-row label { margin-bottom: 0 !important; }
+    .use-location-btn { display: inline-flex; align-items: center; gap: 5px; background: rgba(var(--gold-rgb),.08); border: 1px solid rgba(var(--gold-rgb),.35); color: var(--gold); padding: 5px 11px; border-radius: 20px; font-family: 'Cinzel', serif; font-size: .68rem; font-weight: 600; letter-spacing: .5px; cursor: pointer; transition: all .2s; white-space: nowrap; }
+    .use-location-btn:hover { background: rgba(var(--gold-rgb),.16); border-color: var(--gold); }
+    .use-location-btn:disabled { opacity: .55; cursor: not-allowed; }
+    .use-location-btn .btn-loading-dots { letter-spacing: 2px; }
+    .book-field input[type="text"], .book-field select, .book-field textarea { width: 100%; background: var(--dark); border: 1px solid var(--border); border-radius: 8px; padding: .85rem 1.1rem; color: var(--text); font-family: 'Crimson Pro', serif; font-size: 1.02rem; outline: none; transition: border-color .3s, box-shadow .3s; }
+    .book-field input[type="text"]:focus, .book-field select:focus, .book-field textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(var(--gold-rgb),.12); }
+    .card-row { display: grid; grid-template-columns: 1.4fr 1fr .8fr; gap: 1rem; }
+    .card-row label { margin-bottom: .6rem; }
+    .coupon-row { display: flex; gap: .7rem; }
+    .coupon-row input { flex: 1; }
+    .coupon-row .btn-outline { padding: 0 1.4rem; white-space: nowrap; font-family: 'Cinzel', serif; font-size: .74rem; font-weight: 600; letter-spacing: 1px; border-radius: 8px; background: transparent; cursor: pointer; }
+    .coupon-row .btn-outline:disabled { opacity: .5; cursor: not-allowed; }
+    .coupon-msg { margin-top: .6rem; font-size: .88rem; min-height: 1.2em; }
+    .coupon-msg.success { color: #3fae5a; }
+    .coupon-msg.error { color: #e0685a; }
+    .confirm-hint { display: block; text-align: center; margin-top: .7rem; font-size: .82rem; color: var(--muted); }
+
+    .breadcrumbs { font-size: .82rem; color: var(--muted); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .breadcrumbs a { color: var(--muted); text-decoration: none; }
+    .breadcrumbs a:hover { color: var(--gold); }
+    .breadcrumbs .crumb-sep { color: var(--border); }
+    .breadcrumbs .crumb-current { color: var(--gold); font-weight: 600; }
+    .icon { display: inline-block; vertical-align: -3px; flex-shrink: 0; }
+
+    @@media (max-width: 800px) {
+        .shop-wrap { padding: 1.75rem 1.1rem 3rem; }
+        .checkout-layout { grid-template-columns: 1fr; }
+        .card-row { grid-template-columns: 1fr; }
+        .checkout-form-wrap { padding: 1.4rem; }
+    }
+</style>
+
+<script>
+    var subtotal = @subtotal.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    var currentLang = '@lang';
+    var currencyLabel = @js("Common_EGP");
+    var arabicDigitsMap = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+    var shippingFee = 0;
+    var locStrings = {
+        unsupported: @js("Shop_Location_Unsupported"),
+        locating: @js("Shop_Location_Locating"),
+        success: @js("Shop_Location_Success"),
+        successNoGov: @js("Shop_Location_SuccessNoGov"),
+        denied: @js("Shop_Location_Denied"),
+        timeout: @js("Shop_Location_Timeout"),
+        error: @js("Shop_Location_Error")
+    };
+
+    function toLocalDigits(num) {
+        var str = String(num);
+        if (currentLang !== 'ar') return str;
+        return str.replace(/[0-9]/g, function (d) { return arabicDigitsMap[+d]; });
+    }
+
+    function fmt(n) { return toLocalDigits(Math.round(n * 100) / 100) + ' ' + currencyLabel; }
+
+    function updateTotals() {
+        document.getElementById('ckShipping').textContent = fmt(shippingFee);
+        document.getElementById('ckGrandTotal').textContent = fmt(subtotal + shippingFee);
+    }
+
+    document.getElementById('governorate').addEventListener('change', function () {
+        var opt = this.options[this.selectedIndex];
+        shippingFee = opt.value ? parseFloat(opt.getAttribute('data-fee')) : 0;
+        updateTotals();
+        resetOtpStateIfChanged();
+    });
+
+    document.getElementById('phoneNumber').addEventListener('input', function (e) {
+        e.target.value = e.target.value.replace(/\D/g, '').slice(0, 11);
+    });
+    ['phoneNumber', 'address'].forEach(function (id) {
+        document.getElementById(id).addEventListener('input', resetOtpStateIfChanged);
+    });
+
+    // 🆕 استخدام الموقع الحالي (GPS) — بيملأ العنوان والمحافظة تلقائيًا زي أمازون
+    function normalizeGovName(s) {
+        return (s || '').toString().toLowerCase()
+            .replace(/governorate/gi, '')
+            .replace(/محافظة/g, '')
+            .replace(/[\u064B-\u0652]/g, '')
+            .trim();
+    }
+
+    function matchGovernorate(rawName) {
+        var target = normalizeGovName(rawName);
+        if (!target) return null;
+        var options = document.querySelectorAll('#governorate option[data-name-en]');
+        for (var i = 0; i < options.length; i++) {
+            var opt = options[i];
+            var en = normalizeGovName(opt.getAttribute('data-name-en'));
+            var ar = normalizeGovName(opt.getAttribute('data-name-ar'));
+            if (target === en || target === ar ||
+                (en && (target.indexOf(en) !== -1 || en.indexOf(target) !== -1)) ||
+                (ar && (target.indexOf(ar) !== -1 || ar.indexOf(target) !== -1))) {
+                return opt.value;
+            }
+        }
+        return null;
+    }
+
+    var useLocationBtn = document.getElementById('useLocationBtn');
+    if (useLocationBtn) {
+        useLocationBtn.addEventListener('click', function () {
+            var btn = this;
+            var msgEl = document.getElementById('locationMsg');
+
+            if (!('geolocation' in navigator)) {
+                msgEl.textContent = locStrings.unsupported;
+                msgEl.className = 'coupon-msg error';
+                return;
+            }
+
+            btn.disabled = true;
+            var originalHtml = btn.innerHTML;
+            btn.innerHTML = '<span class="btn-loading-dots">···</span>';
+            msgEl.textContent = locStrings.locating;
+            msgEl.className = 'coupon-msg';
+
+            navigator.geolocation.getCurrentPosition(async function (pos) {
+                try {
+                    var lat = pos.coords.latitude;
+                    var lon = pos.coords.longitude;
+                    var res = await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + lat + '&lon=' + lon + '&accept-language=' + currentLang, {
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    var data = await res.json();
+                    if (!data || !data.address) throw new Error('no-address');
+
+                    var a = data.address;
+                    var parts = [a.road, a.neighbourhood || a.suburb || a.quarter, a.city || a.town || a.village].filter(Boolean);
+                    var addressText = parts.length ? parts.join('، ') : (data.display_name || '');
+
+                    var addressField = document.getElementById('address');
+                    addressField.value = addressText;
+                    resetOtpStateIfChanged();
+
+                    var matched = matchGovernorate(a.state || a.county || '');
+                    if (matched) {
+                        var select = document.getElementById('governorate');
+                        select.value = matched;
+                        select.dispatchEvent(new Event('change'));
+                    }
+
+                    msgEl.textContent = matched ? locStrings.success : locStrings.successNoGov;
+                    msgEl.className = 'coupon-msg success';
+                } catch (err) {
+                    console.error('Reverse geocoding failed:', err);
+                    msgEl.textContent = locStrings.error;
+                    msgEl.className = 'coupon-msg error';
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            }, function (err) {
+                if (err.code === err.PERMISSION_DENIED) {
+                    msgEl.textContent = locStrings.denied;
+                } else if (err.code === err.TIMEOUT) {
+                    msgEl.textContent = locStrings.timeout;
+                } else {
+                    msgEl.textContent = locStrings.error;
+                }
+                msgEl.className = 'coupon-msg error';
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
+        });
+    }
+
+    document.getElementById('cardNumber').addEventListener('input', function (e) {
+        var digits = e.target.value.replace(/\D/g, '').slice(0, 16);
+        e.target.value = digits.replace(/(.{4})/g, '$1 ').trim();
+    });
+    document.getElementById('expiryDate').addEventListener('input', function (e) {
+        var digits = e.target.value.replace(/\D/g, '').slice(0, 4);
+        e.target.value = digits.length > 2 ? digits.slice(0, 2) + '/' + digits.slice(2) : digits;
+    });
+    document.getElementById('cvv').addEventListener('input', function (e) {
+        e.target.value = e.target.value.replace(/\D/g, '').slice(0, 3);
+    });
+
+    document.getElementById('applyCouponBtn').addEventListener('click', async function () {
+        var code = document.getElementById('couponCode').value.trim();
+        var msgEl = document.getElementById('couponMsg');
+        if (!code) {
+            msgEl.textContent = @js("Booking_Coupon_Empty");
+            msgEl.className = 'coupon-msg error';
+            return;
+        }
+        msgEl.textContent = '...';
+        msgEl.className = 'coupon-msg';
+        try {
+            var res = await fetch('/Shop/ValidateCoupon?code=' + encodeURIComponent(code));
+            var data = await res.json();
+            if (data.valid) {
+                msgEl.textContent = @(js("Booking_Coupon_Applied")).replace('{0}', toLocalDigits(data.discountPercent));
+                msgEl.className = 'coupon-msg success';
+            } else {
+                msgEl.textContent = data.message || @js("Booking_Coupon_Invalid");
+                msgEl.className = 'coupon-msg error';
+            }
+        } catch (err) {
+            msgEl.textContent = @js("Booking_Coupon_Error");
+            msgEl.className = 'coupon-msg error';
+        }
+    });
+
+    function resetOtpStateIfChanged() {
+        var otpInput = document.getElementById('otpCode');
+        var confirmBtn = document.getElementById('confirmBtn');
+        var msgEl = document.getElementById('otpMsg');
+        if (!otpInput.disabled) {
+            otpInput.disabled = true;
+            otpInput.value = '';
+            confirmBtn.disabled = true;
+            msgEl.textContent = @js("Booking_ResendOtpHint");
+            msgEl.className = 'coupon-msg error';
+        }
+        updateConfirmHint();
+    }
+
+    function updateConfirmHint() {
+        var hintEl = document.getElementById('confirmHint');
+        hintEl.style.display = document.getElementById('confirmBtn').disabled ? 'block' : 'none';
+    }
+
+    function otpCooldown(btn, seconds) {
+        var originalText = btn.textContent;
+        btn.disabled = true;
+        var timer = setInterval(function () {
+            seconds--;
+            btn.textContent = originalText + ' (' + toLocalDigits(seconds) + ')';
+            if (seconds <= 0) {
+                clearInterval(timer);
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }, 1000);
+    }
+
+    document.getElementById('sendOtpBtn').addEventListener('click', async function () {
+        var btn = this;
+        var msgEl = document.getElementById('otpMsg');
+        var phone = document.getElementById('phoneNumber').value.trim();
+        var address = document.getElementById('address').value.trim();
+        var governorate = document.getElementById('governorate').value;
+        var existingOrderId = document.getElementById('orderId').value;
+        var otpBtnOriginalText = btn.textContent;
+
+        if (phone.length !== 11 || !phone.startsWith('01')) {
+            msgEl.textContent = @js("Shop_InvalidPhone");
+            msgEl.className = 'coupon-msg error';
+            return;
+        }
+        if (!address) {
+            msgEl.textContent = @js("Shop_AddressRequired");
+            msgEl.className = 'coupon-msg error';
+            return;
+        }
+        if (!governorate) {
+            msgEl.textContent = @js("Shop_InvalidGovernorate");
+            msgEl.className = 'coupon-msg error';
+            return;
+        }
+
+        btn.disabled = true;
+        msgEl.textContent = '...';
+        msgEl.className = 'coupon-msg';
+
+        var body = new URLSearchParams();
+        body.append('phoneNumber', phone);
+        body.append('address', address);
+        body.append('governorate', governorate);
+        if (existingOrderId) body.append('existingOrderId', existingOrderId);
+        body.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
+
+        try {
+            var res = await fetch('/Shop/RequestOtp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: body.toString()
+            });
+            var data = await res.json();
+
+            if (data.orderId) document.getElementById('orderId').value = data.orderId;
+
+            if (data.success) {
+                document.getElementById('otpCode').disabled = false;
+                document.getElementById('confirmBtn').disabled = false;
+                msgEl.textContent = data.message;
+                msgEl.className = 'coupon-msg success';
+                otpCooldown(btn, 60);
+            } else {
+                msgEl.textContent = data.message || @js("Booking_Otp_Error");
+                msgEl.className = 'coupon-msg error';
+                btn.disabled = false;
+                btn.textContent = otpBtnOriginalText;
+            }
+        } catch (err) {
+            msgEl.textContent = @js("Booking_Otp_Error");
+            msgEl.className = 'coupon-msg error';
+            btn.disabled = false;
+            btn.textContent = otpBtnOriginalText;
+        }
+        updateConfirmHint();
+    });
+
+    document.getElementById('checkoutForm').addEventListener('submit', function (e) {
+        if (!document.getElementById('orderId').value || document.getElementById('confirmBtn').disabled) {
+            e.preventDefault();
+            var msgEl = document.getElementById('otpMsg');
+            msgEl.textContent = @js("Booking_Otp_Required");
+            msgEl.className = 'coupon-msg error';
+            msgEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
+
+    updateConfirmHint();
+</script>

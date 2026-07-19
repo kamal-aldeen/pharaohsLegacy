@@ -43,6 +43,12 @@ namespace pharaohsLegacy
             // 🆕 بيحول الحجوزات Cancelled لـ Refunded تلقائيًا بعد 24 ساعة (راجع BookingStatusService)
             builder.Services.AddHostedService<pharaohsLegacy.Services.BookingRefundBackgroundService>();
 
+            // 🆕 نفس الفكرة بالظبط بس لأوردرات الشوب (راجع ShopOrderStatusService)
+            builder.Services.AddHostedService<pharaohsLegacy.Services.ShopOrderRefundBackgroundService>();
+
+            // 🆕 التحديث التلقائي لتراك الشحن (Processing → Shipped → Delivered) حسب المحافظة
+            builder.Services.AddHostedService<pharaohsLegacy.Services.ShopOrderShippingBackgroundService>();
+
             var app = builder.Build();
 
             if (!app.Environment.IsDevelopment())

@@ -30,6 +30,8 @@ namespace pharaohsLegacy.Models
         public DbSet<Category> Categories { get; set; }
         public DbSet<ShopOrder> ShopOrders { get; set; }
         public DbSet<ShopPayment> ShopPayments { get; set; }
+        public DbSet<CartItem> CartItems { get; set; } // 🆕 سلة المشتريات
+        public DbSet<ShopOrderItem> ShopOrderItems { get; set; } // 🆕 عناصر الأوردر (منتج واحد أو أكتر)
 
 
 

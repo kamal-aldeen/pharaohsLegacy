@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using pharaohsLegacy.Models;
 
@@ -11,9 +12,11 @@ using pharaohsLegacy.Models;
 namespace pharaohsLegacy.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260717203632_AddShopCart")]
+    partial class AddShopCart
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -738,39 +741,17 @@ namespace pharaohsLegacy.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Address")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime?>("CancelledAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("ConfirmedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime?>("DeliveredAt")
-                        .HasColumnType("datetime2");
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
 
-                    b.Property<string>("Governorate")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PhoneNumber")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("ShippedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<decimal>("ShippingFee")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("ShippingStatus")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -786,33 +767,6 @@ namespace pharaohsLegacy.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ShopOrders");
-                });
-
-            modelBuilder.Entity("pharaohsLegacy.Models.ShopOrderItem", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ShopOrderId")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("UnitPrice")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ShopOrderId");
-
-                    b.ToTable("ShopOrderItems");
                 });
 
             modelBuilder.Entity("pharaohsLegacy.Models.ShopPayment", b =>
@@ -1017,17 +971,6 @@ namespace pharaohsLegacy.Migrations
                     b.Navigation("Category");
                 });
 
-            modelBuilder.Entity("pharaohsLegacy.Models.ShopOrderItem", b =>
-                {
-                    b.HasOne("pharaohsLegacy.Models.ShopOrder", "ShopOrder")
-                        .WithMany("Items")
-                        .HasForeignKey("ShopOrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ShopOrder");
-                });
-
             modelBuilder.Entity("pharaohsLegacy.Models.ShopPayment", b =>
                 {
                     b.HasOne("pharaohsLegacy.Models.ShopOrder", "ShopOrder")
@@ -1037,11 +980,6 @@ namespace pharaohsLegacy.Migrations
                         .IsRequired();
 
                     b.Navigation("ShopOrder");
-                });
-
-            modelBuilder.Entity("pharaohsLegacy.Models.ShopOrder", b =>
-                {
-                    b.Navigation("Items");
                 });
 #pragma warning restore 612, 618
         }

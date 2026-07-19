@@ -434,6 +434,16 @@ body {
 .adm-badge.Cancelled { background: rgba(224,82,82,0.1);  color: var(--red);   border: 1px solid rgba(224,82,82,0.2); }
 .adm-badge.Refunded  { background: rgba(91,141,217,0.1); color: var(--blue);  border: 1px solid rgba(91,141,217,0.2); }
 
+/* 🆕 pill صغير لتراك الشحن — Overview > Recent Shop Orders */
+.adm-shipping-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+}
+.adm-shipping-processing { background: rgba(201,168,76,0.12); color: #c9a227; border: 1px solid rgba(201,168,76,0.25); }
+.adm-shipping-shipped    { background: rgba(91,141,217,0.1);  color: var(--blue); border: 1px solid rgba(91,141,217,0.2); }
+.adm-shipping-delivered  { background: rgba(76,175,128,0.12); color: var(--green); border: 1px solid rgba(76,175,128,0.25); }
+
 
 .adm-overlay {
     position: fixed; inset: 0;
@@ -757,6 +767,11 @@ body {
                 <span class="nav-icon">📅</span> Bookings
                 <span class="nav-count">@Model.TotalBookings</span>
             </button>
+            <button class="adm-nav-item @(activeTab == "shop-orders" ? "active" : "")"
+                    onclick="switchPanel('shop-orders',this)">
+                <span class="nav-icon">📦</span> Shop Orders
+                <span class="nav-count">@Model.TotalShopOrders</span>
+            </button>
             <button class="adm-nav-item @(activeTab == "reviews" ? "active" : "")"
                     onclick="switchPanel('reviews',this)">
                 <span class="nav-icon">⭐</span> Reviews
@@ -856,6 +871,13 @@ body {
             <div class="adm-stat-label">Bookings</div>
         </div>
     </div>
+    <div class="adm-stat c-orange">
+        <div class="adm-stat-icon">📦</div>
+        <div>
+            <div class="adm-stat-val counter" data-target="@Model.TotalShopOrders">0</div>
+            <div class="adm-stat-label">Shop Orders</div>
+        </div>
+    </div>
     <div class="adm-stat c-red">
         <div class="adm-stat-icon">𓂋</div>
         <div>
@@ -911,6 +933,42 @@ body {
                             <td>@b.NumberOfTickets 🎫</td>
                             <td style="color:#c9a227; font-weight:600;">@b.TotalPrice.ToString("N0") EGP</td>
                             <td><span class="adm-badge @b.Status">@b.Status</span></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Recent Shop Orders preview -->
+            <div class="adm-sec-head" style="margin-top:28px;">
+                <div class="adm-sec-title">Recent Shop Orders</div>
+                <button class="adm-btn adm-btn-add" onclick="switchPanel('shop-orders',null)" style="font-size:12px; padding:7px 16px;">View All</button>
+            </div>
+            <div class="adm-table-wrap">
+                <table class="adm-table">
+                    <thead><tr>
+                        <th>Order #</th><th>Customer</th><th>Items</th>
+                        <th>Total</th><th>Payment</th><th>Shipping</th>
+                    </tr></thead>
+                    <tbody>
+                    @foreach (var o in Model.ShopOrders.Take(8))
+                    {
+                        <tr>
+                            <td>#@o.Id</td>
+                            <td>@o.UserEmail</td>
+                            <td><div class="adm-sub-cell">@string.Join(", ", o.Items.Select(i => $"{i.ProductName} x{i.Quantity}"))</div></td>
+                            <td style="color:#c9a227; font-weight:600;">@o.TotalPrice.ToString("N0") EGP</td>
+                            <td><span class="adm-badge @o.Status">@o.Status</span></td>
+                            <td>
+                                @if (o.Status == "Confirmed")
+                                {
+                                    <span class="adm-shipping-pill adm-shipping-@o.ShippingStatus.ToLower()">@o.ShippingStatus</span>
+                                }
+                                else
+                                {
+                                    <span class="adm-sub-cell">—</span>
+                                }
+                            </td>
                         </tr>
                     }
                     </tbody>
@@ -1354,6 +1412,88 @@ JavaScript تفتح Modal التعديل.       *@
                         </span>
                     }
                 </div>
+            </div>
+
+            @* 🆕 Shop Orders اتنقلت لبانل مستقل (panel-shop-orders) — شوف تحت بعد إغلاق البانل ده *@
+        </div>
+
+        <div id="panel-shop-orders" class="adm-panel @(activeTab=="shop-orders"?"active":"")">
+            <div class="adm-sec-head">
+                <div class="adm-sec-title">Shop Orders</div>
+                <div class="adm-search-wrap">
+                    <span class="adm-search-icon">🔍</span>
+                    <input class="adm-search" placeholder="Search orders..."
+                           oninput="searchTable('shopOrdersTable', this.value)" />
+                </div>
+            </div>
+            <div class="adm-table-wrap">
+                <table class="adm-table" id="shopOrdersTable">
+                    <thead><tr>
+                        <th>Order #</th><th>Customer</th><th>Items</th><th>Total</th>
+                        <th>Payment</th><th>Shipping</th><th>Est. arrival</th><th style="width:220px;">Actions</th>
+                    </tr></thead>
+                    <tbody>
+                    @foreach (var o in Model.ShopOrders)
+                    {
+                        // 🆕 نفس منطق الـ ETA بتاع MyOrders.cshtml — بيتحسب من جديد في كل تحميل صفحة
+                        var deliveryDays = pharaohsLegacy.Models.Governorates.GetDeliveryDays(o.Governorate);
+                        DateTime? etaDate = o.ShippingStatus == "Shipped" && o.ShippedAt != null
+                            ? o.ShippedAt.Value.Date.AddDays(deliveryDays)
+                            : (DateTime?)null;
+
+                        <tr>
+                            <td>#@o.Id</td>
+                            <td><div class="adm-sub-cell">@o.UserEmail</div></td>
+                            <td>
+                                <div class="adm-sub-cell">
+                                    @string.Join(", ", o.Items.Select(i => $"{i.ProductName} x{i.Quantity}"))
+                                </div>
+                            </td>
+                            <td style="color:#c9a227; font-weight:600;">@o.TotalPrice.ToString("N0") EGP</td>
+                            <td><span class="adm-badge @o.Status">@o.Status</span></td>
+                            <td>
+                                @if (o.Status == "Confirmed")
+                                {
+                                    <select class="adm-input" style="padding:4px 8px; font-size:12px;"
+                                            onchange="submitShopShipping(@o.Id, this.value)">
+                                        <option value="Processing" selected="@(o.ShippingStatus == "Processing")">Processing</option>
+                                        <option value="Shipped" selected="@(o.ShippingStatus == "Shipped")">Shipped</option>
+                                        <option value="Delivered" selected="@(o.ShippingStatus == "Delivered")">Delivered</option>
+                                    </select>
+                                }
+                                else
+                                {
+                                    <span class="adm-sub-cell">—</span>
+                                }
+                            </td>
+                            <td>
+                                @if (o.Status != "Confirmed")
+                                {
+                                    <span class="adm-sub-cell">—</span>
+                                }
+                                else if (o.ShippingStatus == "Processing")
+                                {
+                                    <span class="adm-sub-cell">Ships within 48h</span>
+                                }
+                                else if (o.ShippingStatus == "Shipped" && etaDate.HasValue)
+                                {
+                                    <span class="adm-sub-cell">@etaDate.Value.ToString("dd MMM")</span>
+                                }
+                                else if (o.ShippingStatus == "Delivered")
+                                {
+                                    <span class="adm-sub-cell">@(o.DeliveredAt?.ToString("dd MMM") ?? "Delivered")</span>
+                                }
+                            </td>
+                            <td>
+                                <button class="adm-btn adm-btn-edit"
+                                        onclick="openShopOrderStatus(@o.Id,'Order #@o.Id — @o.UserEmail','@o.Status')">
+                                    ✏ Status
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
             </div>
         </div>
         <div id="panel-users" class="adm-panel @(activeTab=="users"?"active":"")">
@@ -2143,6 +2283,88 @@ JavaScript تفتح Modal التعديل.       *@
       <!-- Footer -->
       <div style="padding:16px 28px 24px; display:flex; gap:10px; justify-content:flex-end; border-top:1px solid rgba(212,175,55,0.1);">
         <button type="button" onclick="closeModal('modalBookingStatus')"
+                style="padding:10px 22px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:#aaa; cursor:pointer; font-size:13px; transition:.2s;"
+                onmouseover="this.style.background='rgba(255,255,255,0.1)'"
+                onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+          Discard
+        </button>
+        <button type="submit"
+                style="padding:10px 24px; border-radius:8px; border:none; background:linear-gradient(135deg,#c9a227,#b8860b); color:#000; font-weight:700; font-size:13px; cursor:pointer; font-family:'Cinzel',serif; letter-spacing:.5px; transition:.2s;"
+                onmouseover="this.style.opacity='.85'"
+                onmouseout="this.style.opacity='1'">
+          Update Status
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+@* 🆕 فورم مخفي بيتنادى من الـ <select> بتاع الشحن في جدول Shop Orders — submitShopShipping بتملاه وتبعته *@
+<form method="post" action="/Admin/UpdateShopOrderShipping" id="shopShippingForm" style="display:none;">
+  @Html.AntiForgeryToken()
+  <input type="hidden" name="id" id="shopShippingId" />
+  <input type="hidden" name="shippingStatus" id="shopShippingValue" />
+</form>
+
+<div class="adm-overlay" id="modalShopOrderStatus">
+  <div class="adm-modal" style="max-width:440px; padding:0; overflow:hidden;">
+
+    <div style="background:linear-gradient(135deg,#1a1200,#2d1f00); padding:24px 28px 20px; border-bottom:1px solid rgba(212,175,55,0.2); position:relative;">
+      <div style="font-family:'Cinzel',serif; font-size:17px; color:#c9a227; letter-spacing:1px;">
+        ✏ Change Order Status
+      </div>
+      <div style="font-size:12px; color:var(--text-dim); margin-top:4px;">
+        Update the status for: <span id="shopOrderStatusName" style="color:var(--gold-light); font-weight:600;"></span>
+      </div>
+      <div class="adm-modal-close" onclick="closeModal('modalShopOrderStatus')"
+           style="position:absolute; top:18px; right:18px; width:30px; height:30px; border-radius:50%; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; cursor:pointer; color:#aaa; font-size:14px; transition:.2s;"
+           onmouseover="this.style.background='rgba(212,175,55,0.15)'; this.style.color='#c9a227'"
+           onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.color='#aaa'">✕</div>
+    </div>
+
+    <form method="post" action="/Admin/ChangeShopOrderStatus">
+      @Html.AntiForgeryToken()
+      <input type="hidden" name="id" id="shopOrderStatusId" />
+
+      <div style="padding:24px 28px;">
+        <label style="font-size:12px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; display:block; margin-bottom:12px;">Select New Status</label>
+
+        <div style="display:flex; flex-direction:column; gap:10px;" id="shopStatusOptions">
+
+          <label id="shop-opt-Confirmed" onclick="selectShopOrderStatus('Confirmed')"
+                 style="display:flex; align-items:center; gap:14px; padding:14px 16px; border-radius:10px; border:1.5px solid rgba(212,175,55,0.15); background:rgba(212,175,55,0.04); cursor:pointer; transition:.2s;">
+            <div style="width:36px; height:36px; border-radius:50%; background:rgba(39,174,96,0.15); display:flex; align-items:center; justify-content:center; font-size:16px;">✅</div>
+            <div>
+              <div style="color:#2ecc71; font-weight:600; font-size:14px;">Confirmed</div>
+              <div style="color:var(--text-dim); font-size:11px; margin-top:2px;">Order is active and confirmed</div>
+            </div>
+          </label>
+
+          <label id="shop-opt-Cancelled" onclick="selectShopOrderStatus('Cancelled')"
+                 style="display:flex; align-items:center; gap:14px; padding:14px 16px; border-radius:10px; border:1.5px solid rgba(212,175,55,0.15); background:rgba(212,175,55,0.04); cursor:pointer; transition:.2s;">
+            <div style="width:36px; height:36px; border-radius:50%; background:rgba(231,76,60,0.15); display:flex; align-items:center; justify-content:center; font-size:16px;">✖</div>
+            <div>
+              <div style="color:#e74c3c; font-weight:600; font-size:14px;">Cancelled</div>
+              <div style="color:var(--text-dim); font-size:11px; margin-top:2px;">Order cancelled — refund pending within 24h</div>
+            </div>
+          </label>
+
+          <label id="shop-opt-Refunded" onclick="selectShopOrderStatus('Refunded')"
+                 style="display:flex; align-items:center; gap:14px; padding:14px 16px; border-radius:10px; border:1.5px solid rgba(212,175,55,0.15); background:rgba(212,175,55,0.04); cursor:pointer; transition:.2s;">
+            <div style="width:36px; height:36px; border-radius:50%; background:rgba(52,152,219,0.15); display:flex; align-items:center; justify-content:center; font-size:16px;">💙</div>
+            <div>
+              <div style="color:#3498db; font-weight:600; font-size:14px;">Refunded</div>
+              <div style="color:var(--text-dim); font-size:11px; margin-top:2px;">Payment refunded immediately to bank</div>
+            </div>
+          </label>
+
+        </div>
+
+        <input type="hidden" name="status" id="shopOrderStatusSelect" />
+      </div>
+
+      <div style="padding:16px 28px 24px; display:flex; gap:10px; justify-content:flex-end; border-top:1px solid rgba(212,175,55,0.1);">
+        <button type="button" onclick="closeModal('modalShopOrderStatus')"
                 style="padding:10px 22px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:#aaa; cursor:pointer; font-size:13px; transition:.2s;"
                 onmouseover="this.style.background='rgba(255,255,255,0.1)'"
                 onmouseout="this.style.background='rgba(255,255,255,0.05)'">
@@ -3541,6 +3763,33 @@ function openBookingStatus(id, name, currentStatus) {
     openModal('modalBookingStatus');
 }
 
+// 🆕 Shop Order Status (نفس فكرة selectStatus/openBookingStatus بالظبط بس للشوب)
+function selectShopOrderStatus(val) {
+    document.getElementById('shopOrderStatusSelect').value = val;
+    ['Confirmed','Cancelled','Refunded'].forEach(s => {
+        const el = document.getElementById('shop-opt-' + s);
+        el.style.border = '1.5px solid rgba(212,175,55,0.15)';
+        el.style.background = 'rgba(212,175,55,0.04)';
+    });
+    const selected = document.getElementById('shop-opt-' + val);
+    selected.style.border = '1.5px solid rgba(212,175,55,0.5)';
+    selected.style.background = 'rgba(212,175,55,0.1)';
+}
+
+function openShopOrderStatus(id, name, currentStatus) {
+    document.getElementById('shopOrderStatusId').value = id;
+    document.getElementById('shopOrderStatusName').textContent = name;
+    selectShopOrderStatus(currentStatus);
+    openModal('modalShopOrderStatus');
+}
+
+// 🆕 بيتنادى من الـ <select> بتاع تراك الشحن في جدول Shop Orders — بيبعت الفورم المخفي فورًا
+function submitShopShipping(id, shippingStatus) {
+    document.getElementById('shopShippingId').value = id;
+    document.getElementById('shopShippingValue').value = shippingStatus;
+    document.getElementById('shopShippingForm').submit();
+}
+
 //  Panel Switching 
 const panelTitles = {
     overview: '𓋹 Dashboard Overview',
@@ -3549,6 +3798,7 @@ const panelTitles = {
     museums:  '🏛️ Manage Museums',
     gods:     '𓂀 Manage Gods',
     shop:     '🛍️ Manage Shop',
+    'shop-orders': '📦 Shop Orders',
     facts:    '📜 Daily Facts',
     users:    '👥 Users',
     bookings: '📅 Bookings'
@@ -3560,7 +3810,7 @@ function switchPanel(name, btn) {
     if (btn) btn.classList.add('active');
     else {
         document.querySelectorAll('.adm-nav-item').forEach(b => {
-            if (b.textContent.toLowerCase().includes(name)) b.classList.add('active');
+            if (b.textContent.toLowerCase().includes(name.replace('-', ' '))) b.classList.add('active');
         });
     }
     document.getElementById('topbarTitle').textContent = panelTitles[name] || name;

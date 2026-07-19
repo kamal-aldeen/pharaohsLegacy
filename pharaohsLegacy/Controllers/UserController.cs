@@ -187,6 +187,15 @@ namespace pharaohsLegacy.Controllers
                 });
             }
 
+            // ===== SHOP ORDERS COUNT =====
+            // 🆕 عدد طلبات الشوب — بيتعرض كـ badge جنب تاب "My Orders" في الداشبورد.
+            // مبعتهاش جوه DashboardViewModel عشان الكلاس ده مش متاح عندي دلوقتي —
+            // ماشي بنفس أسلوب ViewBag.JourneyCount اللي تحت، فمفيش داعي نلمس الـ ViewModel خالص.
+            // لو اسم الـ DbSet في AppDbContext مختلف عن "ShopOrders" غيّره هنا بس.
+            ViewBag.TotalOrders = await context.ShopOrders
+                .Where(o => o.UserEmail == email && o.Status != "PendingPayment")
+                .CountAsync();
+
             // ===== FAVORITES =====
             var favorites = await context.Favorites
                 .Where(f => f.UserEmail == email)
