@@ -39,6 +39,7 @@ namespace pharaohsLegacy.ViewModels
         public decimal TotalPrice { get; set; }
         public string Status { get; set; } = "";
         public DateTime CreatedAt { get; set; }
+        public Guid? TicketToken { get; set; } // 🆕 لزرار "عرض التذكرة" في الداشبورد
     }
 
     public class FavoriteCardViewModel

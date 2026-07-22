@@ -1842,6 +1842,12 @@
                                         var canCancel = (DateTime.Now - b.CreatedAt).TotalHours < 48
                                                          && b.VisitDate.Date >= DateTime.Today;
                                     }
+                                    @if (b.TicketToken != null)
+                                    {
+                                        <a class="btn-gold" href="@Url.Action("Ticket", "Booking", new { id = b.Id, token = b.TicketToken })" target="_blank">
+                                            🎫 @Html.L("Dash_ViewTicket")
+                                        </a>
+                                    }
                                     @if (canCancel)
                                     {
                                         <form class="cancel-form" action="/Booking/Cancel" method="post">

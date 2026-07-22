@@ -588,7 +588,10 @@
   "Quiz_HowItWorks_StreakDesc": "مستقلة تمامًا عن الكوبون — حافظ عليها بنتيجة 50% فأكتر كل يوم واكسب بونص إضافي:",
   "Quiz_HowItWorks_StreakBreak": "لو فوّت يوم أو نزلت نتيجتك تحت 50%، الشعلة بترجع من الأول.",
   "Quiz_HowItWorks_MaxNote": "أقصى خصم إجمالي ممكن تجمعه (كوبون + شعلة) هو 35%.",
-  "Quiz_HowItWorks_AntiCheat": "إجابات سريعة بشكل غير طبيعي ممكن تتحسب غش ويتلغى الكوبون."
+  "Quiz_HowItWorks_AntiCheat": "إجابات سريعة بشكل غير طبيعي ممكن تتحسب غش ويتلغى الكوبون.",
+  "Booking_ViewTicketBtn": "عرض التذكرة",
+  "Dash_ViewTicket": "عرض التذكرة"
+
 
 
 

@@ -1,0 +1,197 @@
+@model pharaohsLegacy.Models.Booking
+@{
+    ViewData["Title"] = "E-Ticket";
+    var lang = Context.Session.GetString("Lang") ?? "en";
+    var statusClass = Model.Status switch
+    {
+        "Confirmed" => "status-confirmed",
+        "Cancelled" => "status-cancelled",
+        "Refunded" => "status-refunded",
+        "Visited" => "status-visited",
+        _ => "status-confirmed"
+    };
+    var typeIcon = Model.PlaceType == "Temple" ? "🛕" : "🏛️";
+}
+
+<style>
+    .ticket-wrap {
+        max-width: 480px;
+        margin: 60px auto;
+        padding: 0 16px;
+    }
+
+    .ticket-card {
+        background: var(--dark2);
+        border: 1px solid rgba(var(--gold-rgb), .25);
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 20px 50px rgba(0,0,0,.6), 0 0 30px rgba(var(--gold-rgb), .12);
+    }
+
+    .ticket-header {
+        background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+        color: #150f05;
+        padding: 22px 24px;
+        text-align: center;
+    }
+
+        .ticket-header .brand {
+            font-size: .8rem;
+            letter-spacing: 2px;
+            opacity: .8;
+            margin-bottom: 4px;
+        }
+
+        .ticket-header .place-name {
+            font-size: 1.4rem;
+            font-weight: 800;
+        }
+
+    .ticket-body {
+        padding: 24px;
+    }
+
+    .ticket-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px dashed rgba(var(--gold-rgb), .18);
+    }
+
+        .ticket-row:last-of-type {
+            border-bottom: none;
+        }
+
+        .ticket-row .label {
+            color: var(--muted);
+            font-size: .9rem;
+        }
+
+        .ticket-row .value {
+            color: var(--text);
+            font-weight: 700;
+        }
+
+    .status-pill {
+        display: inline-block;
+        padding: 4px 14px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: .85rem;
+    }
+
+    .status-confirmed {
+        background: rgba(39,174,96,.18);
+        color: #2ecc71;
+        border: 1px solid rgba(39,174,96,.4);
+    }
+
+    .status-cancelled {
+        background: rgba(192,57,43,.18);
+        color: #e74c3c;
+        border: 1px solid rgba(192,57,43,.4);
+    }
+
+    .status-refunded {
+        background: rgba(52,152,219,.18);
+        color: #3498db;
+        border: 1px solid rgba(52,152,219,.4);
+    }
+
+    .status-visited {
+        background: rgba(var(--gold-rgb),.18);
+        color: var(--gold-light);
+        border: 1px solid rgba(var(--gold-rgb),.4);
+    }
+
+    .qr-wrap {
+        text-align: center;
+        padding: 24px 0 8px;
+    }
+
+        .qr-wrap img {
+            width: 190px;
+            height: 190px;
+            border-radius: 10px;
+            background: #fff;
+            padding: 10px;
+        }
+
+        .qr-wrap p {
+            color: var(--muted);
+            font-size: .78rem;
+            margin-top: 10px;
+        }
+
+    .ticket-footer {
+        text-align: center;
+        padding: 16px 24px 24px;
+        color: var(--muted);
+        font-size: .75rem;
+    }
+
+    .invalid-note {
+        text-align: center;
+        color: #e74c3c;
+        font-weight: 700;
+        padding: 14px;
+        margin-top: 10px;
+        border-radius: 10px;
+        background: rgba(192,57,43,.1);
+        border: 1px solid rgba(192,57,43,.3);
+    }
+</style>
+
+<div class="ticket-wrap">
+    <div class="ticket-card">
+        <div class="ticket-header">
+            <div class="brand">𓋹 PHARAOHS LEGACY — E-TICKET</div>
+            <div class="place-name">@typeIcon @Model.PlaceName</div>
+        </div>
+
+        <div class="ticket-body">
+            <div class="ticket-row">
+                <span class="label">@(lang == "ar" ? "الاسم" : "Name")</span>
+                <span class="value">@ViewBag.UserName</span>
+            </div>
+            <div class="ticket-row">
+                <span class="label">@(lang == "ar" ? "الإيميل" : "Email")</span>
+                <span class="value">@Model.UserEmail</span>
+            </div>
+            <div class="ticket-row">
+                <span class="label">@(lang == "ar" ? "تاريخ الزيارة" : "Visit Date")</span>
+                <span class="value">@Model.VisitDate.ToString("dd MMM yyyy")</span>
+            </div>
+            <div class="ticket-row">
+                <span class="label">@(lang == "ar" ? "عدد التذاكر" : "Tickets")</span>
+                <span class="value">@Model.NumberOfTickets</span>
+            </div>
+            <div class="ticket-row">
+                <span class="label">@(lang == "ar" ? "الإجمالي" : "Total")</span>
+                <span class="value">@Model.TotalPrice.ToString("N2") EGP</span>
+            </div>
+            <div class="ticket-row">
+                <span class="label">@(lang == "ar" ? "الحالة" : "Status")</span>
+                <span class="status-pill @statusClass">@Model.Status</span>
+            </div>
+
+            @if (Model.Status != "Confirmed" && Model.Status != "Visited")
+            {
+                <div class="invalid-note">
+                    @(lang == "ar"
+                        ? "⚠️ التذكرة دي مش صالحة للدخول — الحجز مش في حالة Confirmed."
+                        : "⚠️ This ticket is not valid for entry — the booking is not Confirmed.")
+                </div>
+            }
+
+            <div class="qr-wrap">
+                <img src="@Url.Action("TicketQr", "Booking", new { id = Model.Id, token = Model.TicketToken })" alt="QR" />
+                <p>@(lang == "ar" ? "اعرض الكود ده عند الدخول" : "Show this code at entry")</p>
+            </div>
+        </div>
+
+        <div class="ticket-footer">
+            #@Model.Id · @(lang == "ar" ? "صادرة من Pharaohs Legacy" : "Issued by Pharaohs Legacy")
+        </div>
+    </div>
+</div>

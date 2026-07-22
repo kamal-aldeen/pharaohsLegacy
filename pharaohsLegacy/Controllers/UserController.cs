@@ -184,7 +184,8 @@ namespace pharaohsLegacy.Controllers
                     NumberOfTickets = b.NumberOfTickets,
                     TotalPrice = b.TotalPrice,
                     Status = b.Status,
-                    CreatedAt = b.CreatedAt
+                    CreatedAt = b.CreatedAt,
+                    TicketToken = b.TicketToken // 🆕 عشان زرار "عرض التذكرة" في الداشبورد
                 });
             }
 

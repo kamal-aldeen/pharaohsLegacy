@@ -3,6 +3,7 @@ using pharaohsLegacy.Models;
 using pharaohsLegacy.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Net.Http.Json;
+using QRCoder;
 
 namespace pharaohsLegacy.Controllers
 {
@@ -390,6 +391,7 @@ namespace pharaohsLegacy.Controllers
             // 🎉 الدفع نجح فعليًا — نأكد الحجز ونسجل الدفعة
             booking.Status = "Confirmed";
             booking.TotalPrice = chargeResult.final_amount; // 🆕 يعكس السعر الفعلي المدفوع بعد الخصم (كان بيفضل السعر الأصلي قبل الكوبون في My Bookings)
+            booking.TicketToken = Guid.NewGuid(); // 🆕 التذكرة (E-Ticket + QR) بتتفتح بالتوكن ده بس
 
             var payment = new Payment
             {
@@ -402,11 +404,102 @@ namespace pharaohsLegacy.Controllers
             _db.Payments.Add(payment);
             await _db.SaveChangesAsync();
 
+            // 🆕 إيميل تأكيد الحجز — Best effort: لو الإرسال فشل (السيرفر واقع، مشكلة SMTP...)
+            // منلغيش الحجز ولا نوقف الـ Flow، الدفع خلص بنجاح فعلاً. بنبلع الاستثناء بس.
+            try
+            {
+                string placeName = booking.PlaceType;
+                if (booking.PlaceType == "Temple")
+                {
+                    var temple = await _db.Temples.FindAsync(booking.PlaceId);
+                    placeName = (lang == "ar" && !string.IsNullOrEmpty(temple?.NameAr)) ? temple.NameAr : (temple?.Name ?? booking.PlaceType);
+                }
+                else if (booking.PlaceType == "Museum")
+                {
+                    var museum = await _db.Museums.FindAsync(booking.PlaceId);
+                    placeName = (lang == "ar" && !string.IsNullOrEmpty(museum?.NameAr)) ? museum.NameAr : (museum?.Name ?? booking.PlaceType);
+                }
+
+                var ticketUrl = Url.Action("Ticket", "Booking", new { id = booking.Id, token = booking.TicketToken }, Request.Scheme);
+
+                await client.PostAsJsonAsync("notifications/booking-confirmation", new
+                {
+                    user_email = booking.UserEmail,
+                    booking_id = booking.Id,
+                    place_name = placeName,
+                    visit_date = booking.VisitDate.ToString("dd MMM yyyy"),
+                    number_of_tickets = booking.NumberOfTickets,
+                    total_price = booking.TotalPrice,
+                    ticket_url = ticketUrl
+                });
+            }
+            catch
+            {
+                // مفيش داعي نعمل حاجة هنا دلوقتي — الحجز والدفع نجحوا. لو ضفت Logging لاحقًا سجّله هنا.
+            }
+
             TempData["Message"] = chargeResult.discount_applied > 0
                 ? _loc.GetFormatted("Booking_SuccessWithCoupon", lang, chargeResult.discount_applied.ToString("N2"))
                 : _loc.Get("Booking_Success", lang);
 
             return RedirectToAction("MyBookings");
+        }
+
+        // 🆕 صفحة التذكرة (E-Ticket) — مفتوحة على أي حد (من غير Login) طالما معاه اللينك
+        // بالتوكن الصح. البيانات بتتجاب Live من الداتابيز وقت الفتح — لو الحجز اتلغى بعدين
+        // التذكرة هتعرض الحالة الصح فورًا، مش تفضل "Confirmed" وهمي.
+        [HttpGet]
+        public async Task<IActionResult> Ticket(int id, string token)
+        {
+            var lang = Lang();
+
+            var booking = await _db.Bookings.FirstOrDefaultAsync(b => b.Id == id);
+            if (booking == null || booking.TicketToken == null ||
+                !Guid.TryParse(token, out var parsedToken) || booking.TicketToken != parsedToken)
+            {
+                return NotFound();
+            }
+
+            if (booking.PlaceType == "Temple")
+            {
+                var temple = await _db.Temples.FindAsync(booking.PlaceId);
+                booking.PlaceName = (lang == "ar" && !string.IsNullOrEmpty(temple?.NameAr))
+                    ? temple.NameAr
+                    : (temple?.Name ?? "معبد غير معروف");
+            }
+            else if (booking.PlaceType == "Museum")
+            {
+                var museum = await _db.Museums.FindAsync(booking.PlaceId);
+                booking.PlaceName = (lang == "ar" && !string.IsNullOrEmpty(museum?.NameAr))
+                    ? museum.NameAr
+                    : (museum?.Name ?? "متحف غير معروف");
+            }
+
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == booking.UserEmail);
+            ViewBag.UserName = user?.Name ?? booking.UserEmail;
+
+            return View(booking);
+        }
+
+        // 🆕 بيرجع صورة QR كـ PNG مباشرة — الكود بيشيل لينك صفحة الـ Ticket بس (مش بيانات الحجز خام)
+        [HttpGet]
+        public async Task<IActionResult> TicketQr(int id, string token)
+        {
+            var booking = await _db.Bookings.FirstOrDefaultAsync(b => b.Id == id);
+            if (booking == null || booking.TicketToken == null ||
+                !Guid.TryParse(token, out var parsedToken) || booking.TicketToken != parsedToken)
+            {
+                return NotFound();
+            }
+
+            var ticketUrl = Url.Action("Ticket", "Booking", new { id = booking.Id, token = booking.TicketToken }, Request.Scheme);
+
+            using var qrGenerator = new QRCodeGenerator();
+            using var qrCodeData = qrGenerator.CreateQrCode(ticketUrl, QRCodeGenerator.ECCLevel.Q);
+            var qrCode = new PngByteQRCode(qrCodeData);
+            byte[] qrBytes = qrCode.GetGraphic(20);
+
+            return File(qrBytes, "image/png");
         }
     }
 }

@@ -593,7 +593,10 @@
   "Quiz_HowItWorks_StreakDesc": "Fully separate from the coupon — keep it alive with 50%+ each day and earn an extra bonus:",
   "Quiz_HowItWorks_StreakBreak": "Miss a day, or score under 50%, and your streak resets to 1.",
   "Quiz_HowItWorks_MaxNote": "The maximum total discount (coupon + streak) is capped at 35%.",
-  "Quiz_HowItWorks_AntiCheat": "Unusually fast answers may be flagged as cheating and cancel the coupon."
+  "Quiz_HowItWorks_AntiCheat": "Unusually fast answers may be flagged as cheating and cancel the coupon.",
+  "Booking_ViewTicketBtn": "View Ticket",
+  "Dash_ViewTicket": "View Ticket"
+
 
 
 

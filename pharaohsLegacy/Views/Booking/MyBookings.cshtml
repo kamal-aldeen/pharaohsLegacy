@@ -481,6 +481,32 @@
                 color: var(--muted);
             }
 
+        .btn-ticket {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px;
+            margin-top: 10px;
+            background: transparent;
+            border: 1px solid rgba(var(--gold-rgb),.5);
+            color: var(--gold-light);
+            border-radius: 12px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all .3s;
+            letter-spacing: .5px;
+        }
+
+            .btn-ticket:hover {
+                background: rgba(var(--gold-rgb),.15);
+                border-color: var(--gold);
+                box-shadow: 0 0 20px rgba(var(--gold-rgb),.2);
+            }
+
  
         .empty-state {
             text-align: center;
@@ -1001,6 +1027,15 @@
                                     onclick="openCancelModal(@b.Id, '@b.PlaceName')">
                                 @(canCancel ? "🗑️ " + Html.L("Booking_CancelBtn") : "⛔ " + Html.L("Booking_CannotCancelBtn"))
                             </button>
+
+                            @if (b.TicketToken != null)
+                            {
+                                <a class="btn-ticket"
+                                   href="@Url.Action("Ticket", "Booking", new { id = b.Id, token = b.TicketToken })"
+                                   target="_blank">
+                                    🎫 @Html.L("Booking_ViewTicketBtn")
+                                </a>
+                            }
                         }
 
                         <button class="btn-track" onclick="toggleTracking(@b.Id, this)">

@@ -156,6 +156,11 @@ namespace pharaohsLegacy.Services
             booking.Status = "Confirmed";
             booking.CancelledAt = null; // بيلغي عملية الريفند المجدولة (الـ Background Job بيعتمد على الحقل ده)
 
+            // 🆕 لو الحجز اتلغى قبل ما يتولد له توكن (حالة نادرة)، أو من أي سبب لسه TicketToken فاضي،
+            // نولده هنا كمان. مش بس أول مرة (Confirm الأساسي في BookingController).
+            if (booking.TicketToken == null)
+                booking.TicketToken = Guid.NewGuid();
+
             var payment = await _db.Payments.FirstOrDefaultAsync(p => p.BookingId == booking.Id);
             if (payment != null) payment.Status = "Completed";
 

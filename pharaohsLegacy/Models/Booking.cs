@@ -20,6 +20,10 @@ namespace pharaohsLegacy.Models
         // الـ Background Job الـ 24 ساعة قبل ما يحوله أوتوماتيك لـ Refunded
         public DateTime? CancelledAt { get; set; }
 
+        // 🆕 بيتولد لما الحجز يبقى Confirmed لأول مرة — ده الـ "مفتاح" اللي بيفتح صفحة
+        // التذكرة (Booking/Ticket). من غيره محدش يقدر يفتح تذكرة حجز مش بتاعه، حتى لو عرف الـ Id.
+        public Guid? TicketToken { get; set; }
+
         [NotMapped]
         public string PlaceName { get; set; } = "";
     }
