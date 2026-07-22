@@ -536,7 +536,36 @@
   "Shop_Track_ArrivesTomorrow": "متوقع وصوله غدًا",
   "Shop_Track_ArrivesIn": "متوقع وصوله خلال",
   "Shop_Track_Days": "أيام",
-  "Shop_Track_DeliveredOn": "تم التوصيل بتاريخ"
+  "Shop_Track_DeliveredOn": "تم التوصيل بتاريخ",
+  "Nav_Quiz": "الكويز",
+
+  "Quiz_Title": "اختبر معلوماتك",
+  "Quiz_SelectDifficulty": "اختار مستوى الصعوبة",
+  "Quiz_Easy": "سهل",
+  "Quiz_Medium": "متوسط",
+  "Quiz_Hard": "صعب",
+  "Quiz_TryAgain": "حاول تاني",
+
+  "Quiz_LoginRequired": "لازم تسجل دخول الأول عشان تلعب الكويز.",
+  "Quiz_NotEnoughData": "لسه مفيش بيانات كافية لتوليد الكويز ده. جرب تاني بعدين.",
+  "Quiz_AttemptExpired": "محاولة الكويز انتهت. ابدأ من جديد.",
+
+  "Quiz_Correct": "✅ إجابة صح!",
+  "Quiz_Wrong": "❌ إجابة غلط",
+  "Quiz_TimeUp": "⏱️ خلص الوقت!",
+  "Quiz_Finished": "خلصت الكويز!",
+  "Quiz_CouponWon": "كسبت كوبون خصم!",
+  "Dash_Tab_Coupons": "كوبوناتي",
+  "Coupon_MyCoupons_Title": "كوبوناتي",
+  "Coupon_BackToQuiz": "ارجع للكويز",
+  "Coupon_NoCoupons": "لسه معندكش أي كوبونات. العب الكويز عشان تكسب واحد!",
+  "Coupon_ConnectionError": "مقدرناش نجيب الكوبونات بتاعتك دلوقتي. جرب تاني بعدين.",
+  "Coupon_Used": "مستخدم",
+  "Coupon_Active": "نشط",
+  "Coupon_Expired": "منتهي",
+  "Coupon_Off": "خصم",
+  "Coupon_ExpiresOn": "بينتهي في",
+  "Coupon_TapToCopy": "دوس عشان تنسخ"
 
 
 

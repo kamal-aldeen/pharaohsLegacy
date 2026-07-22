@@ -1578,6 +1578,15 @@
                     <span class="tab-badge">@Html.Digits((object)ViewBag.TotalOrders)</span>
                 }
             </a>
+            @* 🆕 My Coupons: نفس فكرة My Orders بالظبط — صفحة مستقلة (مش تاب داخلي) لأن
+               الداتا جايه من خدمة البنك برضه، مش من AppDbContext *@
+            <a class="db-tab" href="/Coupon/MyCoupons">
+                🎟️ @Html.L("Dash_Tab_Coupons")
+                @if ((int)(ViewBag.TotalCoupons ?? 0) > 0)
+                {
+                    <span class="tab-badge">@Html.Digits((object)ViewBag.TotalCoupons)</span>
+                }
+            </a>
             <button class="db-tab" onclick="switchTab('favorites', this)">
                 𓆣 @Html.L("Dash_Tab_Favorites")
                 @if (Model.TotalFavorites > 0)

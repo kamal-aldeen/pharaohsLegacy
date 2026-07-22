@@ -636,6 +636,7 @@ namespace pharaohsLegacy.Controllers
             // 🎉 الدفع نجح — نأكد الأوردر، نخصم المخزون لكل عنصر، نفضّي السلة، ونسجل الدفعة
             order.Status = "Confirmed";
             order.ConfirmedAt = DateTime.Now; // 🆕 أساس حساب الـ 48 ساعة قبل الشحن التلقائي (ShopOrderShippingBackgroundService)
+            order.TotalPrice = chargeResult.final_amount; // 🆕 يعكس السعر الفعلي المدفوع بعد الخصم (كان بيفضل السعر الأصلي قبل الكوبون في My Orders)
             foreach (var item in order.Items)
             {
                 products[item.ProductId].StockQuantity -= item.Quantity;

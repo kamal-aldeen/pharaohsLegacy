@@ -1,0 +1,234 @@
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Quiz";
+    var lang = Context.Session.GetString("Lang") ?? "en";
+
+    // 🆕 مش بنحط @Html.L() جوه JS string مباشرة — أي إيموجي (زي ✅/❌/⏱️) بيتحول
+    // لـ HTML entity (&#x2705;) بسبب الـ HtmlEncoder، وجوه <script> ده مش HTML text node
+    // فمبيتفكّش، فبيظهر حرفيًا. بنعمل الـ Serialize هنا بـ JsonSerializer (مش HtmlEncoder)
+    // وبنحقنه بـ Html.Raw عشان يوصل للمتصفح سليم 100%.
+    var quizStrings = JsonSerializer.Serialize(new
+    {
+        correct = Html.L("Quiz_Correct"),
+        wrong = Html.L("Quiz_Wrong"),
+        timeUp = Html.L("Quiz_TimeUp"),
+        finished = Html.L("Quiz_Finished")
+    });
+}
+
+<div class="quiz-wrap">
+    <form id="quizAntiForgery">@Html.AntiForgeryToken()</form>
+
+    <h1 class="quiz-title">𓂀 @Html.L("Quiz_Title")</h1>
+
+    <!-- ============ شاشة 1: اختيار الصعوبة ============ -->
+    <div id="quizDifficultyScreen" class="quiz-card">
+        <p class="quiz-subtitle">@Html.L("Quiz_SelectDifficulty")</p>
+        <div class="quiz-difficulty-options">
+            <button type="button" class="quiz-diff-btn" data-difficulty="Easy">🟢 @Html.L("Quiz_Easy")</button>
+            <button type="button" class="quiz-diff-btn" data-difficulty="Medium">🟡 @Html.L("Quiz_Medium")</button>
+            <button type="button" class="quiz-diff-btn" data-difficulty="Hard">🔴 @Html.L("Quiz_Hard")</button>
+        </div>
+        <p id="quizStartError" class="quiz-error" style="display:none"></p>
+    </div>
+
+    <!-- ============ شاشة 2: اللعب ============ -->
+    <div id="quizPlayScreen" class="quiz-card" style="display:none">
+        <div class="quiz-progress">
+            <span id="quizProgressText"></span>
+            <span id="quizTimer" class="quiz-timer"></span>
+        </div>
+        <h2 id="quizQuestionText" class="quiz-question"></h2>
+        <div id="quizChoices" class="quiz-choices"></div>
+        <p id="quizFeedback" class="quiz-feedback" style="display:none"></p>
+    </div>
+
+    <!-- ============ شاشة 3: النتيجة ============ -->
+    <div id="quizResultScreen" class="quiz-card" style="display:none">
+        <h2 id="quizResultTitle" class="quiz-question"></h2>
+        <p id="quizResultScore" class="quiz-subtitle"></p>
+        <div id="quizCouponBox" class="quiz-coupon-box" style="display:none">
+            <p>🎁 @Html.L("Quiz_CouponWon")</p>
+            <div id="quizCouponCode" class="quiz-coupon-code"></div>
+        </div>
+        <button type="button" id="quizRetryBtn" class="quiz-diff-btn">@Html.L("Quiz_TryAgain")</button>
+    </div>
+</div>
+
+<style>
+    .quiz-wrap { max-width: 640px; margin: 3rem auto; padding: 0 1rem; font-family: inherit; }
+    .quiz-title { text-align: center; color: #d4af37; font-size: 2rem; margin-bottom: 1.5rem; }
+    .quiz-card { background: #14110c; border: 1px solid #3a2f1f; border-radius: 14px; padding: 2rem; box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+    .quiz-subtitle { text-align: center; color: #cbb98a; margin-bottom: 1.5rem; font-size: 1.05rem; }
+    .quiz-difficulty-options { display: flex; flex-direction: column; gap: .9rem; }
+    .quiz-diff-btn {
+        background: #221c12; border: 1px solid #d4af37; color: #f2e6c9; padding: .9rem 1rem;
+        border-radius: 10px; font-size: 1rem; cursor: pointer; transition: all .2s;
+    }
+    .quiz-diff-btn:hover { background: #d4af37; color: #14110c; }
+    .quiz-error { color: #e77; text-align: center; margin-top: 1rem; }
+
+    .quiz-progress { display: flex; justify-content: space-between; color: #cbb98a; margin-bottom: 1rem; font-size: .9rem; }
+    .quiz-timer { font-weight: bold; color: #d4af37; }
+    .quiz-question { color: #f2e6c9; font-size: 1.25rem; margin-bottom: 1.25rem; }
+    .quiz-choices { display: flex; flex-direction: column; gap: .7rem; }
+    .quiz-choice-btn {
+        background: #221c12; border: 1px solid #4a3d26; color: #f2e6c9; padding: .8rem 1rem;
+        border-radius: 10px; text-align: start; cursor: pointer; font-size: .98rem; transition: all .15s;
+    }
+    .quiz-choice-btn:hover:not(:disabled) { border-color: #d4af37; }
+    .quiz-choice-btn.correct { background: #1e3d1e; border-color: #4caf50; }
+    .quiz-choice-btn.wrong { background: #3d1e1e; border-color: #e57373; }
+    .quiz-choice-btn:disabled { cursor: default; opacity: .85; }
+    .quiz-feedback { text-align: center; margin-top: 1rem; font-weight: bold; }
+
+    .quiz-coupon-box { text-align: center; margin: 1.5rem 0; padding: 1rem; border: 1px dashed #d4af37; border-radius: 10px; }
+    .quiz-coupon-code { font-size: 1.4rem; letter-spacing: 2px; color: #d4af37; font-weight: bold; margin-top: .5rem; }
+</style>
+
+<script>
+(function () {
+    const lang = "@lang";
+    const QuizStrings = @Html.Raw(quizStrings);
+    const antiForgeryToken = document.querySelector('#quizAntiForgery input[name="__RequestVerificationToken"]').value;
+
+    const screens = {
+        difficulty: document.getElementById('quizDifficultyScreen'),
+        play: document.getElementById('quizPlayScreen'),
+        result: document.getElementById('quizResultScreen'),
+    };
+
+    let currentAttemptId = null;
+    let timerInterval = null;
+
+    function showScreen(name) {
+        Object.values(screens).forEach(s => s.style.display = 'none');
+        screens[name].style.display = 'block';
+    }
+
+    async function postJson(url, body) {
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': antiForgeryToken },
+            body: JSON.stringify(body)
+        });
+        return res.json();
+    }
+
+    document.querySelectorAll('.quiz-diff-btn[data-difficulty]').forEach(btn => {
+        btn.addEventListener('click', () => startQuiz(btn.dataset.difficulty));
+    });
+
+    document.getElementById('quizRetryBtn').addEventListener('click', () => {
+        showScreen('difficulty');
+        document.getElementById('quizStartError').style.display = 'none';
+    });
+
+    async function startQuiz(difficulty) {
+        const errorBox = document.getElementById('quizStartError');
+        errorBox.style.display = 'none';
+
+        const data = await postJson('/Quiz/Start', { difficulty });
+        if (!data.success) {
+            errorBox.textContent = data.message;
+            errorBox.style.display = 'block';
+            return;
+        }
+        currentAttemptId = data.question.attemptId;
+        showScreen('play');
+        renderQuestion(data.question);
+    }
+
+    function renderQuestion(q) {
+        document.getElementById('quizProgressText').textContent = `${q.index + 1} / ${q.total}`;
+        document.getElementById('quizQuestionText').textContent = q.text;
+        document.getElementById('quizFeedback').style.display = 'none';
+
+        const choicesBox = document.getElementById('quizChoices');
+        choicesBox.innerHTML = '';
+        q.choices.forEach(c => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'quiz-choice-btn';
+            btn.textContent = c.text;
+            btn.dataset.choiceId = c.id;
+            btn.addEventListener('click', () => submitAnswer(q, c.id, btn));
+            choicesBox.appendChild(btn);
+        });
+
+        startTimer(q.timeLimitSeconds, q);
+    }
+
+    function startTimer(seconds, q) {
+        clearInterval(timerInterval);
+        let remaining = seconds;
+        const timerEl = document.getElementById('quizTimer');
+        timerEl.textContent = remaining + 's';
+
+        timerInterval = setInterval(() => {
+            remaining--;
+            timerEl.textContent = Math.max(remaining, 0) + 's';
+            if (remaining <= 0) {
+                clearInterval(timerInterval);
+                // 🔐 ده مجرد UX — الوقت الحقيقي بيتحسب في السيرفر برضه حتى لو اليوزر عدّل الـ JS ده
+                autoTimeoutAnswer(q);
+            }
+        }, 1000);
+    }
+
+    function autoTimeoutAnswer(q) {
+        const firstBtn = document.querySelector('.quiz-choice-btn');
+        if (firstBtn) submitAnswer(q, '__timeout__', firstBtn, true);
+    }
+
+    async function submitAnswer(q, choiceId, clickedBtn, isTimeout) {
+        clearInterval(timerInterval);
+        document.querySelectorAll('.quiz-choice-btn').forEach(b => b.disabled = true);
+
+        const data = await postJson('/Quiz/Answer', {
+            attemptId: currentAttemptId,
+            questionId: q.questionId,
+            choiceId: isTimeout ? '' : choiceId
+        });
+
+        if (!data.success) {
+            document.getElementById('quizFeedback').style.display = 'block';
+            document.getElementById('quizFeedback').textContent = data.message;
+            return;
+        }
+
+        if (!isTimeout) {
+            clickedBtn.classList.add(data.correct ? 'correct' : 'wrong');
+        }
+
+        const feedback = document.getElementById('quizFeedback');
+        feedback.style.display = 'block';
+        feedback.textContent = data.timedOut
+            ? QuizStrings.timeUp
+            : (data.correct ? QuizStrings.correct : QuizStrings.wrong);
+
+        setTimeout(() => {
+            if (data.finished) {
+                showResult(data);
+            } else {
+                renderQuestion(data.nextQuestion);
+            }
+        }, 1100);
+    }
+
+    function showResult(data) {
+        showScreen('result');
+        document.getElementById('quizResultTitle').textContent = QuizStrings.finished;
+        document.getElementById('quizResultScore').textContent =
+            `${data.score} / ${data.total}`;
+
+        const couponBox = document.getElementById('quizCouponBox');
+        if (data.couponCode) {
+            couponBox.style.display = 'block';
+            document.getElementById('quizCouponCode').textContent = data.couponCode;
+        } else {
+            couponBox.style.display = 'none';
+        }
+    }
+})();
+</script>

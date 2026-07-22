@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using pharaohsLegacy.Models;
 using pharaohsLegacy.Models.DTOs;
 using pharaohsLegacy.ViewModels;
+using System.Net.Http.Json;
 
 namespace pharaohsLegacy.Controllers
 {
@@ -195,6 +196,25 @@ namespace pharaohsLegacy.Controllers
             ViewBag.TotalOrders = await context.ShopOrders
                 .Where(o => o.UserEmail == email && o.Status != "PendingPayment")
                 .CountAsync();
+
+            // ===== COUPONS COUNT (النشطة بس — مش مستخدمة ومش منتهية) =====
+            // 🆕 بيتحسب من نفس endpoint اللي CouponController.MyCoupons بيستخدمه —
+            // Best-effort بس (لو البنك مقفول، الـ Badge مش بيظهر بدل ما يكسر الداشبورد كله)
+            ViewBag.TotalCoupons = 0;
+            try
+            {
+                var couponClient = _httpClientFactory.CreateClient("BankService");
+                var couponResponse = await couponClient.GetAsync($"coupons/{Uri.EscapeDataString(email)}");
+                if (couponResponse.IsSuccessStatusCode)
+                {
+                    var coupons = await couponResponse.Content.ReadFromJsonAsync<List<CouponListItem>>() ?? new List<CouponListItem>();
+                    ViewBag.TotalCoupons = coupons.Count(c => !c.is_used && (!c.expires_at.HasValue || c.expires_at.Value >= DateTime.Now));
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[BankService] Coupons count fetch failed for {email}: {ex.Message}");
+            }
 
             // ===== FAVORITES =====
             var favorites = await context.Favorites

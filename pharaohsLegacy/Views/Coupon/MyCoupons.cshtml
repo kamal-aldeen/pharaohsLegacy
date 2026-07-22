@@ -1,0 +1,92 @@
+@model List<pharaohsLegacy.Models.CouponListItem>
+@{
+    ViewData["Title"] = "My Coupons";
+    bool connError = (bool)(ViewBag.BankConnectionError ?? false);
+}
+
+<div class="coupons-wrap">
+    <h1 class="coupons-title">🎟️ @Html.L("Coupon_MyCoupons_Title")</h1>
+    <a href="/Quiz" class="coupons-back-link">← @Html.L("Coupon_BackToQuiz")</a>
+
+    @if (connError)
+    {
+        <p class="coupons-empty coupons-error">@Html.L("Coupon_ConnectionError")</p>
+    }
+    else if (!Model.Any())
+    {
+        <p class="coupons-empty">@Html.L("Coupon_NoCoupons")</p>
+    }
+    else
+    {
+        <div class="coupons-grid">
+            @foreach (var c in Model)
+            {
+                bool expired = c.expires_at.HasValue && c.expires_at.Value < DateTime.Now;
+                string statusClass = c.is_used ? "used" : (expired ? "expired" : "active");
+                string statusLabel = c.is_used
+                    ? Html.L("Coupon_Used")
+                    : (expired ? Html.L("Coupon_Expired") : Html.L("Coupon_Active"));
+
+                <div class="coupon-card @statusClass">
+                    <div class="coupon-status-badge @statusClass">@statusLabel</div>
+                    <div class="coupon-discount">@Html.Digits(c.discount_percent)% @Html.L("Coupon_Off")</div>
+                    <div class="coupon-code" data-code="@c.code" onclick="copyCouponCode(this)">
+                        @c.code
+                        <span class="coupon-copy-hint">@Html.L("Coupon_TapToCopy")</span>
+                    </div>
+                    @if (c.expires_at.HasValue)
+                    {
+                        <div class="coupon-expiry">@Html.L("Coupon_ExpiresOn") @Html.DateLoc(c.expires_at.Value, "dd MMM yyyy")</div>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .coupons-wrap { max-width: 900px; margin: 3rem auto; padding: 0 1rem; }
+    .coupons-title { text-align: center; color: #d4af37; font-size: 2rem; margin-bottom: .5rem; }
+    .coupons-back-link { display: block; text-align: center; color: #cbb98a; text-decoration: none; margin-bottom: 2rem; font-size: .9rem; }
+    .coupons-back-link:hover { color: #d4af37; }
+    .coupons-empty { text-align: center; color: #cbb98a; font-size: 1.05rem; padding: 3rem 1rem; }
+    .coupons-error { color: #e77; }
+
+    .coupons-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.2rem; }
+
+    .coupon-card {
+        position: relative; background: #14110c; border: 1px dashed #4a3d26; border-radius: 14px;
+        padding: 1.5rem; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,.35);
+    }
+    .coupon-card.active { border-color: #d4af37; }
+    .coupon-card.used, .coupon-card.expired { opacity: .55; }
+
+    .coupon-status-badge {
+        position: absolute; top: 10px; inset-inline-end: 12px; font-size: .7rem; padding: .2rem .6rem;
+        border-radius: 20px; font-weight: bold; letter-spacing: .5px;
+    }
+    .coupon-status-badge.active { background: #1e3d1e; color: #7fd17f; }
+    .coupon-status-badge.used { background: #333; color: #aaa; }
+    .coupon-status-badge.expired { background: #3d1e1e; color: #e79a9a; }
+
+    .coupon-discount { color: #f2e6c9; font-size: 1.4rem; font-weight: bold; margin: .5rem 0 1rem; }
+    .coupon-code {
+        background: #221c12; border: 1px solid #4a3d26; border-radius: 8px; padding: .7rem;
+        color: #d4af37; font-size: 1.15rem; font-weight: bold; letter-spacing: 2px; cursor: pointer;
+        transition: all .15s; position: relative;
+    }
+    .coupon-code:hover { border-color: #d4af37; }
+    .coupon-code.copied { background: #1e3d1e; border-color: #4caf50; color: #7fd17f; }
+    .coupon-copy-hint { display: block; font-size: .65rem; letter-spacing: 0; font-weight: normal; color: #8a7a52; margin-top: .3rem; }
+
+    .coupon-expiry { color: #a5987a; font-size: .82rem; margin-top: .9rem; }
+</style>
+
+<script>
+    function copyCouponCode(el) {
+        const code = el.dataset.code;
+        navigator.clipboard.writeText(code).catch(() => {});
+        el.classList.add('copied');
+        setTimeout(() => el.classList.remove('copied'), 1200);
+    }
+</script>

@@ -918,11 +918,14 @@ bank_service/
         - [x] كل خطوات اللصق (1→9): Models + DbSets + Migration + Controllers + ViewModel +
               Views + Navigation + Localization + Bank Service (مفيهاش تعديل) ✅
         - [x] تاب "Shop" في Admin Panel (Views/Admin/Index.cshtml) بنفس شكل تاب Gods ✅
-[ ] 5. بناء الكويز (Quiz):
-        - أسئلة بتتولد من الداتابيز الموجودة (فراعنة/أسر/آلهة/أحداث)
-        - مستويات صعوبة (كل ما الداتابيز تكبر، الأسئلة تتنوع)
-        - عند نتيجة كويسة → نداء /coupons/create من الموقع
-        - عرض الكود للمستخدم + حفظه في صفحته (My Coupons)
+[x] 5. بناء الكويز (Quiz) — الكود جاهز (قيد اللصق) ✅:
+        تفاصيل كاملة تحت في "🧠 Quiz System — الكود جاهز (قيد اللصق)":
+        - [x] QuestionGeneratorService — أسئلة بتتولد من الداتابيز الحقيقية وقت الطلب (مفيش جدول Questions) ✅
+        - [x] مستويات صعوبة (Easy/Medium/Hard) كفلتر فوق نفس الداتا ✅
+        - [x] QuizController (Start/Answer) — Session-based + Anti-Cheat كامل (الإجابة الصح متتبعتش للـ Client، Timeout سيرفر-سايد) ✅
+        - [x] View واحد (Views/Quiz/Index.cshtml) — اختيار صعوبة + لعب AJAX + نتيجة ✅
+        - [x] عند نجاح (≥70%) → نداء /coupons/create من الموقع ✅
+        - [x] My Coupons — عرض الأكواد اللي اليوزر جابها في صفحته ✅ (لسه محتاج endpoint البنك + تستنج)
 ```
 
 ---
@@ -935,6 +938,119 @@ bank_service/
 - الكوبون مربوط بـ `user_email` — يعني كود اليوزر A مينفعش يستخدمه اليوزر B حتى لو عنده الكود.
 - الـ Refund بيدور على آخر عملية Purchase ناجحة بنفس `related_type` + `related_id` ويرجع نفس قيمتها بالظبط — مفيش حاجة بتتحسب يدويًا.
 - أي تعديل مستقبلي في نسبة الخصم الافتراضية أو مدة الصلاحية يتم من `CouponCreate` schema (`discount_percent`, `valid_days`) — مش Hardcoded جوه المنطق.
+
+---
+
+## 🧠 Quiz System — الكود جاهز (قيد اللصق)
+
+> ده تفصيل بند "5. بناء الكويز" فوق. الخطة اتفقنا عليها في شات منفصل قبل التنفيذ، والكود الفعلي
+> اتعمل بعد كده وموجود في مجلد `quiz_integration/` (7 ملفات + INTEGRATION_STEPS.md).
+> القسم ده مرجع لأي شات جديد عشان نبدأ من نفس الفهم بالظبط.
+
+### 🎯 الفكرة الأساسية
+مفيش جدول `Questions` ولا أسئلة متخزنة يدويًا في الداتابيز. الأسئلة بتتولد **لحظة الطلب** من نفس الجداول
+الموجودة فعلاً (Pharaohs / Dynasties / Gods / Temples / Museums / HistoricalEvents / Artifacts)
+عن طريق `QuestionGeneratorService` بيقرا مباشرة من `AppDbContext` وقت الـ Runtime.
+
+### ✅ إزاي الأسئلة بتتولد
+- كل نوع سؤال عبارة عن **Template** جوه الكود (مش نص جاهز)، وبيتملى من صف حقيقي بيتسحب random من الجدول:
+  - "مين حكم في {Dynasty}؟" → بيدور على Pharaoh فين `Dynasty == X`
+  - "الإله {GodName} بيرمز لإيه؟" → بيسحب `Symbol` من جدول Gods
+  - "معبد {TempleName} موجود فين؟" → بيسحب `Location`
+  - "الحدث ده حصل في أنهي سنة تقريبًا؟" → بيسحب `Year` من HistoricalEvents
+- **الاختيارات الغلط (Distractors)** بتتسحب random من نفس الجدول (مش أسامي وهمية) — يعني لو السؤال
+  عن فرعون في الأسرة 18، الاختيارات الغلط فراعنة حقيقيين من أسر مختلفة.
+
+### ✅ إزاي بتفضل Dynamic (تظهر فيها أي إضافة جديدة أوتوماتيك)
+- الـ Generator بيقرا من `_context.Pharaohs` / `_context.Gods` / إلخ وقت التشغيل نفسه، مش وقت الـ Build —
+  فأي صف جديد بيتضاف من Admin Panel بيدخل تلقائيًا في احتمالية الأسئلة من غير أي تعديل في كود الكويز.
+- **مستويات الصعوبة** فلتر فوق نفس الداتا (مش جداول منفصلة):
+  - **Easy** — فراعنة/آلهة مشهورين
+  - **Medium** — تفاصيل زي Dynasty / Period
+  - **Hard** — تواريخ دقيقة + أسئلة بتربط بين جدولين (مثال: HistoricalEvent مربوط بـ PharaohTag)
+- كل ما الداتابيز تكبر، الـ Pool اللي الـ Generator بيسحب منه بيكبر معاها أوتوماتيك، فالتكرار بيقل والتنوع بيزيد.
+
+### 🔐 نظام الحماية ضد الغش (Anti-Cheat) — أهم جزء في التصميم
+**القاعدة الذهبية: الإجابة الصح متتبعتش للـ Client أبدًا.**
+- الـ Server وقت ما بيولّد السؤال بيحفظ (السؤال + الاختيارات + مين الإجابة الصح) في **Session أو جدول
+  QuizAttempt مؤقت** على السيرفر.
+- اللي بيتبعت للمتصفح: نص السؤال + الاختيارات متلخبطة (Shuffle) + ID لكل اختيار بس — من غير أي إشارة
+  لمين الصح، لا في الـ HTML ولا الـ JS ولا في أي network response.
+- المقارنة وقت الإجابة بتحصل في السيرفر بس (مقابل اللي محفوظ في الـ Session)، الـ Score مبيتحسبش من رقم
+  جاي من الـ Client أبدًا.
+- **Session-bound quiz**: كل محاولة ليها Attempt ID مربوط باليوزر — مينفعش حد يفتح تابين ويحل نفس
+  الأسئلة مرتين، ولا يعيد submit بعد ما المحاولة اتقفلت.
+- **Server-side timer**: وقت بداية كل سؤال بيتسجل في السيرفر (مش JS Countdown بس) — إجابة جت بعد
+  الوقت المسموح بترفض كـ Timeout حتى لو صح.
+- **Rate limiting** على الـ Endpoint بتاع الإجابة عشان حد ميحاولش يجرب كل الاحتمالات بسرعة (Brute force).
+
+### ⏳ خطوات التنفيذ (بالترتيب)
+```
+[x] 1. QuestionGeneratorService — Templates لكل نوع (Pharaoh/Dynasty/God/Temple/Museum/HistoricalEvent) ✅
+[x] 2. QuizAttempt — بيتخزن في الـ Session كـ JSON (مش جدول DB) — السؤال + الإجابة الصح + الوقت سيرفر-سايد ✅
+[x] 3. QuizController — Start (يولد أسئلة) / Answer (يتحقق سيرفر-سايد) ✅
+[x] 4. مستويات الصعوبة (Easy/Medium/Hard) كفلتر فوق الـ Generator ✅
+[x] 5. View واحد بس (Views/Quiz/Index.cshtml) — اختيار صعوبة + لعب AJAX + نتيجة، بدل 3 صفحات منفصلة ✅
+[x] 6. عند Score ≥ 70% → نداء /coupons/create من الموقع (نفس البنك الموجود فعلاً) ✅
+[x] 7. My Coupons — عرض الأكواد اللي اليوزر جابها من الكويز في صفحته ✅ (تفاصيل تحت في "🎟️ My Coupons")
+```
+
+### 🐛 باگين اتصلحوا فعليًا بعد أول تستنج
+1. **`[FromBody]` ناقص** — `Start`/`Answer` كانوا بياخدوا الباراميترز كـ scalar params عادية
+   (`string difficulty`, `string attemptId`...)، لكن الـ JS بيبعت JSON body خام. الـ Model Binding
+   الافتراضي بيدور عليهم في Form/Query بس، فكانوا بيوصلوا `null` كل مرة → `attempt.Id != attemptId`
+   بيفشل فورًا → "Quiz_AttemptExpired" وهمي حتى لو كل حاجة تانية سليمة. **الحل:** عملنا
+   `QuizStartRequest`/`QuizAnswerRequest` DTOs وحطينا `[FromBody]` عليهم. ✅ اتصلح.
+2. **الإيموجيز بتظهر كـ `&#x2705;` بدل الرمز** — أي `@Html.L(...)` فيه إيموجي (✅/❌/⏱️) لما بيتحط
+   جوه JS string literal داخل `<script>`، الـ `HtmlEncoder` بيحوّله لـ HTML entity، وده مش HTML text
+   node فمبيتفكّش. **الحل:** بنعمل `JsonSerializer.Serialize` لكل الـ strings دي في كلاس `QuizStrings`
+   جوه الـ `@{ }` ونحقنها بـ `Html.Raw` بدل ما نحطها مباشرة جوه علامات تنصيص JS. ✅ اتصلح.
+
+### ✅ اللي خلص فعليًا (كود جاهز للصق — مجلد `quiz_integration/`)
+- `Models/QuizModels.cs` — `QuizChoice` / `QuizQuestion` / `QuizAttempt` (Transient، بتتسريلايز للـ Session بـ `JsonSerializer`)
+- `Services/QuizQuestionGeneratorService.cs` — 6 Generators (Pharaoh↔Dynasty، God↔Symbol، Temple↔Location، Museum↔Location، Dynasty↔Era، HistoricalEvent↔Year) بيقروا مباشرة من `AppDbContext` وقت الطلب + Distractors حقيقية من نفس الجدول
+- `Controllers/QuizController.cs` — `Index` / `Start` (POST) / `Answer` (POST) — الأمان كامل زي المتفق عليه: `IsCorrect` مبيتبعتش للـ Client، Session-bound Attempt، Timeout بمقارنة وقت السيرفر بس، منع تخطي/إعادة إجابة سؤال، + `[FromBody]` DTOs بعد إصلاح الباگ
+- `Views/Quiz/Index.cshtml` — صفحة واحدة AJAX (اختيار صعوبة → لعب → نتيجة) مع تايمر UX (الحقيقي في السيرفر) + `QuizStrings` (JSON-safe) بعد إصلاح الإيموجيز
+- `BankModels.cs` (نسخة كاملة) — `CouponCreateResult` + `CouponListItem` DTOs (⚠️ لسه محتاج تأكيد إن أسامي الحقول مطابقة لخدمة البنك بايثون)
+- `NEW_LOCALIZATION_KEYS_QUIZ.md` — كل مفاتيح الترجمة الجديدة (`Nav_Quiz`, `Quiz_*`)
+- `INTEGRATION_STEPS.md` — خطوات اللصق كاملة (نسخ الملفات + تسجيل الـ Service في `Program.cs` + لينك الـ Navbar + دمج الترجمة)
+- `_ViewImports.cshtml` — ضفنا `@using pharaohsLegacy.Extensions` عشان `Html.L()` يشتغل في أي View جديدة من غير ما تحتاج تكرره يدويًا في كل ملف
+
+**✅ اتجرب فعليًا وشغال بعد الإصلاحين فوق.**
+
+### ⚠️ Key Rules — Quiz System
+- مفيش جدول Questions ثابت — كل حاجة Generated من الجداول الأساسية وقت الطلب.
+- الإجابة الصح ومكانها **ممنوع تتبعت للـ Client** تحت أي ظرف (لا في JSON ولا Hidden Field ولا JS).
+- التحقق من الإجابة والـ Score بيحصلوا في السيرفر بس.
+- الكوبون الناتج من الكويز بيتبع نفس قواعد الكوبون الموجودة فعلاً (Single-use + صلاحية 10 أيام + مربوط بـ user_email).
+- أي نص فيه إيموجي وهيتحط جوه `<script>` لازم يعدي على `JsonSerializer.Serialize` + `Html.Raw`، مش يتحط مباشرة جوه `@Html.L(...)` وسط علامات تنصيص JS.
+
+---
+
+## 🎟️ My Coupons — الكود جاهز (قيد اللصق)
+
+> صفحة مستقلة (`/Coupon/MyCoupons`) — بالظبط زي `/Shop/MyOrders` — بتعرض كل الكوبونات اللي
+> اليوزر كسبها (من الكويز حاليًا، وأي مصدر تاني مستقبلي). مش تاب داخلي جوه `Dashboard.cshtml`
+> عشان الداتا جايه من خدمة البنك مباشرة، مش من `AppDbContext`.
+
+### ⚠️ شرط أساسي — لسه معلّق
+كل حاجة هنا مبنية على افتراض وجود endpoint في خدمة البنك (بايثون):
+```
+GET /coupons/user/{email}
+```
+بيرجع Array من `{ code, discount_percent, expires_at, is_used }` لكل كوبونات الإيميل ده.
+**لو مش موجود عندك في `main.py` أصلاً، الصفحة هترجع 404 وتعرض "مفيش كوبونات" لحتى اليوزرز
+اللي عندهم فعلاً** — يعني لازم يتضاف هناك الأول قبل ما "My Coupons" يبقى شغال حقيقي.
+
+### ✅ اللي خلص فعليًا (كود جاهز للصق — مجلد `coupons_integration/`)
+- `Controllers/CouponController.cs` — `MyCoupons()` بينادي `GET coupons/user/{email}` من البنك، Best-effort (لو البنك مقفول، بتعرض رسالة اتصال واضحة مش تكسر)
+- `Views/Coupon/MyCoupons.cshtml` — كارت لكل كوبون (نسبة الخصم + الكود قابل للنسخ بدوسة + تاريخ الانتهاء + حالة نشط/مستخدم/منتهي)
+- `BankModels.cs` — `CouponListItem` DTO مضافة (نسخة كاملة، جنب `CouponCreateResult`)
+- `UserController.cs` (نسخة كاملة) — `ViewBag.TotalCoupons` بيتحسب في `Dashboard()` (نفس Best-effort pattern بتاع `ViewBag.TotalOrders`)
+- `Dashboard.cshtml` (نسخة كاملة) — تاب "🎟️ كوبوناتي" جديد بعد تاب "🛍️ My Orders" مباشرة، مع Badge بعدد الكوبونات النشطة
+- `NEW_LOCALIZATION_KEYS_COUPONS.md` + `INTEGRATION_STEPS_COUPONS.md`
+
+**لسه محتاج:** (1) الـ endpoint فوق في خدمة البنك، (2) تستنج يدوي بعد اللصق.
 
 ---
 
@@ -1112,6 +1228,66 @@ Shipping Tracking").
 
 ---
 
+## 🎨 Shop — UI/UX Redesign (Round 2: أيقونات + ألوان) ✅ خلصت بالكامل
+
+> بعد الـ Redesign الأول، الشكل العام كان تمام بس لسه حاسس "بلدي". السبب الحقيقي مكنش الألوان
+> الأساسية (الدهبي/الأسود شغالين كويس أصلاً) — كان **الإيموجي الملونة** (🛒🔥⭐✨🗑📍📞✖⚠️) اللي
+> بتكسر الهوية البصرية لأن ألوانها عشوائية ومالهاش علاقة بالتيم، وألوان الـ badges/الفلاتر
+> (أزرق/أخضر عاديين زي أي موقع Bootstrap) اللي مالهاش علاقة بالطابع الفرعوني.
+
+- كل الإيموجي الملونة في الخمس صفحات (`Index`, `Details`, `Cart`, `Checkout`, `MyOrders`) اتستبدلت
+  بأيقونات SVG أحادية اللون (`currentColor`) — سلة، تشيك، سلة مهملات، دبوس موقع، تليفون، إكس
+  إغلاق، تحذير، تاج/عرض، نجمة، بريق. الرموز الهيروغليفية (𓋹 𓆃) والقلب (♥/♡) اتسابوا زي ما هم
+  لإنهم مناسبين للتصميم أصلاً مش الإيموجي الملونة
+- ألوان الـ badges (`badge-sale`/`badge-new`/`badge-bestseller`) وألوان الفلاتر اتغيرت لباليت
+  أحجار كريمة مصرية: عقيق (carnelian) أعمق للـ Sale، لازورد (lapis) للـ New، فيروز/فاينس
+  (faience) للـ Best Seller — بدل الأزرق/الأخضر الفاقعين اللي كانوا موجودين
+- **باگ اتصلح أثناء الاستبدال:** أزرار "Add to Cart"/"Buy Now" كانت بترجّع نفسها لحالتها الأصلية
+  بعد نجاح العملية بـ `btn.textContent = originalText` — ده كان هيمسح الأيقونة الـ SVG نهائيًا من
+  أول ضغطة (لإن `textContent` بيمسح أي عنصر HTML جواه، مش بس النص). اتصلح باستخدام `innerHTML`
+  بدل `textContent` في كل الأماكن دي (`Index.cshtml` → `addToCart()`, `Details.cshtml` →
+  handlers بتوع `addToCartBtn`/`buyNowBtn`)
+
+---
+
+## 📍 Shop — Checkout: "استخدم موقعي" (GPS Autofill) ✅ خلصت بالكامل
+
+> زي أمازون — زرار جنب حقل العنوان في `Checkout.cshtml` بياخد موقع المستخدم من المتصفح ويملأ
+> العنوان والمحافظة تلقائيًا.
+
+- `navigator.geolocation.getCurrentPosition()` من المتصفح — client-side بالكامل، مفيش أي تعديل
+  في أي Controller أو قاعدة بيانات
+- Reverse Geocoding عن طريق **Nominatim (OpenStreetMap)** — مجاني بالكامل، بدون API key
+- دالة `matchGovernorate()` في الـ JS بتحاول تطابق اسم المحافظة الراجع من الـ GPS مع
+  `<select id="governorate">` الموجود (بالعربي والإنجليزي، بتجاهل كلمة "محافظة"/"Governorate"
+  واختلافات التشكيل) — عشان كده كل `<option>` بقى فيه `data-name-en`/`data-name-ar` كمان
+- حالات الخطأ متغطاة كلها برسائل مختلفة (رفض الإذن، عدم دعم المتصفح، timeout، فشل الـ API) بنفس
+  ستايل `coupon-msg` الموجود أصلاً
+- ⚠️ **مطلوب يدويًا:** إضافة مفاتيح ترجمة جديدة في `en.json`/`ar.json`: `Shop_Checkout_UseLocation`,
+  `Shop_Location_Unsupported`, `Shop_Location_Locating`, `Shop_Location_Success`,
+  `Shop_Location_SuccessNoGov`, `Shop_Location_Denied`, `Shop_Location_Timeout`, `Shop_Location_Error`
+
+---
+
+## 🐛 Dashboard — My Orders Badge مكانش بيظهر ✅ اتصلح بالكامل
+
+> الملاحظة: الداشبورد مكنش بيجيب عدد الطلبات جنب تاب "My Orders". السبب: تعليق قديم موجود في
+> `Dashboard.cshtml` نفسه بيوضح إن اللينك اتعمل مباشر لصفحة `/Shop/MyOrders` من غير badge **لإن
+> الكنترولر أصلاً مكانش بيحسب عدد الطلبات ولا بيبعته للـ View خالص** — يعني كان نقص وظيفي واضح
+> ومُتعمّد ساعتها، مش باگ في منطق موجود.
+
+- `UserController.cs` → `Dashboard()`: ضيف query لعدد الأوردرات (`context.ShopOrders`، مستبعد
+  `PendingPayment` بنفس منطق الـ Bookings بالظبط) وبعتها عن طريق `ViewBag.TotalOrders` — مش عن
+  طريق `DashboardViewModel` (بنفس أسلوب `ViewBag.JourneyCount` الموجود أصلاً في نفس الدالة، عشان
+  ملف الـ ViewModel نفسه مش متاح في الشات)
+- `Dashboard.cshtml`: تاب "My Orders" بقى بيعرض `tab-badge` بالعدد زي Bookings/Favorites بالظبط،
+  وسكشن الـ Profile (`db-profile-stat-row`) بقى فيه عنصر رابع لعدد الطلبات جنب
+  Bookings/Favorites/EGP Spent
+- ⚠️ **تأكد بنفسك:** استخدمت اسم الـ DbSet `context.ShopOrders` افتراضًا (تسمية EF Core التلقائية
+  من اسم الموديل `ShopOrder`) — لو الاسم مختلف في `AppDbContext` بتاعك، غيّره في السطر ده بس
+
+---
+
 ## 🎯 خطة احتراف الـ Shop (✅ خلصت بالكامل — المراحل 1، 2، 3، 4)
 
 > الهدف: الشوب يبان زي مواقع تسوق حقيقية (تفاصيل منتج غنية + تصنيفات وفلاتر + عروض وشارات).
@@ -1249,7 +1425,80 @@ Shipping Tracking").
 
 ---
 
-# 🚀 Roadmap — الترتيب بالأولوية
+## 🚚 Shop — تحديث تلقائي لتراك الشحن (Processing → Shipped → Delivered) ✅ خلصت بالكامل
+
+> الطلب: بدل ما الأدمن يغيّر ShippingStatus يدوي كل مرة، الأوردر يتحرك لوحده بين المراحل الثلاثة —
+> زي أمازون بالظبط: بعد 48 ساعة من تأكيد الدفع يطلع للشحن أوتوماتيك، وبعدها يوصل بعد عدد أيام
+> بيختلف حسب محافظة العميل.
+
+### الموديل
+- `ShopOrder.cs`: 3 حقول جديدة —
+  - `ConfirmedAt` (لحظة نجاح الدفع الفعلية، بتتسجل في `ShopController.Confirm` — مش نفس `CreatedAt`
+    اللي بيتسجل وقت أول `RequestOtp` وممكن يكون أبكر بوقت طويل)
+  - `ShippedAt` (لحظة الخروج للشحن فعليًا، سواء أوتوماتيك أو الأدمن غيّرها يدوي)
+  - `DeliveredAt` (لحظة الوصول فعليًا — للعرض بس في `MyOrders`)
+- Migration: `AddShopOrderTrackingTimestamps`
+- `Governorates.cs`: عمود جديد `DeliveryDays` لكل محافظة (1 يوم القاهرة/الجيزة، لحد 5 أيام
+  سيناء/أسوان/الوادي الجديد — نفس تدرّج `ShippingFee` الموجود أصلاً) + `Governorates.GetDeliveryDays(key)`
+
+### السيرفيس الجديد
+- `ShopOrderShippingBackgroundService.cs` ← IHostedService جديد، نفس فلسفة
+  `ShopOrderRefundBackgroundService` بالظبط، بس بمرحلتين كل 10 دقايق:
+  1. `Processing → Shipped`: أي أوردر `Confirmed` عدى عليه 48 ساعة من `ConfirmedAt`
+  2. `Shipped → Delivered`: أي أوردر عدى عليه من `ShippedAt` عدد الأيام بتاع محافظته
+     (`Governorates.GetDeliveryDays`)
+- `Program.cs`: تسجيل السيرفيس الجديد كـ Hosted Service جنب نظيره بتاع الريفاند
+
+### الكنترولرز
+- `ShopController.Confirm`: بيسجل `order.ConfirmedAt = DateTime.Now` وقت نجاح الدفع مباشرة
+- `AdminController.UpdateShopOrderShipping`: لو الأدمن غيّر الحالة يدويًا، بيسجل `ShippedAt`/`DeliveredAt`
+  لو لسه فاضيين — عشان الحساب التلقائي بعد كده (خصوصًا Delivered) يفضل مبني على تاريخ حقيقي
+  مش فاضي. الأدمن لسه يقدر يتحكم يدوي في أي وقت زي ما هو، مفيش تعارض مع الأوتوماتيك.
+
+### الـ Views
+- `MyOrders.cshtml`: رسالة "متوقع وصوله..." زي أمازون تحت تراك الشحن مباشرة، بتتحسب من جديد في
+  كل تحميل صفحة (من غير أي كرون جوب إضافي) — بتفرق حسب الحالة:
+  - `Processing` → "سيتم شحنه قريبًا"
+  - `Shipped` → "متوقع وصوله اليوم/غدًا/خلال X أيام (تاريخ)" حسب الفرق بين تاريخ النهارده وموعد الوصول
+  - `Delivered` → "وصل بتاريخ كذا"
+  - *(ملحوظة بسيطة: حالة الـ "يومين بالظبط" بالعربي بتطلع "خلال 2 أيام" مش "يومين" — تبسيط متعمد)*
+
+### مفاتيح ترجمة جديدة (لسه محتاجة تتضاف يدويًا في en.json/ar.json)
+`Shop_Track_WillShipSoon`, `Shop_Track_ArrivesToday`, `Shop_Track_ArrivesTomorrow`,
+`Shop_Track_ArrivesIn`, `Shop_Track_Days`, `Shop_Track_DeliveredOn`
+
+### ⚠️ نقطة مفتوحة
+الأوردرات القديمة الـ `Confirmed` (قبل الـ Migration) هتبقى `ConfirmedAt = null`، والسيرفيس بيتجاهلها
+(منقدرش نحسب 48 ساعة من حاجة فاضية) فمش هتتشحن أوتوماتيك. لو محتاجين نضبطها، تنفيذ الـ SQL ده مرة واحدة بعد الـ Migration:
+```sql
+UPDATE ShopOrders SET ConfirmedAt = CreatedAt WHERE Status = 'Confirmed' AND ConfirmedAt IS NULL
+```
+
+---
+
+## 🗂️ Admin Dashboard — فصل Shop Orders في تاب مستقل ✅ خلصت بالكامل
+
+> الطلب: جدول أوردرات الشوب كان جوه تاب "Shop" نفسه (مع المنتجات والكاتيجوريز) — ده كان بيخلي
+> التاب مزدحم ومعقد. اتفصل في تاب مستقل بنفس فكرة تاب Bookings.
+
+- تاب جديد "📦 Shop Orders" في الـ Sidebar (تحت "Users & Data"، جنب Bookings مباشرة) بعدد الأوردرات
+  (`Model.TotalShopOrders`)
+- جدول الأوردرات اتنقل بالكامل من `panel-shop` لبانل مستقل `panel-shop-orders`، وضيف عليه عمود جديد
+  **"Est. arrival"** (بنفس منطق الـ ETA بتاع `MyOrders.cshtml`: "Ships within 48h" / تاريخ الوصول
+  المتوقع / "Delivered")
+- تاب "Shop" الأصلي فضل بس للمنتجات + الكاتيجوريز (أبسط وأوضح)
+- `panelTitles` (JS) اتضاف لها مفتاح `'shop-orders'`
+- `AdminController.cs`: الـ Redirect بعد `ChangeShopOrderStatus` و `UpdateShopOrderShipping` بقى
+  يوجّه لـ `tab = "shop-orders"` بدل `tab = "shop"` (كان باگ صغير هيخلي الأدمن يترمي في تاب
+  المنتجات بعد أي تحديث حالة أوردر)
+- Overview (أول صفحة بتفتح): كارت إحصائي جديد "📦 Shop Orders" + جدول "Recent Shop Orders"
+  (آخر 8 أوردرات) بنفس شكل وهوية "Recent Bookings" الموجود جنبه، مع pill ملوّن لتراك الشحن
+  (دهبي Processing / أزرق Shipped / أخضر Delivered) وزرار "View All" بيودي على التاب الجديد
+- إصلاح صغير مصاحب: دالة `switchPanel` الخاصة بزرار "View All" (اللي بيتنادى من غير `this`) كانت
+  مش هتقدر تعلّم على نav item الصح لأي تاب اسمه فيه شرطة زي `shop-orders` — اتصلحت
+
+---
+
 
 > خلّص واحدة وروح للتانية — مش محتاج تفكر في أي حاجة تانية.
 

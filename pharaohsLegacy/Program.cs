@@ -37,6 +37,9 @@ namespace pharaohsLegacy
             builder.Services.AddSession();
             builder.Services.AddSingleton<LocalizationService>();
 
+            // 🆕 Quiz System — بيقرا من AppDbContext (Scoped) عشان يولد الأسئلة وقت الطلب
+            builder.Services.AddScoped<QuizQuestionGeneratorService>();
+
             builder.Services.AddHostedService<pharaohsLegacy.Services.BookingStatusUpdater>();
             builder.Services.AddHostedService<pharaohsLegacy.Services.PendingBookingCleanupService>();
 

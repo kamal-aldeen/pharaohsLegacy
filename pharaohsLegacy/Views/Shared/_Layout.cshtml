@@ -941,6 +941,7 @@
             <li><a asp-controller="Home" asp-action="Map" class="@(currentAction == "Map" ? "active" : "")">@Html.L("Nav_Map")</a></li>
             <li><a asp-controller="Hieroglyphics" asp-action="Translator" class="@(currentController == "Hieroglyphics" ? "active" : "")">@Html.L("Nav_Translator")</a></li>
             <li><a asp-controller="Shop" asp-action="Index" class="@(currentController == "Shop" ? "active" : "")"> @Html.L("Nav_Shop")</a></li>
+            <li><a asp-controller="Quiz" asp-action="Index" class="@(currentController == "Quiz" ? "active" : "")"> @Html.L("Nav_Quiz")</a></li>
 
             @if (Context.Session.GetString("UserEmail") != null &&
                  Context.Session.GetString("UserEmail") != "guest")

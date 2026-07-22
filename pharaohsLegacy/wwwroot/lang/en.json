@@ -541,7 +541,36 @@
   "Shop_Track_ArrivesTomorrow": "Expected to arrive tomorrow",
   "Shop_Track_ArrivesIn": "Expected to arrive in",
   "Shop_Track_Days": "days",
-  "Shop_Track_DeliveredOn": "Delivered on"
+  "Shop_Track_DeliveredOn": "Delivered on",
+  "Nav_Quiz": "Quiz",
+
+  "Quiz_Title": "Test Your Knowledge",
+  "Quiz_SelectDifficulty": "Choose your difficulty level",
+  "Quiz_Easy": "Easy",
+  "Quiz_Medium": "Medium",
+  "Quiz_Hard": "Hard",
+  "Quiz_TryAgain": "Try Again",
+
+  "Quiz_LoginRequired": "Please log in to take the quiz.",
+  "Quiz_NotEnoughData": "Not enough data to generate this quiz yet. Please try again later.",
+  "Quiz_AttemptExpired": "Your quiz session has expired. Please start again.",
+
+  "Quiz_Correct": "✅ Correct!",
+  "Quiz_Wrong": "❌ Wrong answer",
+  "Quiz_TimeUp": "⏱️ Time's up!",
+  "Quiz_Finished": "Quiz Finished!",
+  "Quiz_CouponWon": "You earned a discount coupon!",
+  "Dash_Tab_Coupons": "My Coupons",
+  "Coupon_MyCoupons_Title": "My Coupons",
+  "Coupon_BackToQuiz": "Back to Quiz",
+  "Coupon_NoCoupons": "You don't have any coupons yet. Play the quiz to earn one!",
+  "Coupon_ConnectionError": "Couldn't load your coupons right now. Please try again later.",
+  "Coupon_Used": "Used",
+  "Coupon_Active": "Active",
+  "Coupon_Expired": "Expired",
+  "Coupon_Off": "OFF",
+  "Coupon_ExpiresOn": "Expires on",
+  "Coupon_TapToCopy": "Tap to copy"
 
 
 

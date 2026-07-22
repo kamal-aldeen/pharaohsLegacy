@@ -389,6 +389,7 @@ namespace pharaohsLegacy.Controllers
 
             // 🎉 الدفع نجح فعليًا — نأكد الحجز ونسجل الدفعة
             booking.Status = "Confirmed";
+            booking.TotalPrice = chargeResult.final_amount; // 🆕 يعكس السعر الفعلي المدفوع بعد الخصم (كان بيفضل السعر الأصلي قبل الكوبون في My Bookings)
 
             var payment = new Payment
             {

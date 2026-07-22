@@ -32,6 +32,34 @@ namespace pharaohsLegacy.Models
         public DateTime? expires_at { get; set; }
     }
 
+    // ==========================================================================
+    // 🆕 رد POST /coupons/create من خدمة البنك — بينادى من QuizController لما
+    // اليوزر يخلص الكويز بنتيجة ≥ 70% ويستاهل كوبون.
+    // ⚠️ الأسامي دي تخمين معقول بناءً على شكل CouponValidateResult فوق — لو
+    // شكل الـ schema عندك في main.py (بايثون) مختلف، عدّل هنا بس.
+    // ==========================================================================
+    public class CouponCreateResult
+    {
+        public bool success { get; set; }
+        public string code { get; set; } = "";
+        public double discount_percent { get; set; }
+        public DateTime? expires_at { get; set; }
+    }
+
+    // ==========================================================================
+    // 🆕 عنصر واحد في رد GET /coupons/user/{email} — كل الكوبونات اللي اليوزر
+    // كسبها (من الكويز أو أي مصدر تاني مستقبلي)، مستخدمة كانت ولا لسه.
+    // ⚠️ نفس التحذير: الأسامي تخمين معقول — لازم تتأكد من شكل الـ endpoint ده
+    // في خدمة البنك (main.py). لو الـ endpoint مش موجود أصلاً، محتاج تضيفه هناك الأول.
+    // ==========================================================================
+    public class CouponListItem
+    {
+        public string code { get; set; } = "";
+        public double discount_percent { get; set; }
+        public DateTime? expires_at { get; set; }
+        public bool is_used { get; set; }
+    }
+
     public class BankErrorResult
     {
         public string detail { get; set; } = "";
