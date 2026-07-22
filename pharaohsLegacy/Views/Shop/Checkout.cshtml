@@ -48,6 +48,10 @@
                     <span>@Html.L("Shop_Checkout_Shipping")</span>
                     <span id="ckShipping">—</span>
                 </div>
+                <div class="checkout-totals-row" id="ckDiscountRow" style="display:none; color:#3fae5a;">
+                    <span>@Html.L("Shop_Checkout_Discount")</span>
+                    <span id="ckDiscount">—</span>
+                </div>
                 <div class="checkout-totals-row checkout-grand-total">
                     <span>@Html.L("Booking_Total_Label")</span>
                     <span id="ckGrandTotal">@Html.Digits((object)subtotal) @Html.L("Common_EGP")</span>
@@ -226,6 +230,7 @@
     var currencyLabel = @js("Common_EGP");
     var arabicDigitsMap = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
     var shippingFee = 0;
+    var appliedDiscountPercent = 0; // 🆕 بيتحدث بعد نجاح Apply Coupon، وبيتصفر لو الكود اتغيّر
     var locStrings = {
         unsupported: @js("Shop_Location_Unsupported"),
         locating: @js("Shop_Location_Locating"),
@@ -246,7 +251,18 @@
 
     function updateTotals() {
         document.getElementById('ckShipping').textContent = fmt(shippingFee);
-        document.getElementById('ckGrandTotal').textContent = fmt(subtotal + shippingFee);
+        var total = subtotal + shippingFee;
+        var discountRow = document.getElementById('ckDiscountRow');
+
+        if (appliedDiscountPercent > 0) {
+            var discountAmount = total * (appliedDiscountPercent / 100);
+            discountRow.style.display = 'flex';
+            document.getElementById('ckDiscount').textContent = '-' + fmt(discountAmount);
+            document.getElementById('ckGrandTotal').textContent = fmt(total - discountAmount);
+        } else {
+            discountRow.style.display = 'none';
+            document.getElementById('ckGrandTotal').textContent = fmt(total);
+        }
     }
 
     document.getElementById('governorate').addEventListener('change', function () {
@@ -383,15 +399,31 @@
             var res = await fetch('/Shop/ValidateCoupon?code=' + encodeURIComponent(code));
             var data = await res.json();
             if (data.valid) {
+                appliedDiscountPercent = data.discountPercent || 0;
+                updateTotals();
                 msgEl.textContent = @(js("Booking_Coupon_Applied")).replace('{0}', toLocalDigits(data.discountPercent));
                 msgEl.className = 'coupon-msg success';
             } else {
+                appliedDiscountPercent = 0;
+                updateTotals();
                 msgEl.textContent = data.message || @js("Booking_Coupon_Invalid");
                 msgEl.className = 'coupon-msg error';
             }
         } catch (err) {
+            appliedDiscountPercent = 0;
+            updateTotals();
             msgEl.textContent = @js("Booking_Coupon_Error");
             msgEl.className = 'coupon-msg error';
+        }
+    });
+
+    // 🆕 لو المستخدم عدّل كود الكوبون بعد ما طبّقه، لازم يدوس Apply تاني — منسيبش خصم قديم شغال على كود اتغيّر
+    document.getElementById('couponCode').addEventListener('input', function () {
+        if (appliedDiscountPercent > 0) {
+            appliedDiscountPercent = 0;
+            updateTotals();
+            document.getElementById('couponMsg').textContent = '';
+            document.getElementById('couponMsg').className = 'coupon-msg';
         }
     });
 
