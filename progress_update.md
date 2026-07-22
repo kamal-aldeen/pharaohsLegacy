@@ -30,7 +30,8 @@
 | ReviewReports | Id, ReviewId, ReporterEmail, Reason, CreatedAt, IsResolved |
 | Dynasties | Id, Name, Era, StartYear, EndYear, Description, Achievements, CapitalCity, ImageUrl, **PharaohTag** |
 | HistoricalEvents | Id, Title, Year (int — سالب = BC), Category, Description, ImageUrl, DynastyTag (nullable), PharaohTag (nullable) |
-| Artifacts | Id, Name, OriginLocation, Period, Type, Description, ImageUrl, MuseumName, MuseumLocation *(نص وصفي بس، مش FK حقيقي — أغلب القطع في متاحف عالمية برا نطاق جدول Museums)* |
+| Artifacts | Id, Name, Origin, Period, Category, Description, ImageUrl, Museum, CurrentLocation (+ نسخ Ar لكل حقل نصي) *(⚠️ الأسماء دي هي الصح الموجودة فعليًا في `Artifact.cs` — كان متكتوب هنا قبل كده MuseumName/OriginLocation/Type بالغلط، وده سبب باگ CS1061 في QuizQuestionGeneratorService.cs، اتصحح. الجدول نص وصفي بس، مش FK حقيقي — أغلب القطع في متاحف عالمية برا نطاق جدول Museums)* |
+| QuizHistories | Id, UserEmail, PlayedAt, Score, Total, ScorePercent, Grade, StreakEligible, StreakDays, DiscountPercent, CouponCode *(🆕 جدول دائم — تسجيل كل كويز خلص، أساس فحص "لعب النهاردة؟" وحساب الـ Streak)* |
 
 > ✅ **جزء تكبير/توسيع الداتا بيز خلص بالكامل (كل الجداول أعلاه).**
 > كل الجداول اتراجعت جدول جدول، الأعداد الحقيقية بعد المراجعة: **156 Pharaohs، 29 Temples، 42 Museums، 69 Gods، 58 Artifacts، 35 Dynasties، 56 Historical Events**.
@@ -143,6 +144,7 @@ Views/
 - Dynasties Page ✅ (مكتمل بالكامل)
 - Historical Events ✅ (مكتمل بالكامل)
 - Multi-language (عربي/إنجليزي) ✅ (مكتمل بالكامل)
+- Bank + Shop + Quiz Ecosystem ✅ (مكتمل بالكامل — تفاصيل كاملة في قسمين "🏦 Bank + Shop + Quiz Ecosystem" و"🧠 Quiz Engine")
 
 ---
 
@@ -674,7 +676,7 @@ public List<DailyFact> Facts { get; set; }
 
 ---
 
-## 🏦 Bank + Shop + Quiz Ecosystem — الخطة الكاملة (🚧 قيد التنفيذ)
+## 🏦 Bank + Shop + Quiz Ecosystem — الخطة الكاملة (✅ مكتمل بالكامل — Bank + Shop + Quiz التلاتة خلصوا)
 
 > ده الـ Feature الكبير اللي شغالين عليه دلوقتي بدل ما نكمل الـ Roadmap بترتيبه العادي.
 > القسم ده موجود عشان في أي شات جديد، تبعتلي الملف وأنا أبقى فاهم إحنا واقفين فين بالظبط ومحتاجين نعمل إيه بعد كده.
@@ -918,14 +920,15 @@ bank_service/
         - [x] كل خطوات اللصق (1→9): Models + DbSets + Migration + Controllers + ViewModel +
               Views + Navigation + Localization + Bank Service (مفيهاش تعديل) ✅
         - [x] تاب "Shop" في Admin Panel (Views/Admin/Index.cshtml) بنفس شكل تاب Gods ✅
-[x] 5. بناء الكويز (Quiz) — الكود جاهز (قيد اللصق) ✅:
-        تفاصيل كاملة تحت في "🧠 Quiz System — الكود جاهز (قيد اللصق)":
-        - [x] QuestionGeneratorService — أسئلة بتتولد من الداتابيز الحقيقية وقت الطلب (مفيش جدول Questions) ✅
-        - [x] مستويات صعوبة (Easy/Medium/Hard) كفلتر فوق نفس الداتا ✅
-        - [x] QuizController (Start/Answer) — Session-based + Anti-Cheat كامل (الإجابة الصح متتبعتش للـ Client، Timeout سيرفر-سايد) ✅
-        - [x] View واحد (Views/Quiz/Index.cshtml) — اختيار صعوبة + لعب AJAX + نتيجة ✅
-        - [x] عند نجاح (≥70%) → نداء /coupons/create من الموقع ✅
-        - [x] My Coupons — عرض الأكواد اللي اليوزر جابها في صفحته ✅ (لسه محتاج endpoint البنك + تستنج)
+[x] 5. بناء الكويز (Quiz) ✅ خلص بالكامل ومتستنج — تفاصيل كاملة تحت في
+        "🧠 Quiz Engine — Grade + Streak + خصم متغير (مكتمل)":
+        - [x] Model (Session-only): QuizModels.cs (QuizAttempt/QuizQuestion/QuizChoice) ✅
+        - [x] Model (دائم في الداتابيز): QuizHistory.cs — تسجيل كل كويز خلص (Grade/Streak/Discount) ✅
+        - [x] QuizController.cs: Index/Start/Answer + Anti-Cheat (Timing Analysis) ✅
+        - [x] QuizQuestionGeneratorService.cs — 13 نوع سؤال من كل جداول الداتابيز ✅
+        - [x] Grade System (A+/A/B+/B) بخصم متغير مش ثابت ✅
+        - [x] Streak System (يومي، منفصل عن الكوبون) + حد كويز واحد في اليوم ✅
+        - [x] عرض النتيجة (Grade Badge + Streak + Coupon) في Index.cshtml ✅
 ```
 
 ---
@@ -938,119 +941,76 @@ bank_service/
 - الكوبون مربوط بـ `user_email` — يعني كود اليوزر A مينفعش يستخدمه اليوزر B حتى لو عنده الكود.
 - الـ Refund بيدور على آخر عملية Purchase ناجحة بنفس `related_type` + `related_id` ويرجع نفس قيمتها بالظبط — مفيش حاجة بتتحسب يدويًا.
 - أي تعديل مستقبلي في نسبة الخصم الافتراضية أو مدة الصلاحية يتم من `CouponCreate` schema (`discount_percent`, `valid_days`) — مش Hardcoded جوه المنطق.
+- **حد الكوبون (70%) وحد الاستمرار في الـ Streak (50%) منفصلين تمامًا عن بعض** — ميتلخبطوش في بعض في أي تعديل مستقبلي (تفاصيل كاملة تحت في قسم Quiz Engine).
+- **الـ Quiz History بيتسجل دايمًا في الداتابيز** (نجح أو فشل) — مش Session بس زي الـ Attempt نفسه. ده أساس فحص "لعب النهاردة؟" وحساب الـ Streak، فمينفعش يتشال أو يتاجل حفظه.
 
 ---
 
-## 🧠 Quiz System — الكود جاهز (قيد اللصق)
+## 🧠 Quiz Engine — Grade + Streak + خصم متغير (✅ مكتمل)
 
-> ده تفصيل بند "5. بناء الكويز" فوق. الخطة اتفقنا عليها في شات منفصل قبل التنفيذ، والكود الفعلي
-> اتعمل بعد كده وموجود في مجلد `quiz_integration/` (7 ملفات + INTEGRATION_STEPS.md).
-> القسم ده مرجع لأي شات جديد عشان نبدأ من نفس الفهم بالظبط.
+> ⚠️ **القسم ده موجود عشان في أي شات جديد، تبعتلي الملف وأنا أبقى فاهم إحنا واقفين فين بالظبط.**
 
 ### 🎯 الفكرة الأساسية
-مفيش جدول `Questions` ولا أسئلة متخزنة يدويًا في الداتابيز. الأسئلة بتتولد **لحظة الطلب** من نفس الجداول
-الموجودة فعلاً (Pharaohs / Dynasties / Gods / Temples / Museums / HistoricalEvents / Artifacts)
-عن طريق `QuestionGeneratorService` بيقرا مباشرة من `AppDbContext` وقت الـ Runtime.
+كوبون الكويز مبقاش نسبة ثابتة (كان 20% تابت في البداية) — بقى **متغير** حسب أداء اليوزر، وبقى فيه نظام Streak يومي يشجع الدخول كل يوم، منفصل تمامًا عن نظام الكوبون.
 
-### ✅ إزاي الأسئلة بتتولد
-- كل نوع سؤال عبارة عن **Template** جوه الكود (مش نص جاهز)، وبيتملى من صف حقيقي بيتسحب random من الجدول:
-  - "مين حكم في {Dynasty}؟" → بيدور على Pharaoh فين `Dynasty == X`
-  - "الإله {GodName} بيرمز لإيه؟" → بيسحب `Symbol` من جدول Gods
-  - "معبد {TempleName} موجود فين؟" → بيسحب `Location`
-  - "الحدث ده حصل في أنهي سنة تقريبًا؟" → بيسحب `Year` من HistoricalEvents
-- **الاختيارات الغلط (Distractors)** بتتسحب random من نفس الجدول (مش أسامي وهمية) — يعني لو السؤال
-  عن فرعون في الأسرة 18، الاختيارات الغلط فراعنة حقيقيين من أسر مختلفة.
+### ✅ قرارات اتاخدت فعليًا (خلاص متفق عليها، متتراجعش عنها)
 
-### ✅ إزاي بتفضل Dynamic (تظهر فيها أي إضافة جديدة أوتوماتيك)
-- الـ Generator بيقرا من `_context.Pharaohs` / `_context.Gods` / إلخ وقت التشغيل نفسه، مش وقت الـ Build —
-  فأي صف جديد بيتضاف من Admin Panel بيدخل تلقائيًا في احتمالية الأسئلة من غير أي تعديل في كود الكويز.
-- **مستويات الصعوبة** فلتر فوق نفس الداتا (مش جداول منفصلة):
-  - **Easy** — فراعنة/آلهة مشهورين
-  - **Medium** — تفاصيل زي Dynasty / Period
-  - **Hard** — تواريخ دقيقة + أسئلة بتربط بين جدولين (مثال: HistoricalEvent مربوط بـ PharaohTag)
-- كل ما الداتابيز تكبر، الـ Pool اللي الـ Generator بيسحب منه بيكبر معاها أوتوماتيك، فالتكرار بيقل والتنوع بيزيد.
+| القرار | التفاصيل |
+|---|---|
+| **عدد الأسئلة** | 10 أسئلة لكل كويز (`QuestionsPerQuiz` في `QuizController.cs`) |
+| **الوقت لكل سؤال** | 20 ثانية ثابتة (بغض النظر عن الصعوبة) — التايمر الإجمالي اتقرر إنه مش لازم، لأنه أصلاً محدد ضمنيًا (عدد الأسئلة × الوقت) |
+| **حد الكوبون (Coupon Eligibility)** | 70% صح فأكتر (`PassScorePercent`) — لازم يكون فوقه عشان ياخد كوبون خالص |
+| **حد الـ Streak (Streak Eligibility)** | 🆕 **50%** صح فأكتر (`StreakScorePercent`) — **منفصل تمامًا عن حد الكوبون**. اليوزر ممكن يحافظ على الـ Streak من غير ما ياخد كوبون في نفس اليوم |
+| **ليه فيه فصل بين الحدين** | هدف الـ Streak إنه يبني عادة دخول يومي (زي Duolingo)، مش يقيس تفوق. لو ربطناه بنفس حد الكوبون (70%)، هيبقى صعب جدًا إن اليوزر يحافظ على Streak طويل، وهيضرب الهدف الأساسي (تشجيع الدخول اليومي) |
+| **Grade Tiers (حسب نسبة الكويز نفسه)** | A+ (95-100%) → 25% \| A (85-94%) → 20% \| B+ (75-84%) → 15% \| B (70-74%) → 10% \| أقل من 70% → "Fail" (مفيش كوبون، لكن ممكن الـ Streak يفضل مستمر لو فوق 50%) |
+| **Streak Bonus Tiers** | يوم 1 → +0% \| 3 أيام → +5% \| 5 أيام → +8% \| 7 أيام → +12% \| 14 يوم → +16% \| 30 يوم → +20% (سقف الـ Bonus نفسه) |
+| **سقف الخصم الإجمالي الأقصى** | **35%** (`MaxTotalDiscountPercent`) — Grade Discount + Streak Bonus مع بعض، مهما زادت الأرقام، محدش يعدي الـ 35% (حماية تجارية) |
+| **حد الكويز اليومي** | كويز واحد بس في اليوم لكل يوزر (حسب `PlayedAt.Date`) — بيتحقق منه في `Start()` من آخر سجل في `QuizHistories`، مش من الـ Session (عشان ميتلفش بمسح الكوكيز) |
+| **قطع الـ Streak** | لو اليوزر فوّت يوم كامل (مش النهاردة ولا إمبارح)، أو آخر كويز كان تحت الـ 50%، الـ Streak بيرجع لـ 1 من الأول (زي Duolingo بالظبط — صفر سماح) |
+| **فشل نداء البنك (Bank Service down)** | لو `/coupons/create` فشل، الكوبون بيتلغي (`discountPercent = 0`) بس **الـ Streak مبيتلمسش** — فشل تقني من عندنا مش لازم اليوزر يتعاقب عليه |
+| **مدة صلاحية كوبون الكويز** | 10 أيام (`QuizCouponValidDays`) — أقصر من كوبون المتجر العادي، عشان يشجع الاستخدام بسرعة |
+| **Anti-Cheat** | موجود من الأول (مش جديد): حد أدنى لسرعة الإجابة (0.35 ثانية) + تحليل نمط الأوقات (سرعة/ثبات غير طبيعي مع نتيجة شبه كاملة = مشبوه، الكوبون مبيتديش) |
 
-### 🔐 نظام الحماية ضد الغش (Anti-Cheat) — أهم جزء في التصميم
-**القاعدة الذهبية: الإجابة الصح متتبعتش للـ Client أبدًا.**
-- الـ Server وقت ما بيولّد السؤال بيحفظ (السؤال + الاختيارات + مين الإجابة الصح) في **Session أو جدول
-  QuizAttempt مؤقت** على السيرفر.
-- اللي بيتبعت للمتصفح: نص السؤال + الاختيارات متلخبطة (Shuffle) + ID لكل اختيار بس — من غير أي إشارة
-  لمين الصح، لا في الـ HTML ولا الـ JS ولا في أي network response.
-- المقارنة وقت الإجابة بتحصل في السيرفر بس (مقابل اللي محفوظ في الـ Session)، الـ Score مبيتحسبش من رقم
-  جاي من الـ Client أبدًا.
-- **Session-bound quiz**: كل محاولة ليها Attempt ID مربوط باليوزر — مينفعش حد يفتح تابين ويحل نفس
-  الأسئلة مرتين، ولا يعيد submit بعد ما المحاولة اتقفلت.
-- **Server-side timer**: وقت بداية كل سؤال بيتسجل في السيرفر (مش JS Countdown بس) — إجابة جت بعد
-  الوقت المسموح بترفض كـ Timeout حتى لو صح.
-- **Rate limiting** على الـ Endpoint بتاع الإجابة عشان حد ميحاولش يجرب كل الاحتمالات بسرعة (Brute force).
+### ✅ اللي خلص فعليًا
 
-### ⏳ خطوات التنفيذ (بالترتيب)
 ```
-[x] 1. QuestionGeneratorService — Templates لكل نوع (Pharaoh/Dynasty/God/Temple/Museum/HistoricalEvent) ✅
-[x] 2. QuizAttempt — بيتخزن في الـ Session كـ JSON (مش جدول DB) — السؤال + الإجابة الصح + الوقت سيرفر-سايد ✅
-[x] 3. QuizController — Start (يولد أسئلة) / Answer (يتحقق سيرفر-سايد) ✅
-[x] 4. مستويات الصعوبة (Easy/Medium/Hard) كفلتر فوق الـ Generator ✅
-[x] 5. View واحد بس (Views/Quiz/Index.cshtml) — اختيار صعوبة + لعب AJAX + نتيجة، بدل 3 صفحات منفصلة ✅
-[x] 6. عند Score ≥ 70% → نداء /coupons/create من الموقع (نفس البنك الموجود فعلاً) ✅
-[x] 7. My Coupons — عرض الأكواد اللي اليوزر جابها من الكويز في صفحته ✅ (تفاصيل تحت في "🎟️ My Coupons")
+Models/
+├── QuizModels.cs      ← QuizAttempt/QuizQuestion/QuizChoice — Session-only (JSON)، IsCorrect مبيوصلش للـ Client أبدًا
+└── QuizHistory.cs      ← 🆕 جدول دائم في الداتابيز (مش Session) — بيسجل كل كويز خلص:
+                           Score, Grade, StreakEligible, StreakDays, DiscountPercent, CouponCode, PlayedAt
+                           ده أساس فحص "لعب النهاردة؟" وحساب الـ Streak صح حتى لو الـ Session انتهت
+
+Services/
+└── QuizQuestionGeneratorService.cs   ← 13 نوع سؤال مختلف بيتولدوا من: Pharaohs, Temples, Museums,
+                                          Gods, Dynasties, HistoricalEvents, Artifacts (True/False كمان)
+                                          🐛 اتصلح فيه باگ: كان بيستخدم a.MuseumName (مش موجود في
+                                          Artifact.cs الحقيقي) بدل a.Museum — اتصحح مع دعم Pick(ar/en)
+
+Controllers/
+└── QuizController.cs
+    ├── Index() (GET)   ← 🆕 بيحسب الـ Streak الحالي + هل لعب النهاردة، وبيبعتهم للـ View (ViewBag)
+    ├── Start() (POST)  ← 🆕 بيرفض كويز جديد لو اليوزر لعب النهاردة خلاص (بيتحقق من QuizHistories، مش Session)
+    └── Answer() (POST) ← فيها كل منطق الـ Grade + Streak + الخصم المتغير + نداء /coupons/create
+                            + حفظ QuizHistory دايمًا (نجح أو فشل)
+
+Views/Quiz/
+└── Index.cshtml        ← شاشة البداية بتعرض رسالة الـ Streak الحالي (🔥 أو تشجيع يبدأ واحد جديد)
+                            + تعطيل زرار البدء لو لعب النهاردة خلاص
+                            شاشة النتيجة بتعرض: Grade Badge + Streak Line (مستقل) + Coupon Box (لو استاهل)
 ```
 
-### 🐛 باگين اتصلحوا فعليًا بعد أول تستنج
-1. **`[FromBody]` ناقص** — `Start`/`Answer` كانوا بياخدوا الباراميترز كـ scalar params عادية
-   (`string difficulty`, `string attemptId`...)، لكن الـ JS بيبعت JSON body خام. الـ Model Binding
-   الافتراضي بيدور عليهم في Form/Query بس، فكانوا بيوصلوا `null` كل مرة → `attempt.Id != attemptId`
-   بيفشل فورًا → "Quiz_AttemptExpired" وهمي حتى لو كل حاجة تانية سليمة. **الحل:** عملنا
-   `QuizStartRequest`/`QuizAnswerRequest` DTOs وحطينا `[FromBody]` عليهم. ✅ اتصلح.
-2. **الإيموجيز بتظهر كـ `&#x2705;` بدل الرمز** — أي `@Html.L(...)` فيه إيموجي (✅/❌/⏱️) لما بيتحط
-   جوه JS string literal داخل `<script>`، الـ `HtmlEncoder` بيحوّله لـ HTML entity، وده مش HTML text
-   node فمبيتفكّش. **الحل:** بنعمل `JsonSerializer.Serialize` لكل الـ strings دي في كلاس `QuizStrings`
-   جوه الـ `@{ }` ونحقنها بـ `Html.Raw` بدل ما نحطها مباشرة جوه علامات تنصيص JS. ✅ اتصلح.
-
-### ✅ اللي خلص فعليًا (كود جاهز للصق — مجلد `quiz_integration/`)
-- `Models/QuizModels.cs` — `QuizChoice` / `QuizQuestion` / `QuizAttempt` (Transient، بتتسريلايز للـ Session بـ `JsonSerializer`)
-- `Services/QuizQuestionGeneratorService.cs` — 6 Generators (Pharaoh↔Dynasty، God↔Symbol، Temple↔Location، Museum↔Location، Dynasty↔Era، HistoricalEvent↔Year) بيقروا مباشرة من `AppDbContext` وقت الطلب + Distractors حقيقية من نفس الجدول
-- `Controllers/QuizController.cs` — `Index` / `Start` (POST) / `Answer` (POST) — الأمان كامل زي المتفق عليه: `IsCorrect` مبيتبعتش للـ Client، Session-bound Attempt، Timeout بمقارنة وقت السيرفر بس، منع تخطي/إعادة إجابة سؤال، + `[FromBody]` DTOs بعد إصلاح الباگ
-- `Views/Quiz/Index.cshtml` — صفحة واحدة AJAX (اختيار صعوبة → لعب → نتيجة) مع تايمر UX (الحقيقي في السيرفر) + `QuizStrings` (JSON-safe) بعد إصلاح الإيموجيز
-- `BankModels.cs` (نسخة كاملة) — `CouponCreateResult` + `CouponListItem` DTOs (⚠️ لسه محتاج تأكيد إن أسامي الحقول مطابقة لخدمة البنك بايثون)
-- `NEW_LOCALIZATION_KEYS_QUIZ.md` — كل مفاتيح الترجمة الجديدة (`Nav_Quiz`, `Quiz_*`)
-- `INTEGRATION_STEPS.md` — خطوات اللصق كاملة (نسخ الملفات + تسجيل الـ Service في `Program.cs` + لينك الـ Navbar + دمج الترجمة)
-- `_ViewImports.cshtml` — ضفنا `@using pharaohsLegacy.Extensions` عشان `Html.L()` يشتغل في أي View جديدة من غير ما تحتاج تكرره يدويًا في كل ملف
-
-**✅ اتجرب فعليًا وشغال بعد الإصلاحين فوق.**
-
-### ⚠️ Key Rules — Quiz System
-- مفيش جدول Questions ثابت — كل حاجة Generated من الجداول الأساسية وقت الطلب.
-- الإجابة الصح ومكانها **ممنوع تتبعت للـ Client** تحت أي ظرف (لا في JSON ولا Hidden Field ولا JS).
-- التحقق من الإجابة والـ Score بيحصلوا في السيرفر بس.
-- الكوبون الناتج من الكويز بيتبع نفس قواعد الكوبون الموجودة فعلاً (Single-use + صلاحية 10 أيام + مربوط بـ user_email).
-- أي نص فيه إيموجي وهيتحط جوه `<script>` لازم يعدي على `JsonSerializer.Serialize` + `Html.Raw`، مش يتحط مباشرة جوه `@Html.L(...)` وسط علامات تنصيص JS.
-
----
-
-## 🎟️ My Coupons — الكود جاهز (قيد اللصق)
-
-> صفحة مستقلة (`/Coupon/MyCoupons`) — بالظبط زي `/Shop/MyOrders` — بتعرض كل الكوبونات اللي
-> اليوزر كسبها (من الكويز حاليًا، وأي مصدر تاني مستقبلي). مش تاب داخلي جوه `Dashboard.cshtml`
-> عشان الداتا جايه من خدمة البنك مباشرة، مش من `AppDbContext`.
-
-### ⚠️ شرط أساسي — لسه معلّق
-كل حاجة هنا مبنية على افتراض وجود endpoint في خدمة البنك (بايثون):
+**✅ Migrations المطلوبة (اتعملت):**
+```bash
+dotnet ef migrations add AddQuizHistory
+dotnet ef migrations add AddStreakEligibleToQuizHistory
+dotnet ef database update
 ```
-GET /coupons/user/{email}
+
+**مفاتيح ترجمة جديدة اتضافت في `ar.json` / `en.json`:**
 ```
-بيرجع Array من `{ code, discount_percent, expires_at, is_used }` لكل كوبونات الإيميل ده.
-**لو مش موجود عندك في `main.py` أصلاً، الصفحة هترجع 404 وتعرض "مفيش كوبونات" لحتى اليوزرز
-اللي عندهم فعلاً** — يعني لازم يتضاف هناك الأول قبل ما "My Coupons" يبقى شغال حقيقي.
-
-### ✅ اللي خلص فعليًا (كود جاهز للصق — مجلد `coupons_integration/`)
-- `Controllers/CouponController.cs` — `MyCoupons()` بينادي `GET coupons/user/{email}` من البنك، Best-effort (لو البنك مقفول، بتعرض رسالة اتصال واضحة مش تكسر)
-- `Views/Coupon/MyCoupons.cshtml` — كارت لكل كوبون (نسبة الخصم + الكود قابل للنسخ بدوسة + تاريخ الانتهاء + حالة نشط/مستخدم/منتهي)
-- `BankModels.cs` — `CouponListItem` DTO مضافة (نسخة كاملة، جنب `CouponCreateResult`)
-- `UserController.cs` (نسخة كاملة) — `ViewBag.TotalCoupons` بيتحسب في `Dashboard()` (نفس Best-effort pattern بتاع `ViewBag.TotalOrders`)
-- `Dashboard.cshtml` (نسخة كاملة) — تاب "🎟️ كوبوناتي" جديد بعد تاب "🛍️ My Orders" مباشرة، مع Badge بعدد الكوبونات النشطة
-- `NEW_LOCALIZATION_KEYS_COUPONS.md` + `INTEGRATION_STEPS_COUPONS.md`
-
-**لسه محتاج:** (1) الـ endpoint فوق في خدمة البنك، (2) تستنج يدوي بعد اللصق.
+Quiz_AlreadyPlayedToday, Quiz_NoCouponMessage, Quiz_DiscountEarned,
+Quiz_StreakDays, Quiz_CurrentStreakActive, Quiz_CurrentStreakNone
+```
 
 ---
 
@@ -1532,11 +1492,11 @@ UPDATE ShopOrders SET ConfirmedAt = CreatedAt WHERE Status = 'Confirmed' AND Con
 [x] 10. Daily Fact (Home Page) ✅ — تفاصيل كاملة في قسم "Daily Fact" تحت
 [x] Shop System ✅ — خلص بالكامل بما فيه Categories (مرحلة 2)، Offers & Badges (مرحلة 3)، وWishlist/Breadcrumbs/SKU (مرحلة 4)، تفاصيل في قسم "🛍️ Shop System" و"🎯 خطة احتراف الـ Shop" فوق
 
-🚧 دلوقتي شغالين على باقي Bank + Quiz Ecosystem (الـ Shop خلص بالكامل وطلع بره القايمة دي)
+✅ Bank + Quiz Ecosystem كامل خلص (الـ Shop خلص من قبل كمان)
     (تفاصيل كاملة في قسم "🏦 Bank + Shop + Quiz Ecosystem" فوق)
-    ده بيغطي البنود 11 و18 تحت مع بعض
+    ده كان بيغطي البنود 11 و18 تحت مع بعض
 
-[ ] 11. Quiz تفاعلي            → جزء من الـ Ecosystem الجديد فوق
+[x] 11. Quiz تفاعلي ✅ خلص  → تفاصيل في قسم "🧠 Quiz Engine — Grade + Streak + خصم متغير (مكتمل)" فوق
 [ ] 12. Email Confirmation + QR Code
 [ ] 13. Analytics Dashboard (Admin)
 [ ] 14. AI Trip Planner

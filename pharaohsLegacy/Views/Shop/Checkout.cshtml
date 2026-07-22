@@ -46,7 +46,7 @@
                 </div>
                 <div class="checkout-totals-row">
                     <span>@Html.L("Shop_Checkout_Shipping")</span>
-                    <span id="ckShipping">—</span>
+                    <span id="ckShipping" class="ck-shipping-pending">@Html.L("Shop_Checkout_SelectGovernorate")</span>
                 </div>
                 <div class="checkout-totals-row" id="ckDiscountRow" style="display:none; color:#3fae5a;">
                     <span>@Html.L("Shop_Checkout_Discount")</span>
@@ -178,6 +178,7 @@
     .checkout-totals-row { display: flex; justify-content: space-between; font-size: .92rem; color: var(--muted); margin-bottom: .7rem; }
     .checkout-grand-total { font-family: 'Cinzel', serif; font-size: 1.1rem; color: var(--text); margin-top: .7rem; }
     .checkout-grand-total span:last-child { color: var(--gold); font-weight: 800; font-size: 1.25rem; }
+    .ck-shipping-pending { font-style: italic; opacity: .65; font-size: .88em; }
 
     .checkout-form-wrap { background: linear-gradient(160deg, var(--dark3), var(--dark)); border: 1px solid var(--border); border-radius: 14px; padding: 1.8rem 1.8rem 2rem; }
 
@@ -205,6 +206,8 @@
     .coupon-row .btn-outline { padding: 0 1.4rem; white-space: nowrap; font-family: 'Cinzel', serif; font-size: .74rem; font-weight: 600; letter-spacing: 1px; border-radius: 8px; background: transparent; cursor: pointer; }
     .coupon-row .btn-outline:disabled { opacity: .5; cursor: not-allowed; }
     .coupon-msg { margin-top: .6rem; font-size: .88rem; min-height: 1.2em; }
+    #couponCode.input-valid { border-color: #3fae5a !important; box-shadow: 0 0 0 3px rgba(63,174,90,.14) !important; }
+    #couponCode.input-invalid { border-color: #e0685a !important; box-shadow: 0 0 0 3px rgba(224,104,90,.14) !important; }
     .coupon-msg.success { color: #3fae5a; }
     .coupon-msg.error { color: #e0685a; }
     .confirm-hint { display: block; text-align: center; margin-top: .7rem; font-size: .82rem; color: var(--muted); }
@@ -250,7 +253,12 @@
     function fmt(n) { return toLocalDigits(Math.round(n * 100) / 100) + ' ' + currencyLabel; }
 
     function updateTotals() {
-        document.getElementById('ckShipping').textContent = fmt(shippingFee);
+        var shippingEl = document.getElementById('ckShipping');
+        var governorateChosen = document.getElementById('governorate').value !== '';
+        if (governorateChosen) {
+            shippingEl.classList.remove('ck-shipping-pending');
+            shippingEl.textContent = fmt(shippingFee);
+        }
         var total = subtotal + shippingFee;
         var discountRow = document.getElementById('ckDiscountRow');
 
@@ -386,8 +394,10 @@
     });
 
     document.getElementById('applyCouponBtn').addEventListener('click', async function () {
-        var code = document.getElementById('couponCode').value.trim();
+        var codeInput = document.getElementById('couponCode');
+        var code = codeInput.value.trim();
         var msgEl = document.getElementById('couponMsg');
+        codeInput.classList.remove('input-valid', 'input-invalid');
         if (!code) {
             msgEl.textContent = @js("Booking_Coupon_Empty");
             msgEl.className = 'coupon-msg error';
@@ -401,17 +411,20 @@
             if (data.valid) {
                 appliedDiscountPercent = data.discountPercent || 0;
                 updateTotals();
+                codeInput.classList.add('input-valid');
                 msgEl.textContent = @(js("Booking_Coupon_Applied")).replace('{0}', toLocalDigits(data.discountPercent));
                 msgEl.className = 'coupon-msg success';
             } else {
                 appliedDiscountPercent = 0;
                 updateTotals();
+                codeInput.classList.add('input-invalid');
                 msgEl.textContent = data.message || @js("Booking_Coupon_Invalid");
                 msgEl.className = 'coupon-msg error';
             }
         } catch (err) {
             appliedDiscountPercent = 0;
             updateTotals();
+            codeInput.classList.add('input-invalid');
             msgEl.textContent = @js("Booking_Coupon_Error");
             msgEl.className = 'coupon-msg error';
         }
@@ -419,6 +432,7 @@
 
     // 🆕 لو المستخدم عدّل كود الكوبون بعد ما طبّقه، لازم يدوس Apply تاني — منسيبش خصم قديم شغال على كود اتغيّر
     document.getElementById('couponCode').addEventListener('input', function () {
+        this.classList.remove('input-valid', 'input-invalid');
         if (appliedDiscountPercent > 0) {
             appliedDiscountPercent = 0;
             updateTotals();

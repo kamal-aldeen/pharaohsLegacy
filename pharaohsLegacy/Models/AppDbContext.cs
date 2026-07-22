@@ -32,6 +32,7 @@ namespace pharaohsLegacy.Models
         public DbSet<ShopPayment> ShopPayments { get; set; }
         public DbSet<CartItem> CartItems { get; set; } // 🆕 سلة المشتريات
         public DbSet<ShopOrderItem> ShopOrderItems { get; set; } // 🆕 عناصر الأوردر (منتج واحد أو أكتر)
+        public DbSet<QuizHistory> QuizHistories { get; set; } // 🆕 تاريخ الكويز الدائم (Grade + Streak + Discount)
 
 
 

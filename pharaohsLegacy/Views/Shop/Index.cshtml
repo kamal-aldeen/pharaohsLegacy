@@ -108,25 +108,22 @@
             var favMap = (Dictionary<int, int>)ViewBag.FavoriteMap;
             bool canFav = ViewBag.CanFavorite == true;
             bool isFav = canFav && favMap.ContainsKey(p.Id);
+
+            // 🆕 أولوية الـ Badges: Sale > Best Seller > New > Featured — وحد أقصى 2 عشان الكارت الصغير مايتزدحمش
+            var badgeList = new List<(string cls, string key, bool isPercent)>();
+            if (hasDiscount) badgeList.Add(("badge-sale", "", true));
+            if (p.IsBestSeller) badgeList.Add(("badge-bestseller", "Shop_Badge_BestSeller", false));
+            if (p.IsNew) badgeList.Add(("badge-new", "Shop_Badge_New", false));
+            if (p.IsFeatured) badgeList.Add(("badge-featured", "Shop_Badge_Featured", false));
+            badgeList = badgeList.Take(2).ToList();
+
             <a class="shop-card" href="/Shop/Details/@p.Id">
                 <div class="shop-card-img @(p.StockQuantity <= 0 ? "is-out" : "")">
                     <img src="@p.ImageUrl" alt="@name" />
                     <div class="shop-card-badges">
-                        @if (hasDiscount)
+                        @foreach (var b in badgeList)
                         {
-                            <span class="shop-badge badge-sale">-@discountPct%</span>
-                        }
-                        @if (p.IsNew)
-                        {
-                            <span class="shop-badge badge-new">@Html.L("Shop_Badge_New")</span>
-                        }
-                        @if (p.IsBestSeller)
-                        {
-                            <span class="shop-badge badge-bestseller">@Html.L("Shop_Badge_BestSeller")</span>
-                        }
-                        @if (p.IsFeatured)
-                        {
-                            <span class="shop-badge badge-featured">@Html.L("Shop_Badge_Featured")</span>
+                            <span class="shop-badge @b.cls">@(b.isPercent ? $"-{discountPct}%" : Html.L(b.key))</span>
                         }
                     </div>
                     @if (canFav)

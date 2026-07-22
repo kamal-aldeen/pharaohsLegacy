@@ -12,23 +12,40 @@
         correct = Html.L("Quiz_Correct"),
         wrong = Html.L("Quiz_Wrong"),
         timeUp = Html.L("Quiz_TimeUp"),
-        finished = Html.L("Quiz_Finished")
+        finished = Html.L("Quiz_Finished"),
+        easy = Html.L("Quiz_Easy"),
+        medium = Html.L("Quiz_Medium"),
+        hard = Html.L("Quiz_Hard"),
+        noCoupon = Html.L("Quiz_NoCouponMessage"),
+        discountTemplate = Html.L("Quiz_DiscountEarned"),
+        streakTemplate = Html.L("Quiz_StreakDays")
     });
 }
 
 <div class="quiz-wrap">
     <form id="quizAntiForgery">@Html.AntiForgeryToken()</form>
 
-    <h1 class="quiz-title">𓂀 @Html.L("Quiz_Title")</h1>
+    <div class="quiz-title-row">
+        <h1 class="quiz-title">𓂀 @Html.L("Quiz_Title")</h1>
+    </div>
+    <button type="button" id="quizInfoBtn" class="quiz-info-btn">
+        <span class="quiz-info-btn-icon">ⓘ</span>
+        <span>@Html.L("Quiz_HowItWorks_Title")</span>
+    </button>
 
-    <!-- ============ شاشة 1: اختيار الصعوبة ============ -->
-    <div id="quizDifficultyScreen" class="quiz-card">
-        <p class="quiz-subtitle">@Html.L("Quiz_SelectDifficulty")</p>
-        <div class="quiz-difficulty-options">
-            <button type="button" class="quiz-diff-btn" data-difficulty="Easy">🟢 @Html.L("Quiz_Easy")</button>
-            <button type="button" class="quiz-diff-btn" data-difficulty="Medium">🟡 @Html.L("Quiz_Medium")</button>
-            <button type="button" class="quiz-diff-btn" data-difficulty="Hard">🔴 @Html.L("Quiz_Hard")</button>
-        </div>
+    <!-- ============ شاشة 1: ابدأ الكويز (بلا اختيار صعوبة — بيتحدد تلقائيًا) ============ -->
+    <div id="quizStartScreen" class="quiz-card">
+        <p class="quiz-streak-banner">@ViewBag.StreakMessage</p>
+        <p class="quiz-subtitle">@Html.L("Quiz_Intro")</p>
+        @if ((bool)(ViewBag.AlreadyPlayedToday ?? false))
+        {
+            <p class="quiz-already-played">@ViewBag.AlreadyPlayedMessage</p>
+            <button type="button" class="quiz-diff-btn quiz-start-btn" disabled>@Html.L("Quiz_Start")</button>
+        }
+        else
+        {
+            <button type="button" id="quizStartBtn" class="quiz-diff-btn quiz-start-btn">@Html.L("Quiz_Start")</button>
+        }
         <p id="quizStartError" class="quiz-error" style="display:none"></p>
     </div>
 
@@ -36,6 +53,7 @@
     <div id="quizPlayScreen" class="quiz-card" style="display:none">
         <div class="quiz-progress">
             <span id="quizProgressText"></span>
+            <span id="quizDifficultyBadge" class="quiz-diff-badge"></span>
             <span id="quizTimer" class="quiz-timer"></span>
         </div>
         <h2 id="quizQuestionText" class="quiz-question"></h2>
@@ -47,11 +65,60 @@
     <div id="quizResultScreen" class="quiz-card" style="display:none">
         <h2 id="quizResultTitle" class="quiz-question"></h2>
         <p id="quizResultScore" class="quiz-subtitle"></p>
+        <div id="quizGradeBadge" class="quiz-grade-badge" style="display:none"></div>
+        <div id="quizStreakLine" class="quiz-streak-line" style="display:none"></div>
         <div id="quizCouponBox" class="quiz-coupon-box" style="display:none">
             <p>🎁 @Html.L("Quiz_CouponWon")</p>
             <div id="quizCouponCode" class="quiz-coupon-code"></div>
+            <div id="quizDiscountLine" class="quiz-discount-line"></div>
         </div>
+        <p id="quizNoCouponMsg" class="quiz-error" style="display:none"></p>
         <button type="button" id="quizRetryBtn" class="quiz-diff-btn">@Html.L("Quiz_TryAgain")</button>
+    </div>
+
+    <!-- ============ Modal: إزاي الكويز شغال ============ -->
+    <div id="quizInfoOverlay" class="quiz-modal-overlay" style="display:none">
+        <div class="quiz-modal" role="dialog" aria-modal="true" aria-labelledby="quizInfoTitle">
+            <button type="button" id="quizInfoClose" class="quiz-modal-close" aria-label="@Html.L("Quiz_Close")">&times;</button>
+
+            <h3 id="quizInfoTitle" class="quiz-modal-title">@Html.L("Quiz_HowItWorks_Title")</h3>
+
+            <div class="quiz-quickfacts">
+                <div class="quiz-quickfact"><span class="quiz-quickfact-icon">📝</span><span>@Html.L("Quiz_HowItWorks_Fact1")</span></div>
+                <div class="quiz-quickfact"><span class="quiz-quickfact-icon">⏱️</span><span>@Html.L("Quiz_HowItWorks_Fact2")</span></div>
+                <div class="quiz-quickfact"><span class="quiz-quickfact-icon">📅</span><span>@Html.L("Quiz_HowItWorks_Fact3")</span></div>
+            </div>
+
+            <div class="quiz-modal-section">
+                <h4 class="quiz-modal-section-title">🎁 @Html.L("Quiz_HowItWorks_CouponTitle")</h4>
+                <p class="quiz-modal-section-desc">@Html.L("Quiz_HowItWorks_CouponDesc")</p>
+                <div class="quiz-tier-grid">
+                    <div class="quiz-tier-chip tier-ap"><span>A+</span><small>95-100%</small><b>25%</b></div>
+                    <div class="quiz-tier-chip tier-a"><span>A</span><small>85-94%</small><b>20%</b></div>
+                    <div class="quiz-tier-chip tier-bp"><span>B+</span><small>75-84%</small><b>15%</b></div>
+                    <div class="quiz-tier-chip tier-b"><span>B</span><small>70-74%</small><b>10%</b></div>
+                </div>
+            </div>
+
+            <div class="quiz-modal-section">
+                <h4 class="quiz-modal-section-title">🔥 @Html.L("Quiz_HowItWorks_StreakTitle")</h4>
+                <p class="quiz-modal-section-desc">@Html.L("Quiz_HowItWorks_StreakDesc")</p>
+                <div class="quiz-tier-grid quiz-tier-grid-streak">
+                    <div class="quiz-tier-chip tier-streak"><small>@Html.L("Quiz_Day") 1</small><b>+0%</b></div>
+                    <div class="quiz-tier-chip tier-streak"><small>3 @Html.L("Quiz_Days")</small><b>+5%</b></div>
+                    <div class="quiz-tier-chip tier-streak"><small>5 @Html.L("Quiz_Days")</small><b>+8%</b></div>
+                    <div class="quiz-tier-chip tier-streak"><small>7 @Html.L("Quiz_Days")</small><b>+12%</b></div>
+                    <div class="quiz-tier-chip tier-streak"><small>14 @Html.L("Quiz_Days")</small><b>+16%</b></div>
+                    <div class="quiz-tier-chip tier-streak"><small>30 @Html.L("Quiz_Days")</small><b>+20%</b></div>
+                </div>
+                <p class="quiz-modal-warning">⚠️ @Html.L("Quiz_HowItWorks_StreakBreak")</p>
+            </div>
+
+            <div class="quiz-modal-footnote">
+                <p>💰 @Html.L("Quiz_HowItWorks_MaxNote")</p>
+                <p>🛡️ @Html.L("Quiz_HowItWorks_AntiCheat")</p>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -60,16 +127,26 @@
     .quiz-title { text-align: center; color: #d4af37; font-size: 2rem; margin-bottom: 1.5rem; }
     .quiz-card { background: #14110c; border: 1px solid #3a2f1f; border-radius: 14px; padding: 2rem; box-shadow: 0 8px 24px rgba(0,0,0,.35); }
     .quiz-subtitle { text-align: center; color: #cbb98a; margin-bottom: 1.5rem; font-size: 1.05rem; }
-    .quiz-difficulty-options { display: flex; flex-direction: column; gap: .9rem; }
     .quiz-diff-btn {
         background: #221c12; border: 1px solid #d4af37; color: #f2e6c9; padding: .9rem 1rem;
         border-radius: 10px; font-size: 1rem; cursor: pointer; transition: all .2s;
     }
     .quiz-diff-btn:hover { background: #d4af37; color: #14110c; }
+    .quiz-diff-btn:disabled { opacity: .6; cursor: default; }
+    .quiz-start-btn { display: block; margin: 0 auto; padding: .9rem 2.5rem; font-size: 1.05rem; }
     .quiz-error { color: #e77; text-align: center; margin-top: 1rem; }
+    .quiz-streak-banner { text-align: center; color: #e0a92e; font-weight: bold; margin-bottom: .8rem; font-size: 1rem; }
+    .quiz-already-played { text-align: center; color: #cbb98a; margin-bottom: 1rem; }
 
-    .quiz-progress { display: flex; justify-content: space-between; color: #cbb98a; margin-bottom: 1rem; font-size: .9rem; }
+    .quiz-progress { display: flex; align-items: center; justify-content: space-between; color: #cbb98a; margin-bottom: 1rem; font-size: .9rem; gap: .5rem; }
     .quiz-timer { font-weight: bold; color: #d4af37; }
+    .quiz-diff-badge {
+        font-size: .78rem; font-weight: bold; padding: .2rem .6rem; border-radius: 20px;
+        border: 1px solid currentColor;
+    }
+    .quiz-diff-badge.easy { color: #4caf50; }
+    .quiz-diff-badge.medium { color: #e0a92e; }
+    .quiz-diff-badge.hard { color: #e57373; }
     .quiz-question { color: #f2e6c9; font-size: 1.25rem; margin-bottom: 1.25rem; }
     .quiz-choices { display: flex; flex-direction: column; gap: .7rem; }
     .quiz-choice-btn {
@@ -84,6 +161,91 @@
 
     .quiz-coupon-box { text-align: center; margin: 1.5rem 0; padding: 1rem; border: 1px dashed #d4af37; border-radius: 10px; }
     .quiz-coupon-code { font-size: 1.4rem; letter-spacing: 2px; color: #d4af37; font-weight: bold; margin-top: .5rem; }
+    .quiz-discount-line { color: #cbb98a; margin-top: .6rem; font-size: .95rem; }
+    .quiz-streak-line { color: #e0a92e; margin-top: .3rem; font-size: .9rem; font-weight: bold; }
+    .quiz-grade-badge {
+        display: inline-block; margin: .5rem auto 1rem; padding: .3rem 1rem; border-radius: 20px;
+        border: 1px solid #d4af37; color: #d4af37; font-weight: bold; font-size: 1.1rem; text-align: center;
+    }
+
+    /* ===== Info Button + How-It-Works Modal ===== */
+    .quiz-title-row { display: flex; align-items: center; justify-content: center; margin-bottom: .6rem; }
+    .quiz-title-row .quiz-title { margin-bottom: 0; }
+
+    .quiz-info-btn {
+        display: flex; align-items: center; justify-content: center; gap: .45rem;
+        margin: 0 auto 1.4rem; padding: .55rem 1.2rem;
+        background: linear-gradient(180deg, #2a2211, #1a1509);
+        border: 1px solid #d4af37; color: #f2e6c9; border-radius: 30px;
+        font-size: .92rem; font-weight: 600; cursor: pointer;
+        box-shadow: 0 0 0 rgba(212,175,55,.5);
+        animation: quizInfoPulse 2.2s ease-in-out 3;
+        transition: background .2s, transform .15s;
+    }
+    .quiz-info-btn:hover { background: #d4af37; color: #14110c; transform: translateY(-1px); }
+    .quiz-info-btn-icon { font-size: 1.15rem; color: #d4af37; }
+    .quiz-info-btn:hover .quiz-info-btn-icon { color: #14110c; }
+
+    @@keyframes quizInfoPulse {
+        0%   { box-shadow: 0 0 0 0 rgba(212,175,55,.55); }
+        60%  { box-shadow: 0 0 0 9px rgba(212,175,55,0); }
+        100% { box-shadow: 0 0 0 0 rgba(212,175,55,0); }
+    }
+
+    .quiz-modal-overlay {
+        position: fixed; inset: 0; background: rgba(8, 6, 3, .72); backdrop-filter: blur(2px);
+        display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 1rem;
+    }
+    .quiz-modal {
+        background: #171208; border: 1px solid #3a2f1f; border-radius: 16px; padding: 1.75rem;
+        max-width: 480px; width: 100%; max-height: 85vh; overflow-y: auto; position: relative;
+        box-shadow: 0 20px 50px rgba(0,0,0,.5);
+    }
+    .quiz-modal-close {
+        position: absolute; inset-inline-end: 1rem; top: .9rem; background: none; border: none;
+        color: #cbb98a; font-size: 1.6rem; line-height: 1; cursor: pointer; padding: 0;
+    }
+    .quiz-modal-close:hover { color: #d4af37; }
+    .quiz-modal-title { color: #d4af37; font-size: 1.25rem; margin: 0 0 1.1rem; text-align: center; }
+
+    .quiz-quickfacts { display: flex; justify-content: space-between; gap: .5rem; margin-bottom: 1.4rem; }
+    .quiz-quickfact {
+        flex: 1; display: flex; flex-direction: column; align-items: center; gap: .3rem;
+        text-align: center; color: #cbb98a; font-size: .78rem; background: #1f1810;
+        border: 1px solid #2e2717; border-radius: 10px; padding: .6rem .3rem;
+    }
+    .quiz-quickfact-icon { font-size: 1.2rem; }
+
+    .quiz-modal-section { margin-bottom: 1.3rem; }
+    .quiz-modal-section-title { color: #f2e6c9; font-size: 1rem; margin: 0 0 .3rem; }
+    .quiz-modal-section-desc { color: #a8977a; font-size: .82rem; margin: 0 0 .7rem; line-height: 1.5; }
+
+    .quiz-tier-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem; }
+    .quiz-tier-grid-streak { grid-template-columns: repeat(3, 1fr); }
+    .quiz-tier-chip {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        background: #221c12; border: 1px solid #3a2f1f; border-radius: 10px; padding: .5rem .3rem;
+        gap: .15rem;
+    }
+    .quiz-tier-chip span { font-weight: bold; font-size: .95rem; color: #f2e6c9; }
+    .quiz-tier-chip small { color: #8c7c5c; font-size: .68rem; }
+    .quiz-tier-chip b { color: #d4af37; font-size: .95rem; }
+    .quiz-tier-chip.tier-ap { border-color: #d4af37; }
+    .quiz-tier-chip.tier-streak b { color: #e0a92e; }
+
+    .quiz-modal-warning { color: #cf8d8d; font-size: .76rem; margin: .6rem 0 0; line-height: 1.4; }
+
+    .quiz-modal-footnote {
+        border-top: 1px solid #2e2717; padding-top: 1rem; margin-top: 1rem;
+    }
+    .quiz-modal-footnote p { color: #a8977a; font-size: .8rem; margin: 0 0 .5rem; line-height: 1.5; }
+
+    @@media (max-width: 480px) {
+        .quiz-quickfacts { flex-direction: column; }
+        .quiz-quickfact { flex-direction: row; justify-content: flex-start; text-align: start; }
+        .quiz-tier-grid { grid-template-columns: repeat(2, 1fr); }
+        .quiz-tier-grid-streak { grid-template-columns: repeat(2, 1fr); }
+    }
 </style>
 
 <script>
@@ -93,7 +255,7 @@
     const antiForgeryToken = document.querySelector('#quizAntiForgery input[name="__RequestVerificationToken"]').value;
 
     const screens = {
-        difficulty: document.getElementById('quizDifficultyScreen'),
+        start: document.getElementById('quizStartScreen'),
         play: document.getElementById('quizPlayScreen'),
         result: document.getElementById('quizResultScreen'),
     };
@@ -115,20 +277,41 @@
         return res.json();
     }
 
-    document.querySelectorAll('.quiz-diff-btn[data-difficulty]').forEach(btn => {
-        btn.addEventListener('click', () => startQuiz(btn.dataset.difficulty));
+    // ===== How-It-Works Modal =====
+    const infoBtn = document.getElementById('quizInfoBtn');
+    const infoOverlay = document.getElementById('quizInfoOverlay');
+    const infoClose = document.getElementById('quizInfoClose');
+
+    function openInfoModal() { infoOverlay.style.display = 'flex'; }
+    function closeInfoModal() { infoOverlay.style.display = 'none'; }
+
+    if (infoBtn) infoBtn.addEventListener('click', openInfoModal);
+    if (infoClose) infoClose.addEventListener('click', closeInfoModal);
+    if (infoOverlay) {
+        infoOverlay.addEventListener('click', (e) => {
+            if (e.target === infoOverlay) closeInfoModal();
+        });
+    }
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && infoOverlay && infoOverlay.style.display !== 'none') closeInfoModal();
     });
 
+    const startBtn = document.getElementById('quizStartBtn');
+    if (startBtn) startBtn.addEventListener('click', startQuiz);
+
     document.getElementById('quizRetryBtn').addEventListener('click', () => {
-        showScreen('difficulty');
+        showScreen('start');
         document.getElementById('quizStartError').style.display = 'none';
     });
 
-    async function startQuiz(difficulty) {
+    async function startQuiz() {
         const errorBox = document.getElementById('quizStartError');
         errorBox.style.display = 'none';
+        startBtn.disabled = true; // 🆕 يمنع دبل-كليك يعمل محاولتين مرة واحدة
 
-        const data = await postJson('/Quiz/Start', { difficulty });
+        const data = await postJson('/Quiz/Start', {});
+        startBtn.disabled = false;
+
         if (!data.success) {
             errorBox.textContent = data.message;
             errorBox.style.display = 'block';
@@ -139,8 +322,18 @@
         renderQuestion(data.question);
     }
 
+    function difficultyBadge(difficulty) {
+        const el = document.getElementById('quizDifficultyBadge');
+        const key = (difficulty || '').toLowerCase();
+        el.className = 'quiz-diff-badge ' + key;
+        const icon = key === 'easy' ? '🟢' : key === 'hard' ? '🔴' : '🟡';
+        const label = key === 'easy' ? QuizStrings.easy : key === 'hard' ? QuizStrings.hard : QuizStrings.medium;
+        el.textContent = `${icon} ${label}`;
+    }
+
     function renderQuestion(q) {
         document.getElementById('quizProgressText').textContent = `${q.index + 1} / ${q.total}`;
+        difficultyBadge(q.difficulty);
         document.getElementById('quizQuestionText').textContent = q.text;
         document.getElementById('quizFeedback').style.display = 'none';
 
@@ -222,12 +415,36 @@
         document.getElementById('quizResultScore').textContent =
             `${data.score} / ${data.total}`;
 
+        const gradeBadge = document.getElementById('quizGradeBadge');
+        if (data.grade && data.grade !== 'Fail') {
+            gradeBadge.style.display = 'inline-block';
+            gradeBadge.textContent = data.grade;
+        } else {
+            gradeBadge.style.display = 'none';
+        }
+
+        // 🆕 الـ Streak بيظهر مستقل تمامًا عن الكوبون — ممكن يستمر حتى لو معملش كوبون النهاردة
+        const streakLine = document.getElementById('quizStreakLine');
+        if (data.streakDays && data.streakDays >= 1) {
+            streakLine.style.display = 'block';
+            streakLine.textContent = '🔥 ' + QuizStrings.streakTemplate.replace('{0}', data.streakDays);
+        } else {
+            streakLine.style.display = 'none';
+        }
+
         const couponBox = document.getElementById('quizCouponBox');
+        const noCouponMsg = document.getElementById('quizNoCouponMsg');
+
         if (data.couponCode) {
             couponBox.style.display = 'block';
+            noCouponMsg.style.display = 'none';
             document.getElementById('quizCouponCode').textContent = data.couponCode;
+            document.getElementById('quizDiscountLine').textContent =
+                QuizStrings.discountTemplate.replace('{0}', data.couponDiscount);
         } else {
             couponBox.style.display = 'none';
+            noCouponMsg.style.display = 'block';
+            noCouponMsg.textContent = QuizStrings.noCoupon;
         }
     }
 })();

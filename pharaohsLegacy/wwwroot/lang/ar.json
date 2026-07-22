@@ -566,7 +566,29 @@
   "Coupon_Off": "خصم",
   "Coupon_ExpiresOn": "بينتهي في",
   "Coupon_TapToCopy": "دوس عشان تنسخ",
-  "Shop_Checkout_Discount": "الخصم"
+  "Shop_Checkout_Discount": "الخصم",
+  "Quiz_Intro": "اختبر معلوماتك عن مصر القديمة. يبدأ الكويز بأسئلة سهلة ثم تزداد صعوبة مع تقدمك!",
+  "Quiz_Start": "ابدأ الكويز",
+  "Quiz_AlreadyPlayedToday": "لعبت الكويز النهاردة خلاص! ارجع بكرة تكمّل الاستمرارية 🔥",
+  "Quiz_NoCouponMessage": "محتاج تجيب 70% صح على الأقل عشان تاخد كوبون. جرب تاني بكرة!",
+  "Quiz_DiscountEarned": "خصمك: {0}%",
+  "Quiz_StreakDays": "{0} يوم متتالي",
+  "Quiz_CurrentStreakActive": "🔥 عندك Streak {0} يوم متتالي! خلّيه مستمر",
+  "Quiz_CurrentStreakNone": "ابدأ Streak جديد النهاردة!",
+  "Quiz_HowItWorks_Title": "إزاي الكويز شغال؟",
+  "Quiz_Close": "إغلاق",
+  "Quiz_Day": "يوم",
+  "Quiz_Days": "أيام",
+  "Quiz_HowItWorks_Fact1": "10 أسئلة لكل كويز",
+  "Quiz_HowItWorks_Fact2": "20 ثانية للسؤال",
+  "Quiz_HowItWorks_Fact3": "كويز واحد باليوم",
+  "Quiz_HowItWorks_CouponTitle": "كوبون الخصم",
+  "Quiz_HowItWorks_CouponDesc": "جاوب صح على 70% فأكتر عشان تستحق كوبون — قيمته بتتحدد حسب نتيجتك:",
+  "Quiz_HowItWorks_StreakTitle": "الشعلة اليومية",
+  "Quiz_HowItWorks_StreakDesc": "مستقلة تمامًا عن الكوبون — حافظ عليها بنتيجة 50% فأكتر كل يوم واكسب بونص إضافي:",
+  "Quiz_HowItWorks_StreakBreak": "لو فوّت يوم أو نزلت نتيجتك تحت 50%، الشعلة بترجع من الأول.",
+  "Quiz_HowItWorks_MaxNote": "أقصى خصم إجمالي ممكن تجمعه (كوبون + شعلة) هو 35%.",
+  "Quiz_HowItWorks_AntiCheat": "إجابات سريعة بشكل غير طبيعي ممكن تتحسب غش ويتلغى الكوبون."
 
 
 

@@ -571,7 +571,29 @@
   "Coupon_Off": "OFF",
   "Coupon_ExpiresOn": "Expires on",
   "Coupon_TapToCopy": "Tap to copy",
-  "Shop_Checkout_Discount": "Discount"
+  "Shop_Checkout_Discount": "Discount",
+  "Quiz_Intro": "Test your knowledge of Ancient Egypt. The quiz starts easy and gets harder as you go!",
+  "Quiz_Start": "Start Quiz",
+  "Quiz_AlreadyPlayedToday": "You already played today! Come back tomorrow to keep your streak going 🔥",
+  "Quiz_NoCouponMessage": "You need at least 70% correct to earn a coupon. Try again tomorrow!",
+  "Quiz_DiscountEarned": "Your discount: {0}%",
+  "Quiz_StreakDays": "{0} day streak",
+  "Quiz_CurrentStreakActive": "🔥 You're on a {0}-day streak! Keep it going",
+  "Quiz_CurrentStreakNone": "Start a new streak today!",
+  "Quiz_HowItWorks_Title": "How does the quiz work?",
+  "Quiz_Close": "Close",
+  "Quiz_Day": "day",
+  "Quiz_Days": "days",
+  "Quiz_HowItWorks_Fact1": "10 questions per quiz",
+  "Quiz_HowItWorks_Fact2": "20 seconds per question",
+  "Quiz_HowItWorks_Fact3": "One quiz per day",
+  "Quiz_HowItWorks_CouponTitle": "Discount coupon",
+  "Quiz_HowItWorks_CouponDesc": "Score 70% or higher to qualify for a coupon — the value depends on your grade:",
+  "Quiz_HowItWorks_StreakTitle": "Daily streak",
+  "Quiz_HowItWorks_StreakDesc": "Fully separate from the coupon — keep it alive with 50%+ each day and earn an extra bonus:",
+  "Quiz_HowItWorks_StreakBreak": "Miss a day, or score under 50%, and your streak resets to 1.",
+  "Quiz_HowItWorks_MaxNote": "The maximum total discount (coupon + streak) is capped at 35%.",
+  "Quiz_HowItWorks_AntiCheat": "Unusually fast answers may be flagged as cheating and cancel the coupon."
 
 
 

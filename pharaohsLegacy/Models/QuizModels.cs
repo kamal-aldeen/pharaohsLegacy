@@ -34,11 +34,21 @@ namespace pharaohsLegacy.Models
     {
         public string Id { get; set; } = Guid.NewGuid().ToString("N");
         public string UserEmail { get; set; } = "";
+
+        // ⚠️ مبقاش بيتحدد ولا بيتستخدم بعد التحويل لصعوبة تلقائية مختلطة لكل كويز —
+        // كل سؤال بقى ليه Difficulty خاص بيه جوه QuizQuestion نفسه. سايبينه هنا
+        // (بياخد القيمة الافتراضية Easy) عشان مايكسرش أي كود تاني بيقرا منه.
         public QuizDifficulty Difficulty { get; set; }
+
         public List<QuizQuestion> Questions { get; set; } = new();
         public int CurrentIndex { get; set; } = 0;
         public DateTime StartedAt { get; set; } = DateTime.Now;
         public bool Finished { get; set; } = false;
         public int TimeLimitSeconds { get; set; } = 20; // لكل سؤال
+
+        // 🔐 Anti-Cheat: وقت كل إجابة بالثواني، بالترتيب — بيتستخدم في
+        // QuizController.IsSuspiciousTimingPattern عشان نكشف نمط بوت/سكريبت
+        // (سرعة غير طبيعية أو ثبات غير طبيعي في التوقيت) قبل ما نديله الكوبون.
+        public List<double> AnswerTimesSeconds { get; set; } = new();
     }
 }

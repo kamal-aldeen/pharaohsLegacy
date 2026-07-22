@@ -40,24 +40,21 @@
             var discountPct = hasDiscount ? (int)Math.Round((1 - (Model.Price / Model.OriginalPrice.Value)) * 100) : 0;
             const int lowStockThreshold = 5;
         }
+        @{
+            // 🆕 نفس أولوية الـ Badges المستخدمة في Index.cshtml: Sale > Best Seller > New > Featured — حد أقصى 2
+            var badgeList = new List<(string cls, string key, bool isPercent)>();
+            if (hasDiscount) badgeList.Add(("badge-sale", "", true));
+            if (Model.IsBestSeller) badgeList.Add(("badge-bestseller", "Shop_Badge_BestSeller", false));
+            if (Model.IsNew) badgeList.Add(("badge-new", "Shop_Badge_New", false));
+            if (Model.IsFeatured) badgeList.Add(("badge-featured", "Shop_Badge_Featured", false));
+            badgeList = badgeList.Take(2).ToList();
+        }
         <div class="details-img">
             <img src="@ViewBag.ProductImage" alt="@ViewBag.ProductName" />
             <div class="details-badges">
-                @if (hasDiscount)
+                @foreach (var b in badgeList)
                 {
-                    <span class="shop-badge badge-sale">-@discountPct%</span>
-                }
-                @if (Model.IsNew)
-                {
-                    <span class="shop-badge badge-new">@Html.L("Shop_Badge_New")</span>
-                }
-                @if (Model.IsBestSeller)
-                {
-                    <span class="shop-badge badge-bestseller">@Html.L("Shop_Badge_BestSeller")</span>
-                }
-                @if (Model.IsFeatured)
-                {
-                    <span class="shop-badge badge-featured">@Html.L("Shop_Badge_Featured")</span>
+                    <span class="shop-badge @b.cls">@(b.isPercent ? $"-{discountPct}%" : Html.L(b.key))</span>
                 }
             </div>
             @{

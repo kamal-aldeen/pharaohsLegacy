@@ -28,7 +28,11 @@
 
     @if (!Model.Any())
     {
-        <p class="shop-empty">@Html.L("Shop_NoOrders")</p>
+        <div class="shop-empty-state">
+            <div class="shop-empty-glyph">𓆓</div>
+            <p>@Html.L("Shop_NoOrders")</p>
+            <a href="/Shop/Index" class="btn-gold">@Html.L("Shop_Cart_ContinueShopping")</a>
+        </div>
     }
     else
     {
@@ -190,7 +194,9 @@
     .shop-hero-divider::before, .shop-hero-divider::after { content: ''; flex: 1; max-width: 90px; height: 1px; background: linear-gradient(90deg, transparent, rgba(var(--gold-rgb),.55)); }
     .shop-hero-divider::after { background: linear-gradient(90deg, rgba(var(--gold-rgb),.55), transparent); }
     .shop-hero-divider span { font-size: 1.1rem; opacity: .85; }
-    .shop-empty { text-align: center; color: var(--muted); margin-top: 3rem; font-size: 1.05rem; }
+    .shop-empty-state { text-align: center; padding: 5rem 1rem; color: var(--muted); }
+    .shop-empty-glyph { font-size: 2.6rem; margin-bottom: 1rem; opacity: .7; }
+    .shop-empty-state p { margin-bottom: 1.5rem; font-size: 1.05rem; }
 
     .breadcrumbs { font-size: .82rem; color: var(--muted); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .breadcrumbs a { color: var(--muted); text-decoration: none; }
