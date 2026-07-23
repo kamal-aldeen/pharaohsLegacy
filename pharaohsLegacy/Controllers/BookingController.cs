@@ -137,11 +137,17 @@ namespace pharaohsLegacy.Controllers
             if (placeName == null)
                 return NotFound();
 
+            // 🆕 السعر بقى بييجي من جدول Prices بدل ما يكون ثابت هنا — 150/100 قيمة احتياطية بس
+            // لو معملش سعر للمكان ده لسه
+            var createPriceRecord = await _db.Prices
+                .FirstOrDefaultAsync(p => p.PlaceType == placeType && p.PlaceId == placeId);
+            decimal ticketPriceForView = createPriceRecord?.Amount ?? (placeType == "Temple" ? 150 : 100);
+
             ViewBag.PlaceType = placeType;
             ViewBag.PlaceId = placeId;
             ViewBag.PlaceName = placeName;
             ViewBag.PlaceImage = placeImage;
-            ViewBag.TicketPrice = placeType == "Temple" ? 150 : 100;
+            ViewBag.TicketPrice = ticketPriceForView;
 
             return View();
         }
@@ -212,7 +218,10 @@ namespace pharaohsLegacy.Controllers
                 if (numberOfTickets < 1 || numberOfTickets > 10)
                     return Json(new { success = false, message = _loc.Get("Booking_InvalidTickets", lang) });
 
-                int existingTicketPrice = booking.PlaceType == "Temple" ? 150 : 100;
+                // 🆕 السعر بقى بييجي من جدول Prices بدل الرقم الثابت
+                var existingPriceRecord = await _db.Prices
+                    .FirstOrDefaultAsync(p => p.PlaceType == booking.PlaceType && p.PlaceId == booking.PlaceId);
+                decimal existingTicketPrice = existingPriceRecord?.Amount ?? (booking.PlaceType == "Temple" ? 150 : 100);
                 booking.VisitDate = visitDate;
                 booking.NumberOfTickets = numberOfTickets;
                 booking.TotalPrice = existingTicketPrice * numberOfTickets;
@@ -226,7 +235,10 @@ namespace pharaohsLegacy.Controllers
                 if (numberOfTickets < 1 || numberOfTickets > 10)
                     return Json(new { success = false, message = _loc.Get("Booking_InvalidTickets", lang) });
 
-                int ticketPrice = placeType == "Temple" ? 150 : 100;
+                // 🆕 السعر بقى بييجي من جدول Prices بدل الرقم الثابت
+                var newPriceRecord = await _db.Prices
+                    .FirstOrDefaultAsync(p => p.PlaceType == placeType && p.PlaceId == placeId);
+                decimal ticketPrice = newPriceRecord?.Amount ?? (placeType == "Temple" ? 150 : 100);
 
                 booking = new Booking
                 {

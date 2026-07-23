@@ -84,6 +84,20 @@ namespace pharaohsLegacy.Controllers
                 }
             }
 
+            // 🆕 أسعار المعابد والمتاحف الحالية — تتعرض جنب كل صف في تابي Temples/Museums
+            // ViewBag[TemplePrices][temple.Id] => السعر، وهكذا للمتاحف
+            // بنستخدم GroupBy بدل ToDictionaryAsync مباشرة كحماية إضافية لو حصل تكرار
+            // (لو الـ Unique Index اتفعّل صح، التكرار مش المفروض يحصل من الأساس)
+            var templePricesRaw = await _context.Prices.Where(p => p.PlaceType == "Temple").ToListAsync();
+            ViewBag.TemplePrices = templePricesRaw
+                .GroupBy(p => p.PlaceId)
+                .ToDictionary(g => g.Key, g => g.First().Amount);
+
+            var museumPricesRaw = await _context.Prices.Where(p => p.PlaceType == "Museum").ToListAsync();
+            ViewBag.MuseumPrices = museumPricesRaw
+                .GroupBy(p => p.PlaceId)
+                .ToDictionary(g => g.Key, g => g.First().Amount);
+
             var vm = new AdminOverviewViewModel
             {
                 TotalUsers = await _context.Users.CountAsync(u => u.Email != AdminEmail),
@@ -202,6 +216,12 @@ namespace pharaohsLegacy.Controllers
             model.ImageUrl = model.ImageUrl ?? "";
             _context.Temples.Add(model);
             await _context.SaveChangesAsync();
+
+            // 🆕 نضيف سعر افتراضي (150) للمعبد الجديد في جدول Prices عشان ميفضلش من غير
+            // سعر مسجل — الأدمن يقدر يعدله بعدين من EditPrice
+            _context.Prices.Add(new Price { PlaceType = "Temple", PlaceId = model.Id, Amount = 150 });
+            await _context.SaveChangesAsync();
+
             TempData["Success"] = "Temple added successfully!";
             return RedirectToAction("Index", new { tab = "temples" });
         }
@@ -239,11 +259,44 @@ namespace pharaohsLegacy.Controllers
         {
             if (!IsAdmin()) return Unauthorized();
             var item = await _context.Temples.FindAsync(id);
-            if (item != null) { _context.Temples.Remove(item); await _context.SaveChangesAsync(); }
+            if (item != null)
+            {
+                _context.Temples.Remove(item);
+
+                // 🆕 نمسح السعر المرتبط بيه من جدول Prices عشان ميفضلش صف يتيم
+                var relatedPrice = await _context.Prices
+                    .FirstOrDefaultAsync(p => p.PlaceType == "Temple" && p.PlaceId == id);
+                if (relatedPrice != null) _context.Prices.Remove(relatedPrice);
+
+                await _context.SaveChangesAsync();
+            }
             TempData["Success"] = "Temple deleted.";
             return RedirectToAction("Index", new { tab = "temples" });
         }
 
+
+        // ──────────────────────────────
+        // 🆕 PRICE — تعديل سعر أي معبد أو متحف (جدول Prices واحد للاتنين)
+        // ──────────────────────────────
+
+        [HttpPost]
+        public async Task<IActionResult> EditPrice(string placeType, int placeId, decimal amount)
+        {
+            if (!IsAdmin()) return Unauthorized();
+            if (placeType != "Temple" && placeType != "Museum") return BadRequest();
+
+            var existing = await _context.Prices
+                .FirstOrDefaultAsync(p => p.PlaceType == placeType && p.PlaceId == placeId);
+
+            if (existing == null)
+                _context.Prices.Add(new Price { PlaceType = placeType, PlaceId = placeId, Amount = amount });
+            else
+                existing.Amount = amount;
+
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "Price updated successfully!";
+            return RedirectToAction("Index", new { tab = placeType == "Temple" ? "temples" : "museums" });
+        }
 
         [HttpPost]
         public async Task<IActionResult> AddMuseum(Museum model)
@@ -256,6 +309,12 @@ namespace pharaohsLegacy.Controllers
             model.ImageUrl = model.ImageUrl ?? "";
             _context.Museums.Add(model);
             await _context.SaveChangesAsync();
+
+            // 🆕 نضيف سعر افتراضي (100) للمتحف الجديد في جدول Prices عشان ميفضلش من غير
+            // سعر مسجل — الأدمن يقدر يعدله بعدين من EditPrice
+            _context.Prices.Add(new Price { PlaceType = "Museum", PlaceId = model.Id, Amount = 100 });
+            await _context.SaveChangesAsync();
+
             TempData["Success"] = "Museum added successfully!";
             return RedirectToAction("Index", new { tab = "museums" });
         }
@@ -294,7 +353,17 @@ namespace pharaohsLegacy.Controllers
         {
             if (!IsAdmin()) return Unauthorized();
             var item = await _context.Museums.FindAsync(id);
-            if (item != null) { _context.Museums.Remove(item); await _context.SaveChangesAsync(); }
+            if (item != null)
+            {
+                _context.Museums.Remove(item);
+
+                // 🆕 نمسح السعر المرتبط بيه من جدول Prices عشان ميفضلش صف يتيم
+                var relatedPrice = await _context.Prices
+                    .FirstOrDefaultAsync(p => p.PlaceType == "Museum" && p.PlaceId == id);
+                if (relatedPrice != null) _context.Prices.Remove(relatedPrice);
+
+                await _context.SaveChangesAsync();
+            }
             TempData["Success"] = "Museum deleted.";
             return RedirectToAction("Index", new { tab = "museums" });
         }

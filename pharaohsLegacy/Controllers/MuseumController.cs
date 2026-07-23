@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using pharaohsLegacy.Models;
 
@@ -26,6 +26,11 @@ namespace pharaohsLegacy.Controllers
                 .Where(m => m.Category == "World")
                 .ToList();
 
+            // 🆕 أسعار كل المتاحف دفعة واحدة (PlaceId -> Amount)
+            ViewBag.Prices = context.Prices
+                .Where(p => p.PlaceType == "Museum")
+                .ToDictionary(p => p.PlaceId, p => p.Amount);
+
             return View();
         }
         public async Task<IActionResult> Details(int id)
@@ -42,6 +47,12 @@ namespace pharaohsLegacy.Controllers
 
             ViewBag.IsFav = fav != null;
             ViewBag.FavId = fav?.Id ?? 0;
+
+            // 🆕 السعر بقى بييجي من جدول Prices بدل ما يكون ثابت في الـ View — 100 قيمة احتياطية بس
+            // لو معملش سعر للمتحف ده لسه (في الأدمن أو الـ SQL)
+            var priceRecord = await context.Prices
+                .FirstOrDefaultAsync(p => p.PlaceType == "Museum" && p.PlaceId == id);
+            ViewBag.Price = priceRecord?.Amount ?? 100;
 
             // ✅ Reviews
             var reviews = await context.Reviews

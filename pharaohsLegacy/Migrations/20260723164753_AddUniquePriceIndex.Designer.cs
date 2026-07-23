@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using pharaohsLegacy.Models;
 
@@ -11,9 +12,11 @@ using pharaohsLegacy.Models;
 namespace pharaohsLegacy.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260723164753_AddUniquePriceIndex")]
+    partial class AddUniquePriceIndex
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -579,9 +582,6 @@ namespace pharaohsLegacy.Migrations
 
                     b.Property<int>("PlaceId")
                         .HasColumnType("int");
-
-                    b.Property<string>("PlaceName")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PlaceType")
                         .IsRequired()

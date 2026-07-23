@@ -5,6 +5,7 @@
     var egyptian = ViewBag.Egyptian as List<pharaohsLegacy.Models.Museum>;
     var lang = Context.Session.GetString("Lang") ?? "en";
     var arrowNext = lang == "ar" ? "←" : "→";
+    var prices = ViewBag.Prices as Dictionary<int, decimal> ?? new Dictionary<int, decimal>();
 }
 
 @section Styles {
@@ -124,6 +125,7 @@
         var mCategory = (lang == "ar" && !string.IsNullOrEmpty(m.CategoryAr)) ? m.CategoryAr : m.Category;
         var mSearchName = $"{m.Name} {m.NameAr}".ToLower();
         var mSearchSub = $"{m.Location} {m.LocationAr}".ToLower();
+        var mPrice = prices.TryGetValue(m.Id, out var mPr) ? mPr : 100;
         <a href="/Museum/Details/@m.Id" class="pg-card"
            data-name="@mSearchName" data-sub="@mSearchSub">
             <div class="pg-card-img">
@@ -131,7 +133,7 @@
                      onerror="this.src='https://via.placeholder.com/400x300/2d1a08/c9a227?text=@mName'" />
                 <div class="pg-card-img-overlay"></div>
                 <span class="pg-card-location">📍 @mLocation</span>
-                <span class="pg-card-ticket">🎟 @Html.Digits(100) @Html.L("Common_EGP")</span>
+                <span class="pg-card-ticket">🎟 @Html.Digits(mPrice) @Html.L("Common_EGP")</span>
             </div>
             <div class="pg-card-body">
                 <span class="pg-card-tag">🏛️ @mCategory</span>

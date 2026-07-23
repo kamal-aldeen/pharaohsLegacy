@@ -1133,7 +1133,7 @@ JavaScript تفتح Modal التعديل.       *@
         <table class="adm-table" id="templesTable">
             <thead><tr>
                 <th style="width:60px;">Image</th>
-                <th>Name</th><th>Location</th><th>Period</th><th style="width:140px;">Actions</th>
+                <th>Name</th><th>Location</th><th>Period</th><th style="width:110px;">Price (EGP)</th><th style="width:140px;">Actions</th>
             </tr></thead>
             <tbody>
             @foreach (var t in Model.Temples)
@@ -1144,6 +1144,17 @@ JavaScript تفتح Modal التعديل.       *@
                     <td><div class="adm-name-cell">@t.Name</div></td>
                     <td><div class="adm-sub-cell">📍 @t.Location</div></td>
                     <td><div class="adm-sub-cell">@t.Period</div></td>
+                    <td>
+                        <form method="post" action="/Admin/EditPrice" style="display:flex;gap:4px;align-items:center;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="placeType" value="Temple" />
+                            <input type="hidden" name="placeId" value="@t.Id" />
+                            <input type="number" step="0.01" min="0" name="amount" class="adm-input"
+                                   style="width:80px;padding:6px 8px;"
+                                   value="@(((IDictionary<int, decimal>)ViewBag.TemplePrices).TryGetValue(t.Id, out var tp) ? tp : 150)" />
+                            <button type="submit" class="adm-btn adm-btn-edit" style="padding:6px 10px;" title="Save price">💾</button>
+                        </form>
+                    </td>
                     <td>
                         <div class="adm-actions">
                             <button class="adm-btn adm-btn-edit"
@@ -1195,7 +1206,7 @@ JavaScript تفتح Modal التعديل.       *@
         <table class="adm-table" id="museumsTable">
             <thead><tr>
                 <th style="width:60px;">Image</th>
-                <th>Name</th><th>Location</th><th>Founded</th><th>Category</th><th style="width:140px;">Actions</th>
+                <th>Name</th><th>Location</th><th>Founded</th><th>Category</th><th style="width:110px;">Price (EGP)</th><th style="width:140px;">Actions</th>
             </tr></thead>
             <tbody>
             @foreach (var m in Model.Museums)
@@ -1207,6 +1218,17 @@ JavaScript تفتح Modal التعديل.       *@
                     <td><div class="adm-sub-cell">📍 @m.Location</div></td>
                     <td><div class="adm-sub-cell">@m.Founded</div></td>
                     <td><div class="adm-sub-cell">@m.Category</div></td>
+                    <td>
+                        <form method="post" action="/Admin/EditPrice" style="display:flex;gap:4px;align-items:center;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="placeType" value="Museum" />
+                            <input type="hidden" name="placeId" value="@m.Id" />
+                            <input type="number" step="0.01" min="0" name="amount" class="adm-input"
+                                   style="width:80px;padding:6px 8px;"
+                                   value="@(((IDictionary<int, decimal>)ViewBag.MuseumPrices).TryGetValue(m.Id, out var mp) ? mp : 100)" />
+                            <button type="submit" class="adm-btn adm-btn-edit" style="padding:6px 10px;" title="Save price">💾</button>
+                        </form>
+                    </td>
                     <td>
                         <div class="adm-actions">
                             <button class="adm-btn adm-btn-edit"

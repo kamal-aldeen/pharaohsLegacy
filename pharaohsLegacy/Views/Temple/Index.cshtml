@@ -5,6 +5,7 @@
     ViewData["Title"] = "Temples";
     var lang = Context.Session.GetString("Lang") ?? "en";
     var arrowNext = lang == "ar" ? "←" : "→";
+    var prices = ViewBag.Prices as Dictionary<int, decimal> ?? new Dictionary<int, decimal>();
 }
 
 @section Styles {
@@ -139,6 +140,7 @@
         var tDescription = (lang == "ar" && !string.IsNullOrEmpty(t.DescriptionAr)) ? t.DescriptionAr : t.Description;
         var tSearchName = $"{t.Name} {t.NameAr}".ToLower();
         var tSearchSub = $"{t.Location} {t.LocationAr}".ToLower();
+        var tPrice = prices.TryGetValue(t.Id, out var tPr) ? tPr : 150;
         <a href="/Temple/Details/@t.Id" class="pg-card"
            data-name="@tSearchName" data-sub="@tSearchSub">
             <div class="pg-card-img">
@@ -146,7 +148,7 @@
                      onerror="this.src='https://via.placeholder.com/400x300/2d1a08/c9a227?text=@tName'" />
                 <div class="pg-card-img-overlay"></div>
                 <span class="pg-card-location">📍 @tLocation</span>
-                <span class="pg-card-ticket">🎟 @Html.Digits(150) @Html.L("Common_EGP")</span>
+                <span class="pg-card-ticket">🎟 @Html.Digits(tPrice) @Html.L("Common_EGP")</span>
             </div>
             <div class="pg-card-body">
                 <span class="pg-card-tag">🛕 @Html.L("Common_Temple")</span>

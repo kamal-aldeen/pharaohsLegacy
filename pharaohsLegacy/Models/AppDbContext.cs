@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace pharaohsLegacy.Models
 {
@@ -16,6 +16,7 @@ namespace pharaohsLegacy.Models
         public DbSet<Museum> Museums { get; set; }
         public DbSet<Booking> Bookings { get; set; }
         public DbSet<Payment> Payments { get; set; }
+        public DbSet<Price> Prices { get; set; } // 🆕 سعر التذكرة لكل معبد/متحف (PlaceType + PlaceId)
         public DbSet<God> Gods { get; set; }
         public DbSet<Artifact> Artifacts { get; set; }
         public DbSet<Review> Reviews { get; set; }
@@ -38,6 +39,12 @@ namespace pharaohsLegacy.Models
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // 🆕 منع تكرار السعر لنفس المكان نهائيًا على مستوى الداتا بيز
+            // (Composite Unique Index على PlaceType + PlaceId)
+            modelBuilder.Entity<Price>()
+                .HasIndex(p => new { p.PlaceType, p.PlaceId })
+                .IsUnique();
+
             
             modelBuilder.Entity<Pharaoh>().HasData(
                 new Pharaoh

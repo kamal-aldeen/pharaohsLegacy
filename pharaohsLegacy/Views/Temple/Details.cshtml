@@ -146,7 +146,7 @@
             <div class="det-price-badge">
                 <div>
                     <div class="det-price-label">@Html.L("Common_TicketPrice")</div>
-                    <div class="det-price-val">@Html.Digits(150) @Html.L("Common_EGP")</div>
+                    <div class="det-price-val">@Html.Digits((object)ViewBag.Price) @Html.L("Common_EGP")</div>
                 </div>
                 <span style="font-size:1.5rem;">🎟</span>
             </div>
