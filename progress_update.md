@@ -145,6 +145,7 @@ Views/
 - Historical Events ✅ (مكتمل بالكامل)
 - Multi-language (عربي/إنجليزي) ✅ (مكتمل بالكامل)
 - Bank + Shop + Quiz Ecosystem ✅ (مكتمل بالكامل — تفاصيل كاملة في `BANK_SHOP_QUIZ_DETAILS.md`)
+- Email Confirmation + QR Code (E-Ticket) ✅ (مكتمل بالكامل — تفاصيل كاملة تحت في قسم "Email Confirmation + QR Code")
 
 ---
 
@@ -732,7 +733,6 @@ public List<DailyFact> Facts { get; set; }
 ## 🔜 الجاي — واحدة واحدة بالترتيب ده
 
 ```
-[ ] 12. Email Confirmation + QR Code
 [ ] 13. Analytics Dashboard (Admin)
 [ ] 14. AI Trip Planner
 [ ] 15. Notification System
@@ -754,6 +754,63 @@ public List<DailyFact> Facts { get; set; }
 ---
 
 > كل الـ features التانية الكتيرة (3D / AR / Metaverse / Microservices / ...) موجودة في قسم **المرجع الكامل** تحت — للتوثيق بس، مش للتنفيذ دلوقتي.
+
+---
+
+## 🎫 Email Confirmation + QR Code (بند 12) — ✅ مكتمل بالكامل
+
+> الفيتشر ده خلص تمامًا. القسم ده بقى توثيق لما اتعمل فعليًا — عشان في أي شات جديد تبعتلي الملف وأنا أبقى فاهم إحنا واقفين فين.
+
+### 🎯 الفكرة الأساسية
+- **Email Confirmation:** إيميل تأكيد حقيقي بيتبعت بعد نجاح الدفع (نفس مبدأ إرسال الـ OTP الموجود أصلاً في `email_service.py` بتاع البنك).
+- **QR Code:** مش مجرد كود بيتعرض، ده **E-Ticket حقيقي** — زي تذكرة طيران/حفلة. اليوزر بيفتح الكود بالتليفون ويلاقي تذكرته (الاسم، الإيميل، عدد التذاكر، التوتال، حالة الدفع).
+
+### ✅ قرارات اتاخدت وطُبّقت فعليًا
+| القرار | التفاصيل |
+|---|---|
+| **محتوى الـ QR** | **مش** بيانات الحجز خام جوه الكود. الكود بيشيل **لينك فريد بس** (`/Booking/Ticket/{id}?token=...`) |
+| **مصدر بيانات التذكرة** | Live من الداتابيز وقت فتح اللينك — لو الحجز اتلغى بعدين، التذكرة تعرض الحالة الصح فورًا |
+| **الأمان** | حقل `TicketToken` (Guid?) في `Booking.cs` — بيتولد لما الحجز يبقى `Confirmed` لأول مرة (جوه `Confirm()` في `BookingController.cs`)، وبرضه لو رجع Confirmed من تراجع عن إلغاء (جوه `BookingStatusService.ToConfirmedAsync`) |
+| **المكتبة** | `QRCoder` (NuGet, v1.6.0) — بتحول اللينك لصورة PNG مباشرة عن طريق Action منفصل `TicketQr` |
+| **مكان الظهور** | زرار "🎫 عرض التذكرة" جنب كل حجز `Confirmed` في **مكانين**: `MyBookings.cshtml` و`Dashboard.cshtml` (الـ Bookings tab) |
+
+### 🗂️ الملفات اللي اتعدلت (خريطة كاملة)
+
+**ASP.NET Core (الموقع الرئيسي):**
+- `Models/Booking.cs` — إضافة `public Guid? TicketToken { get; set; }`
+- `Services/BookingStatusService.cs` — توليد التوكن لو الحجز رجع Confirmed من إلغاء (`ToConfirmedAsync`)
+- `Controllers/BookingController.cs` —
+  - توليد التوكن أول مرة في `Confirm()` بعد نجاح الدفع
+  - Action جديد `Ticket(int id, string token)` — بيرجع صفحة التذكرة (بيتحقق من تطابق التوكن قبل أي حاجة)
+  - Action جديد `TicketQr(int id, string token)` — بيرجع صورة QR كـ PNG مباشرة (لينكها هو نفس رابط `Ticket`)
+  - في نهاية `Confirm()` (بعد نجاح الدفع)، نداء best-effort لـ `notifications/booking-confirmation` في خدمة البنك — جوه `try/catch` عشان لو الإيميل فشل الحجز يفضل ناجح عادي
+- `Views/Booking/Ticket.cshtml` — 🆕 View جديد بالكامل، صفحة التذكرة (الاسم/الإيميل/التاريخ/عدد التذاكر/التوتال/الحالة + صورة QR)
+- `Views/Booking/MyBookings.cshtml` — زرار "🎫 عرض التذكرة" (`.btn-ticket` CSS جديد) جنب أي حجز Confirmed
+- `ViewModels/DashboardViewModel.cs` — إضافة `TicketToken` لـ `BookingCardViewModel`
+- `Controllers/UserController.cs` — تمرير `TicketToken` من `Booking` لـ `BookingCardViewModel` جوه `Dashboard()`
+- `Views/User/Dashboard.cshtml` — زرار "🎫 عرض التذكرة" (`.btn-gold`) جنب زرار الإلغاء في الـ Bookings tab
+- `pharaohsLegacy.csproj` — إضافة `<PackageReference Include="QRCoder" Version="1.6.0" />`
+- Migration: `AddTicketTokenToBooking` ✅
+
+**Localization (لازم تتضاف يدويًا في `wwwroot/lang/ar.json` و`en.json`):**
+- `Booking_ViewTicketBtn` = "عرض التذكرة" / "View Ticket" (لـ `MyBookings.cshtml`)
+- `Dash_ViewTicket` = "عرض التذكرة" / "View Ticket" (لـ `Dashboard.cshtml`)
+
+**Bank Service (Python/FastAPI):**
+- `email_service.py` — دالة جديدة `send_booking_confirmation_email()`، نفس أسلوب `send_otp_email()` بالظبط (SMTP + نص وHTML بالتصميم الدهبي)
+- `schemas.py` — Schema جديد `BookingConfirmationEmailRequest` (section جديد "Notifications")
+- `main.py` — Endpoint جديد `POST /notifications/booking-confirmation` (section جديد "Notifications"، بين `/payments/refund` و`/coupons/create`) — مش عملية بنكية، مفيش account ولا Transaction، مجرد إرسال إيميل
+
+### 🔍 Flow الإيميل بالظبط (عشان الرجوع له بسرعة)
+1. الدفع ينجح في `Confirm()` (C#)
+2. `Confirm()` بينادي `POST /notifications/booking-confirmation` في خدمة البنك، ببيانات الحجز + لينك التذكرة
+3. الـ endpoint بينادي `send_booking_confirmation_email()`
+4. الدالة دي بتبعت SMTP مباشر (نفس `.env` بتاع OTP: `SMTP_EMAIL` / `SMTP_PASSWORD`)
+5. الإيميل فيه نسخة نص + HTML، وفيه زرار "🎫 عرض التذكرة" بيودّي على `/Booking/Ticket/{id}?token=...`
+
+### ⚠️ حاجات لسه محتاجة قرار (مش من ضمن السكوب الحالي)
+- شكل الـ Shop (لو هيتطبق نفس الفكرة على أوردرات المتجر مش الحجوزات بس) — لسه مقرّرناش.
+- ✅ تصميم الإيميل اتقرر: HTML Template احترافي (مش نص عادي) — نفس تصميم الـ OTP الدهبي.
 
 ---
 
