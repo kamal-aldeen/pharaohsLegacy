@@ -117,7 +117,8 @@ namespace pharaohsLegacy.Controllers
             {
                 Name = register.Name,
                 Email = register.Email,
-                Password = register.Password
+                Password = register.Password,
+                CreatedAt = DateTime.Now // 🆕 Analytics Dashboard (بند 13)
             };
 
             context.Users.Add(user);

@@ -98,6 +98,120 @@ namespace pharaohsLegacy.Controllers
                 .GroupBy(p => p.PlaceId)
                 .ToDictionary(g => g.Key, g => g.First().Amount);
 
+            // 🆕 حوّشناهم local هنا (بدل ما يتعملوا query جوه الـ initializer بس) عشان نعيد
+            // استخدامهم في حساب الـ Analytics (خصوصًا Reviews name-lookup) من غير Query زيادة
+            var pharaohsList = await _context.Pharaohs.OrderBy(p => p.Name).ToListAsync();
+            var templesList = await _context.Temples.OrderBy(t => t.Name).ToListAsync();
+            var museumsList = await _context.Museums.OrderBy(m => m.Name).ToListAsync();
+            var godsList = await _context.Gods.OrderBy(g => g.Name).ToListAsync();
+
+            // ──────────────────────────────
+            // 📊 ANALYTICS DASHBOARD DATA (بند 13)
+            // ──────────────────────────────
+            var last30Start = DateTime.Now.Date.AddDays(-29);
+
+            // 1) Revenue Trend — آخر 30 يوم، حجوزات + شوب مع بعض
+            var revenueBookingsRaw = bookings
+                .Where(b => (b.Status == "Confirmed" || b.Status == "Visited") && b.CreatedAt.Date >= last30Start)
+                .GroupBy(b => b.CreatedAt.Date)
+                .ToDictionary(g => g.Key, g => g.Sum(b => b.TotalPrice));
+
+            var revenueShopRaw = shopOrders
+                .Where(o => o.Status == "Confirmed" && o.CreatedAt.Date >= last30Start)
+                .GroupBy(o => o.CreatedAt.Date)
+                .ToDictionary(g => g.Key, g => g.Sum(o => o.TotalPrice));
+
+            var revenueTrend = new List<RevenuePoint>();
+            for (var d = last30Start; d <= DateTime.Now.Date; d = d.AddDays(1))
+            {
+                revenueTrend.Add(new RevenuePoint
+                {
+                    Label = d.ToString("MMM dd"),
+                    BookingRevenue = revenueBookingsRaw.TryGetValue(d, out var br) ? br : 0,
+                    ShopRevenue = revenueShopRaw.TryGetValue(d, out var sr) ? sr : 0
+                });
+            }
+
+            // 2) Most Booked Places — أعلى 5 أماكن حجزًا
+            var topBookedPlaces = bookingRows
+                .GroupBy(b => new { b.PlaceName, b.PlaceType })
+                .Select(g => new PlaceBookingCount { PlaceName = g.Key.PlaceName, PlaceType = g.Key.PlaceType, Count = g.Count() })
+                .OrderByDescending(x => x.Count)
+                .Take(5)
+                .ToList();
+
+            // 3) User Growth — تسجيلات جديدة آخر 30 يوم (⚠️ محتاج عمود Users.CreatedAt يتضاف الأول)
+            var newUsersRaw = await _context.Users
+                .Where(u => u.Email != AdminEmail && u.CreatedAt.Date >= last30Start)
+                .ToListAsync();
+            var usersByDate = newUsersRaw.GroupBy(u => u.CreatedAt.Date).ToDictionary(g => g.Key, g => g.Count());
+            var userGrowth = new List<UserGrowthPoint>();
+            for (var d = last30Start; d <= DateTime.Now.Date; d = d.AddDays(1))
+            {
+                userGrowth.Add(new UserGrowthPoint
+                {
+                    Label = d.ToString("MMM dd"),
+                    NewUsers = usersByDate.TryGetValue(d, out var c) ? c : 0
+                });
+            }
+
+            // 4) Reviews Stats — متوسط عام + أعلى/أقل عنصر تقييمًا + متوسط لكل Type
+            var allReviews = await _context.Reviews.ToListAsync();
+            var reviewsStats = new ReviewsSummary();
+            if (allReviews.Any())
+            {
+                reviewsStats.OverallAverageRating = Math.Round(allReviews.Average(r => r.Rating), 2);
+
+                string GetPlaceName(string type, int itemId) => type?.ToLower() switch
+                {
+                    "pharaoh" => pharaohsList.FirstOrDefault(p => p.Id == itemId)?.Name ?? "Unknown",
+                    "temple" => templesList.FirstOrDefault(t => t.Id == itemId)?.Name ?? "Unknown",
+                    "museum" => museumsList.FirstOrDefault(m => m.Id == itemId)?.Name ?? "Unknown",
+                    "god" => godsList.FirstOrDefault(g => g.Id == itemId)?.Name ?? "Unknown",
+                    _ => "Unknown"
+                };
+
+                var reviewGroups = allReviews
+                    .GroupBy(r => new { Type = r.Type, r.ItemId })
+                    .Select(g => new { g.Key.Type, g.Key.ItemId, AvgRating = g.Average(r => r.Rating), Count = g.Count() })
+                    .ToList();
+
+                var topRated = reviewGroups.OrderByDescending(x => x.AvgRating).ThenByDescending(x => x.Count).FirstOrDefault();
+                var lowestRated = reviewGroups.OrderBy(x => x.AvgRating).ThenByDescending(x => x.Count).FirstOrDefault();
+
+                if (topRated != null)
+                {
+                    reviewsStats.TopRatedName = GetPlaceName(topRated.Type, topRated.ItemId);
+                    reviewsStats.TopRatedAvg = Math.Round(topRated.AvgRating, 2);
+                }
+                if (lowestRated != null)
+                {
+                    reviewsStats.LowestRatedName = GetPlaceName(lowestRated.Type, lowestRated.ItemId);
+                    reviewsStats.LowestRatedAvg = Math.Round(lowestRated.AvgRating, 2);
+                }
+
+                reviewsStats.AverageByType = allReviews
+                    .GroupBy(r => r.Type)
+                    .Select(g => new TypeRatingAvg { Type = g.Key, AverageRating = Math.Round(g.Average(r => r.Rating), 2) })
+                    .ToList();
+            }
+
+            // 5) Quiz Stats — ⚠️ لازم يتأكد اسم الـ DbSet (مفترض _context.QuizHistories) وأسماء الأعمدة
+            var allQuizHistories = await _context.QuizHistories.ToListAsync();
+            var quizStats = new QuizSummary();
+            if (allQuizHistories.Any())
+            {
+                quizStats.TotalPlayers = allQuizHistories.Select(q => q.UserEmail).Distinct().Count();
+                quizStats.TotalPlays = allQuizHistories.Count;
+                quizStats.AverageScorePercent = Math.Round(allQuizHistories.Average(q => q.ScorePercent), 2);
+                quizStats.AverageStreakDays = Math.Round(allQuizHistories.Average(q => q.StreakDays), 2);
+                quizStats.GradeDistribution = allQuizHistories
+                    .GroupBy(q => q.Grade)
+                    .Select(g => new GradeCount { Grade = g.Key, Count = g.Count() })
+                    .OrderByDescending(x => x.Count)
+                    .ToList();
+            }
+
             var vm = new AdminOverviewViewModel
             {
                 TotalUsers = await _context.Users.CountAsync(u => u.Email != AdminEmail),
@@ -111,11 +225,11 @@ namespace pharaohsLegacy.Controllers
                 TotalVisited = bookings.Count(b => b.Status == "Visited"),
                 TotalRevenue = bookings.Where(b => b.Status == "Confirmed" || b.Status == "Visited").Sum(b => b.TotalPrice),
                 TotalDynasties = _context.Dynasties.Count(),
-                Pharaohs = await _context.Pharaohs.OrderBy(p => p.Name).ToListAsync(),
-                Temples = await _context.Temples.OrderBy(t => t.Name).ToListAsync(),
-                Museums = await _context.Museums.OrderBy(m => m.Name).ToListAsync(),
+                Pharaohs = pharaohsList,
+                Temples = templesList,
+                Museums = museumsList,
                 Users = await _context.Users.Where(u => u.Email != AdminEmail).OrderBy(u => u.Name).ToListAsync(),
-                Gods = await _context.Gods.OrderBy(g => g.Name).ToListAsync(),
+                Gods = godsList,
                 Artifacts = await _context.Artifacts.OrderBy(a => a.Name).ToListAsync(),
                 Reviews = await _context.Reviews.OrderByDescending(r => r.CreatedAt).ToListAsync(),
                 Reports = await _context.ReviewReports.OrderByDescending(r => r.CreatedAt).ToListAsync(),
@@ -140,8 +254,12 @@ namespace pharaohsLegacy.Controllers
 
                 Bookings = bookingRows,
 
-
-
+                // 🆕 Analytics Dashboard (بند 13)
+                RevenueTrend = revenueTrend,
+                TopBookedPlaces = topBookedPlaces,
+                UserGrowth = userGrowth,
+                ReviewsStats = reviewsStats,
+                QuizStats = quizStats,
 
 
             };

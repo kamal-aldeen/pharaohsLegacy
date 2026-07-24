@@ -11,6 +11,7 @@
 <head>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Admin — Pharaohs Legacy</title>
@@ -336,6 +337,23 @@ body {
     pointer-events: none;
 }
 
+
+/* 🆕 Analytics Dashboard (بند 13) */
+.adm-chart-card {
+    background: var(--dark-card);
+    border: 1px solid #3d2a15;
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin-bottom: 8px;
+}
+.adm-analytics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+@@media (max-width: 900px) {
+    .adm-analytics-grid { grid-template-columns: 1fr; }
+}
 
 .adm-table-wrap {
     background: var(--dark-card);
@@ -756,6 +774,11 @@ body {
                 <span class="nav-count">@Model.TotalFacts</span>
             </button>
 
+            <button class="adm-nav-item @(activeTab == "analytics" ? "active" : "")"
+                    onclick="switchPanel('analytics',this)">
+                <span class="nav-icon">📊</span> Analytics
+            </button>
+
             <span class="adm-nav-label" style="margin-top:12px;">Users & Data</span>
             <button class="adm-nav-item @(activeTab == "users" ? "active" : "")"
                     onclick="switchPanel('users',this)">
@@ -801,6 +824,7 @@ body {
               activeTab == "museums"  ? "🏛️ Manage Museums" :
               activeTab == "artifacts" ? "𓏠 Manage Artifacts" :
                   activeTab == "reviews" ? "⭐ Manage Reviews" :
+              activeTab == "analytics" ? "📊 Analytics Dashboard" :
               activeTab == "users"    ? "👥 Users" : "📅 Bookings")
         </div>
         <div class="adm-topbar-right">
@@ -974,6 +998,108 @@ body {
                     </tbody>
                 </table>
             </div>
+        </div>
+
+        <!-- 🆕 ANALYTICS (بند 13) -->
+        <div id="panel-analytics" class="adm-panel @(activeTab=="analytics"?"active":"")">
+
+            <!-- Revenue Trend -->
+            <div class="adm-sec-head">
+                <div class="adm-sec-title">📈 Revenue Trend (Last 30 Days)</div>
+            </div>
+            <div class="adm-chart-card">
+                <canvas id="chartRevenueTrend" height="90"></canvas>
+            </div>
+
+            <!-- Most Booked Places + User Growth side by side -->
+            <div class="adm-analytics-grid">
+                <div>
+                    <div class="adm-sec-head" style="margin-top:24px;">
+                        <div class="adm-sec-title">🏆 Most Booked Places</div>
+                    </div>
+                    <div class="adm-chart-card">
+                        <canvas id="chartTopPlaces" height="220"></canvas>
+                    </div>
+                </div>
+                <div>
+                    <div class="adm-sec-head" style="margin-top:24px;">
+                        <div class="adm-sec-title">👥 User Growth (Last 30 Days)</div>
+                    </div>
+                    <div class="adm-chart-card">
+                        <canvas id="chartUserGrowth" height="220"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reviews Stats -->
+            <div class="adm-sec-head" style="margin-top:24px;">
+                <div class="adm-sec-title">⭐ Reviews Stats</div>
+            </div>
+            <div class="adm-stats">
+                <div class="adm-stat c-gold">
+                    <div class="adm-stat-icon">⭐</div>
+                    <div>
+                        <div class="adm-stat-val">@Model.ReviewsStats.OverallAverageRating.ToString("0.00")</div>
+                        <div class="adm-stat-label">Overall Avg Rating</div>
+                    </div>
+                </div>
+                <div class="adm-stat c-green">
+                    <div class="adm-stat-icon">🥇</div>
+                    <div>
+                        <div class="adm-stat-val" style="font-size:16px;">@Model.ReviewsStats.TopRatedName</div>
+                        <div class="adm-stat-label">Top Rated (@Model.ReviewsStats.TopRatedAvg.ToString("0.00")★)</div>
+                    </div>
+                </div>
+                <div class="adm-stat c-red">
+                    <div class="adm-stat-icon">🥉</div>
+                    <div>
+                        <div class="adm-stat-val" style="font-size:16px;">@Model.ReviewsStats.LowestRatedName</div>
+                        <div class="adm-stat-label">Lowest Rated (@Model.ReviewsStats.LowestRatedAvg.ToString("0.00")★)</div>
+                    </div>
+                </div>
+            </div>
+            <div class="adm-chart-card">
+                <canvas id="chartReviewsByType" height="90"></canvas>
+            </div>
+
+            <!-- Quiz Stats -->
+            <div class="adm-sec-head" style="margin-top:24px;">
+                <div class="adm-sec-title">🧠 Quiz Stats</div>
+            </div>
+            <div class="adm-stats">
+                <div class="adm-stat c-blue">
+                    <div class="adm-stat-icon">👤</div>
+                    <div>
+                        <div class="adm-stat-val counter" data-target="@Model.QuizStats.TotalPlayers">0</div>
+                        <div class="adm-stat-label">Players</div>
+                    </div>
+                </div>
+                <div class="adm-stat c-purple">
+                    <div class="adm-stat-icon">🎮</div>
+                    <div>
+                        <div class="adm-stat-val counter" data-target="@Model.QuizStats.TotalPlays">0</div>
+                        <div class="adm-stat-label">Total Plays</div>
+                    </div>
+                </div>
+                <div class="adm-stat c-teal">
+                    <div class="adm-stat-icon">📊</div>
+                    <div>
+                        <div class="adm-stat-val">@Model.QuizStats.AverageScorePercent.ToString("0.0")%</div>
+                        <div class="adm-stat-label">Avg Score</div>
+                    </div>
+                </div>
+                <div class="adm-stat c-orange">
+                    <div class="adm-stat-icon">🔥</div>
+                    <div>
+                        <div class="adm-stat-val">@Model.QuizStats.AverageStreakDays.ToString("0.0")</div>
+                        <div class="adm-stat-label">Avg Streak Days</div>
+                    </div>
+                </div>
+            </div>
+            <div class="adm-chart-card">
+                <canvas id="chartQuizGrades" height="90"></canvas>
+            </div>
+
         </div>
 
         <!--  PHARAOHS  -->
@@ -3823,7 +3949,8 @@ const panelTitles = {
     'shop-orders': '📦 Shop Orders',
     facts:    '📜 Daily Facts',
     users:    '👥 Users',
-    bookings: '📅 Bookings'
+    bookings: '📅 Bookings',
+    analytics: '📊 Analytics Dashboard'
 };
 function switchPanel(name, btn) {
     document.querySelectorAll('.adm-panel').forEach(p => p.classList.remove('active'));
@@ -4117,6 +4244,116 @@ document.addEventListener('DOMContentLoaded', () => {
     // Auto-dismiss toast
     const toast = document.getElementById('toastMsg');
     if (toast) setTimeout(() => toast.remove(), 4000);
+});
+
+//  🆕 Analytics Dashboard Charts (بند 13) 
+document.addEventListener('DOMContentLoaded', () => {
+
+    // 🆕 المشروع ممكن يكون الـ Json.Serialize بتاعه بـ PascalCase أو camelCase حسب إعدادات
+    // Program.cs (JsonOptions) — الفنكشن دي بتطبّع أي مفتاح لأول حرف صغير عشان الكود تحت
+    // يشتغل بره ما نعرف الإعداد بالظبط (زي p.label بدل ما نضطر نتأكد لو هي p.Label)
+    function lowerFirstKeys(obj) {
+        if (Array.isArray(obj)) return obj.map(lowerFirstKeys);
+        if (obj !== null && typeof obj === 'object') {
+            const out = {};
+            for (const k in obj) {
+                const nk = k.charAt(0).toLowerCase() + k.slice(1);
+                out[nk] = lowerFirstKeys(obj[k]);
+            }
+            return out;
+        }
+        return obj;
+    }
+
+    // بيانات الـ Analytics متبعتة من الـ ViewModel كـ JSON — الشارتس اتعملها init بس أول مرة الـ panel يتفتح فيها (Chart.js بيحتاج canvas ظاهر عشان يحسب المقاسات صح)
+    const analyticsData = {
+        revenueTrend: lowerFirstKeys(@Html.Raw(Json.Serialize(Model.RevenueTrend))),
+        topBookedPlaces: lowerFirstKeys(@Html.Raw(Json.Serialize(Model.TopBookedPlaces))),
+        userGrowth: lowerFirstKeys(@Html.Raw(Json.Serialize(Model.UserGrowth))),
+        reviewsByType: lowerFirstKeys(@Html.Raw(Json.Serialize(Model.ReviewsStats.AverageByType))),
+        quizGrades: lowerFirstKeys(@Html.Raw(Json.Serialize(Model.QuizStats.GradeDistribution)))
+    };
+
+    const goldColor = '#c9a227';
+    const chartCommonOptions = {
+        responsive: true,
+        plugins: { legend: { labels: { color: '#e8d5b0' } } },
+        scales: {
+            x: { ticks: { color: '#a89178' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+            y: { ticks: { color: '#a89178' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+        }
+    };
+
+    let analyticsChartsInitialized = false;
+    function initAnalyticsCharts() {
+        if (analyticsChartsInitialized) return;
+        analyticsChartsInitialized = true;
+
+        // 1) Revenue Trend
+        new Chart(document.getElementById('chartRevenueTrend'), {
+            type: 'line',
+            data: {
+                labels: analyticsData.revenueTrend.map(p => p.label),
+                datasets: [
+                    { label: 'Booking Revenue', data: analyticsData.revenueTrend.map(p => p.bookingRevenue), borderColor: goldColor, backgroundColor: 'rgba(201,162,39,0.15)', tension: 0.3, fill: true },
+                    { label: 'Shop Revenue', data: analyticsData.revenueTrend.map(p => p.shopRevenue), borderColor: '#5b8dd9', backgroundColor: 'rgba(91,141,217,0.12)', tension: 0.3, fill: true }
+                ]
+            },
+            options: chartCommonOptions
+        });
+
+        // 2) Most Booked Places
+        new Chart(document.getElementById('chartTopPlaces'), {
+            type: 'bar',
+            data: {
+                labels: analyticsData.topBookedPlaces.map(p => p.placeName),
+                datasets: [{ label: 'Bookings', data: analyticsData.topBookedPlaces.map(p => p.count), backgroundColor: goldColor }]
+            },
+            options: { ...chartCommonOptions, plugins: { legend: { display: false } } }
+        });
+
+        // 3) User Growth
+        new Chart(document.getElementById('chartUserGrowth'), {
+            type: 'line',
+            data: {
+                labels: analyticsData.userGrowth.map(p => p.label),
+                datasets: [{ label: 'New Users', data: analyticsData.userGrowth.map(p => p.newUsers), borderColor: '#4caf80', backgroundColor: 'rgba(76,175,128,0.15)', tension: 0.3, fill: true }]
+            },
+            options: { ...chartCommonOptions, plugins: { legend: { display: false } } }
+        });
+
+        // 4) Reviews By Type
+        new Chart(document.getElementById('chartReviewsByType'), {
+            type: 'bar',
+            data: {
+                labels: analyticsData.reviewsByType.map(p => p.type),
+                datasets: [{ label: 'Avg Rating', data: analyticsData.reviewsByType.map(p => p.averageRating), backgroundColor: '#9b6dd9' }]
+            },
+            options: { ...chartCommonOptions, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { ...chartCommonOptions.scales, x: { ...chartCommonOptions.scales.x, max: 5 } } }
+        });
+
+        // 5) Quiz Grade Distribution
+        new Chart(document.getElementById('chartQuizGrades'), {
+            type: 'bar',
+            data: {
+                labels: analyticsData.quizGrades.map(p => p.grade),
+                datasets: [{ label: 'Players', data: analyticsData.quizGrades.map(p => p.count), backgroundColor: '#e09050' }]
+            },
+            options: { ...chartCommonOptions, plugins: { legend: { display: false } } }
+        });
+    }
+
+    // لو الأدمن فاتح على تاب Analytics من الأول (?tab=analytics) هيّئ الشارتس فورًا
+    if (document.getElementById('panel-analytics')?.classList.contains('active')) {
+        initAnalyticsCharts();
+    }
+
+    // نلف على switchPanel الأصلية عشان نهيّئ الشارتس أول مرة بس اليوزر يفتح تاب Analytics
+    const originalSwitchPanel = window.switchPanel;
+    window.switchPanel = function (name, btn) {
+        originalSwitchPanel(name, btn);
+        if (name === 'analytics') initAnalyticsCharts();
+    };
 });
 
 

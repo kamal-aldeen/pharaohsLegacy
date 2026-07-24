@@ -757,6 +757,61 @@ public List<DailyFact> Facts { get; set; }
 
 ---
 
+## 📊 Analytics Dashboard (Admin) — بند 13 — 🔜 خطة العمل (لسه ما بدأناش)
+
+> **الحالة:** تخطيط بس — لسه مفيش كود اتكتب. السكشن ده بيوثّق النطاق والقرارات قبل البدء عشان لو الشات اتقفل نرجع بسرعة.
+
+### 🎯 النطاق (كل الخمس أجزاء هتتعمل مع بعض، مش مرحلة مرحلة)
+1. **Revenue / Bookings Trends** — Line/Bar chart بالوقت (يومي/شهري) من جدول `Bookings` (`TotalPrice`, `CreatedAt`, `Status`) + `Payments` (`Amount`, `PaymentDate`, `Status`)
+2. **Most Booked Places** — أعلى الأماكن حجزًا (Temples/Museums...) من `Bookings` (`PlaceType`, `PlaceId`, `PlaceName`)
+3. **User Growth** — تسجيلات جديدة بالوقت من جدول `Users` — ✅ **تأكدنا:** جدول `Users` **مفيهوش `CreatedAt` خالص** (الأعمدة الموجودة فعليًا: `Id, Name, Email, Password, UserName, NormalizedUserName, NormalizedEmail, EmailConfirmed, PasswordHash, SecurityStamp, ConcurrencyStamp, PhoneNumber, PhoneNumberConfirmed, TwoFactorEnabled, LockoutEnd, LockoutEnabled, AccessFailedCount` — أعمدة Identity زيادة موجودة بس مش مستخدمة فعليًا حسب الـ Session-based Auth الحالي). **لازم عمود جديد بـ Migration حقيقية** (مش SQL يدوي هالمرة، لأن العمود جديد بالكامل مش موجود بأي شكل).
+
+**القرار بخصوص اليوزرز القدام:** `defaultValueSql: "GETDATE()"` — كل اليوزرز المسجلين قبل الـ Migration هيبانوا بتاريخ يوم تشغيل الـ Migration نفسه (هيتجمعوا في نقطة واحدة على الـ Growth chart)، وأي يوزر جديد بعد كده هيتسجل بتاريخه الحقيقي تلقائيًا.
+
+```csharp
+// User.cs — عمود جديد
+[Column(TypeName = "datetime")]
+public DateTime CreatedAt { get; set; } = DateTime.Now;
+```
+
+```csharp
+// UserController.cs → Register (POST) — لازم يتحط صراحة وقت الإنشاء
+var newUser = new User
+{
+    // ... باقي الحقول
+    CreatedAt = DateTime.Now
+};
+```
+
+Migration commands:
+```
+Add-Migration AddUserCreatedAt
+```
+لازم بعد التوليد نتأكد إن سطر الـ `AddColumn<DateTime>(name: "CreatedAt", table: "Users", ...)` فيه `defaultValueSql: "GETDATE()"` (لو الـ EF ما حطهاش تلقائي من الـ Model، هنضيفها يدوي في ملف الـ Migration قبل `Update-Database`).
+4. **Reviews Stats** — متوسط تقييم عام + أعلى/أقل الأماكن تقييمًا من `Reviews` (`Rating`, `Type`, `ItemId`)
+5. **Quiz Stats** — عدد اللاعبين + متوسط الدرجات + الـ Streaks من `QuizHistories` (`Score`, `ScorePercent`, `StreakDays`)
+
+### 🔗 Overlap مع بند تاني في الروادماب
+البند **"Admin Financial Dashboard + Revenue Tracking + Revenue Forecasting"** (تحت قسم البنك، سطر ~895) بيتقاطع مباشرة مع جزء الـ Revenue/Bookings هنا — هيتقفل تلقائيًا (كليًا أو جزئيًا) لما نخلص الجزء ده، وهنوثّق ده في الملف بعد التنفيذ.
+
+### 📈 مكتبة الـ Charts
+**Chart.js** — هتتضاف عبر CDN في `Admin/Index.cshtml` (أو `_Layout.cshtml` لو مش موجودة أصلاً)، زي أي مكتبة خارجية تانية في المشروع.
+
+### 🧩 الخطوات المتوقعة (نفس باترن Daily Fact/Dynasties السابق)
+1. **تأكيد** عمود `CreatedAt` في `Users` (نقطة مفتوحة)
+2. **`AdminController.cs`** — إضافة الـ Queries/Aggregations اللازمة جوه `Index()` (أو Method منفصلة `GetAnalyticsData()` لو الحجم كبر)
+3. **`ViewModels/AdminOverviewViewModel.cs`** — إضافة خصائص جديدة (تتبعت يدويًا زي العادة — الملف ده لسه ما اتبعتش كامل في شات) لحمل نتايج الـ 5 أجزاء (مثلاً: `List<RevenuePoint> RevenueTrend`, `List<PlaceBookingCount> TopBookedPlaces`, `List<UserGrowthPoint> UserGrowth`, `ReviewsSummary ReviewsStats`, `QuizSummary QuizStats` — الأسماء الدقيقة هتتحدد وقت الكود)
+4. **`Admin/Index.cshtml`** — Sidebar item جديد `📊 Analytics` (`adm-nav-item` + `onclick="switchPanel('analytics', this)"`) + Panel `panel-analytics` فيه الـ 5 Charts + إضافة `analytics: '📊 Analytics Dashboard'` في `panelTitles`
+5. **Chart.js `<canvas>` elements** + JS init لكل چارت، بتاخد الداتا من الـ ViewModel (غالبًا عبر `@Html.Raw(Json.Serialize(...))` زي أي داتا JS تانية في المشروع)
+
+### ⚠️ Key Rules تتراعى وإحنا بنبني الجزء ده
+- الـ Admin Dashboard **مش بيتترجم ومفيهوش دارك/لايت مود** — الـ Analytics Panel هيتبني إنجليزي بس، بدون أي ربط بنظام الدارك مود
+- أي عمود جديد بيتضاف يدوي بـ SQL مباشر (لو احتجنا) → لازم Empty Migration بعده (زي درس `SymbolAr`/Gods)
+- `[Column(TypeName = "decimal(18,2)")]` لازم على أي حقل decimal جديد (زي `TotalPrice`/`Amount` بالظبط)
+- الاستبعاد المعتاد لحالة `PendingPayment` من أي إحصائية حجوزات/إيرادات (زي ما بيحصل في `Admin/Index` الحالي)
+
+---
+
 ## 🎫 Email Confirmation + QR Code (بند 12) — ✅ مكتمل بالكامل
 
 > الفيتشر ده خلص تمامًا. القسم ده بقى توثيق لما اتعمل فعليًا — عشان في أي شات جديد تبعتلي الملف وأنا أبقى فاهم إحنا واقفين فين.

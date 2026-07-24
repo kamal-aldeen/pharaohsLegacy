@@ -57,6 +57,68 @@ namespace pharaohsLegacy.ViewModels
 
         public List<ShopOrder> ShopOrders { get; set; }
 
+        // 🆕 Analytics Dashboard (بند 13)
+        public List<RevenuePoint> RevenueTrend { get; set; } = new();
+        public List<PlaceBookingCount> TopBookedPlaces { get; set; } = new();
+        public List<UserGrowthPoint> UserGrowth { get; set; } = new();
+        public ReviewsSummary ReviewsStats { get; set; } = new();
+        public QuizSummary QuizStats { get; set; } = new();
+
+    }
+
+    // ──────────────────────────────
+    // 🆕 Analytics Dashboard DTOs (بند 13)
+    // ──────────────────────────────
+
+    public class RevenuePoint
+    {
+        public string Label { get; set; } = "";
+        public decimal BookingRevenue { get; set; }
+        public decimal ShopRevenue { get; set; }
+    }
+
+    public class PlaceBookingCount
+    {
+        public string PlaceName { get; set; } = "";
+        public string PlaceType { get; set; } = "";
+        public int Count { get; set; }
+    }
+
+    public class UserGrowthPoint
+    {
+        public string Label { get; set; } = "";
+        public int NewUsers { get; set; }
+    }
+
+    public class TypeRatingAvg
+    {
+        public string Type { get; set; } = "";
+        public double AverageRating { get; set; }
+    }
+
+    public class ReviewsSummary
+    {
+        public double OverallAverageRating { get; set; }
+        public string TopRatedName { get; set; } = "-";
+        public double TopRatedAvg { get; set; }
+        public string LowestRatedName { get; set; } = "-";
+        public double LowestRatedAvg { get; set; }
+        public List<TypeRatingAvg> AverageByType { get; set; } = new();
+    }
+
+    public class GradeCount
+    {
+        public string Grade { get; set; } = "";
+        public int Count { get; set; }
+    }
+
+    public class QuizSummary
+    {
+        public int TotalPlayers { get; set; }
+        public int TotalPlays { get; set; }
+        public double AverageScorePercent { get; set; }
+        public double AverageStreakDays { get; set; }
+        public List<GradeCount> GradeDistribution { get; set; } = new();
     }
 
     public class AdminBookingRow
