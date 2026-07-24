@@ -733,7 +733,7 @@ public List<DailyFact> Facts { get; set; }
 ## 🔜 الجاي — واحدة واحدة بالترتيب ده
 
 ```
-[ ] 13. Analytics Dashboard (Admin)
+[x] 13. Analytics Dashboard (Admin) — ✅ مكتمل (تفاصيل تحت)
 [ ] 14. AI Trip Planner
 [ ] 15. Notification System
 [ ] 16. Smart Search
@@ -757,58 +757,37 @@ public List<DailyFact> Facts { get; set; }
 
 ---
 
-## 📊 Analytics Dashboard (Admin) — بند 13 — 🔜 خطة العمل (لسه ما بدأناش)
+## 📊 Analytics Dashboard (Admin) — بند 13 — ✅ مكتمل بالكامل
 
-> **الحالة:** تخطيط بس — لسه مفيش كود اتكتب. السكشن ده بيوثّق النطاق والقرارات قبل البدء عشان لو الشات اتقفل نرجع بسرعة.
+> الفيتشر ده خلص تمامًا واتأكد إن الـ 5 Charts ظاهرة وشغالة صح في الـ Admin panel. القسم ده بقى توثيق لما اتعمل فعليًا — عشان في أي شات جديد تبعتلي الملف وأنا أبقى فاهم إحنا واقفين فين.
 
-### 🎯 النطاق (كل الخمس أجزاء هتتعمل مع بعض، مش مرحلة مرحلة)
-1. **Revenue / Bookings Trends** — Line/Bar chart بالوقت (يومي/شهري) من جدول `Bookings` (`TotalPrice`, `CreatedAt`, `Status`) + `Payments` (`Amount`, `PaymentDate`, `Status`)
-2. **Most Booked Places** — أعلى الأماكن حجزًا (Temples/Museums...) من `Bookings` (`PlaceType`, `PlaceId`, `PlaceName`)
-3. **User Growth** — تسجيلات جديدة بالوقت من جدول `Users` — ✅ **تأكدنا:** جدول `Users` **مفيهوش `CreatedAt` خالص** (الأعمدة الموجودة فعليًا: `Id, Name, Email, Password, UserName, NormalizedUserName, NormalizedEmail, EmailConfirmed, PasswordHash, SecurityStamp, ConcurrencyStamp, PhoneNumber, PhoneNumberConfirmed, TwoFactorEnabled, LockoutEnd, LockoutEnabled, AccessFailedCount` — أعمدة Identity زيادة موجودة بس مش مستخدمة فعليًا حسب الـ Session-based Auth الحالي). **لازم عمود جديد بـ Migration حقيقية** (مش SQL يدوي هالمرة، لأن العمود جديد بالكامل مش موجود بأي شكل).
+### 🎯 النطاق (الـ 5 أجزاء)
+1. **Revenue Trend** — Line chart آخر 30 يوم، Bookings + Shop مع بعض (مش Payments — نفس منطق `TotalRevenue` الأصلي اللي بيحسب من `Bookings.TotalPrice` مباشرة)
+2. **Most Booked Places** — Bar chart لأعلى 5 أماكن حجزًا
+3. **User Growth** — Line chart آخر 30 يوم، تسجيلات جديدة من `Users.CreatedAt` (عمود جديد بالكامل، اتضاف في الخطوة دي)
+4. **Reviews Stats** — كروت (متوسط عام + أعلى/أقل عنصر تقييمًا) + Bar chart لمتوسط التقييم لكل Type
+5. **Quiz Stats** — كروت (لاعبين، Total Plays، متوسط الدرجة، متوسط الـ Streak) + Bar chart لتوزيع الـ Grades
 
-**القرار بخصوص اليوزرز القدام:** `defaultValueSql: "GETDATE()"` — كل اليوزرز المسجلين قبل الـ Migration هيبانوا بتاريخ يوم تشغيل الـ Migration نفسه (هيتجمعوا في نقطة واحدة على الـ Growth chart)، وأي يوزر جديد بعد كده هيتسجل بتاريخه الحقيقي تلقائيًا.
+### ✅ قرارات اتاخدت وطُبّقت فعليًا
+| القرار | التفاصيل |
+|---|---|
+| مصدر الـ Revenue | `Bookings.TotalPrice` + `ShopOrders.TotalPrice` (Status = Confirmed/Visited) — مش جدول `Payments` منفصل، عشان يتوافق مع منطق `TotalRevenue`/`TotalShopRevenue` الموجودين أصلاً |
+| `Users.CreatedAt` لليوزرز القدام | `defaultValueSql: "GETDATE()"` — كلهم هيبانوا في نقطة واحدة (يوم الـ Migration) على الـ Growth chart، وأي يوزر جديد بعد كده بتاريخه الحقيقي |
+| مكتبة الـ Charts | **Chart.js 4.4.4** عبر CDN (`cdn.jsdelivr.net`) في `<head>` بتاع `Admin/Index.cshtml` |
+| Reviews name-lookup | بدل ما نعمل query لكل Review، حوّشنا `Pharaohs/Temples/Museums/Gods` كـ `local var` قبل الـ `vm` initializer واستخدمناهم في الاتنين (تجنب queries زيادة) |
+| JSON casing defensive fix | دالة JS `lowerFirstKeys()` بتطبّع مفاتيح الـ JSON (PascalCase أو camelCase) عشان الشارتس تشتغل صح مهما كان إعداد `Program.cs` |
+| Charts init timing | `initAnalyticsCharts()` بتتنفذ أول مرة بس اليوزر يفتح تاب Analytics (مش عند تحميل الصفحة) — لأن Chart.js محتاج الـ `<canvas>` يكون ظاهر عشان يحسب المقاسات صح |
 
-```csharp
-// User.cs — عمود جديد
-[Column(TypeName = "datetime")]
-public DateTime CreatedAt { get; set; } = DateTime.Now;
-```
-
-```csharp
-// UserController.cs → Register (POST) — لازم يتحط صراحة وقت الإنشاء
-var newUser = new User
-{
-    // ... باقي الحقول
-    CreatedAt = DateTime.Now
-};
-```
-
-Migration commands:
-```
-Add-Migration AddUserCreatedAt
-```
-لازم بعد التوليد نتأكد إن سطر الـ `AddColumn<DateTime>(name: "CreatedAt", table: "Users", ...)` فيه `defaultValueSql: "GETDATE()"` (لو الـ EF ما حطهاش تلقائي من الـ Model، هنضيفها يدوي في ملف الـ Migration قبل `Update-Database`).
-4. **Reviews Stats** — متوسط تقييم عام + أعلى/أقل الأماكن تقييمًا من `Reviews` (`Rating`, `Type`, `ItemId`)
-5. **Quiz Stats** — عدد اللاعبين + متوسط الدرجات + الـ Streaks من `QuizHistories` (`Score`, `ScorePercent`, `StreakDays`)
+### 📁 الملفات اللي اتعدلت (نسخ نهائية اتبعتت)
+- `ViewModels/AdminViewModel.cs` — 5 DTOs جديدة (`RevenuePoint`, `PlaceBookingCount`, `UserGrowthPoint`, `ReviewsSummary`, `QuizSummary`, `TypeRatingAvg`, `GradeCount`) + خصائصهم في `AdminOverviewViewModel`
+- `Controllers/AdminController.cs` — منطق حساب الـ 5 أجزاء جوه `Index()`
+- `Views/Admin/Index.cshtml` — Chart.js CDN + Sidebar item + `panel-analytics` + JS لكل الـ 5 Charts
+- `Models/User.cs` — عمود `CreatedAt` جديد (`[Column(TypeName = "datetime")]`)
+- `Controllers/UserController.cs` — `Register` (POST) بقى بيحط `CreatedAt = DateTime.Now` صراحة
+- `Migrations/20260724074313_AddUserCreatedAt.cs` — ⚠️ **درس مهم:** أول نسخة اتولّدت من `Add-Migration` كانت حاطة `defaultValue: new DateTime(1,1,1,...)` (سنة 1 ميلادي!) مش `GETDATE()` — لازم تتصحح يدويًا كل مرة الـ EF يولّد Default لعمود DateTime جديد، لأنه مش بياخد الـ default من الـ `= DateTime.Now` في الـ Model تلقائيًا وقت الـ Migration نفسها
 
 ### 🔗 Overlap مع بند تاني في الروادماب
-البند **"Admin Financial Dashboard + Revenue Tracking + Revenue Forecasting"** (تحت قسم البنك، سطر ~895) بيتقاطع مباشرة مع جزء الـ Revenue/Bookings هنا — هيتقفل تلقائيًا (كليًا أو جزئيًا) لما نخلص الجزء ده، وهنوثّق ده في الملف بعد التنفيذ.
-
-### 📈 مكتبة الـ Charts
-**Chart.js** — هتتضاف عبر CDN في `Admin/Index.cshtml` (أو `_Layout.cshtml` لو مش موجودة أصلاً)، زي أي مكتبة خارجية تانية في المشروع.
-
-### 🧩 الخطوات المتوقعة (نفس باترن Daily Fact/Dynasties السابق)
-1. **تأكيد** عمود `CreatedAt` في `Users` (نقطة مفتوحة)
-2. **`AdminController.cs`** — إضافة الـ Queries/Aggregations اللازمة جوه `Index()` (أو Method منفصلة `GetAnalyticsData()` لو الحجم كبر)
-3. **`ViewModels/AdminOverviewViewModel.cs`** — إضافة خصائص جديدة (تتبعت يدويًا زي العادة — الملف ده لسه ما اتبعتش كامل في شات) لحمل نتايج الـ 5 أجزاء (مثلاً: `List<RevenuePoint> RevenueTrend`, `List<PlaceBookingCount> TopBookedPlaces`, `List<UserGrowthPoint> UserGrowth`, `ReviewsSummary ReviewsStats`, `QuizSummary QuizStats` — الأسماء الدقيقة هتتحدد وقت الكود)
-4. **`Admin/Index.cshtml`** — Sidebar item جديد `📊 Analytics` (`adm-nav-item` + `onclick="switchPanel('analytics', this)"`) + Panel `panel-analytics` فيه الـ 5 Charts + إضافة `analytics: '📊 Analytics Dashboard'` في `panelTitles`
-5. **Chart.js `<canvas>` elements** + JS init لكل چارت، بتاخد الداتا من الـ ViewModel (غالبًا عبر `@Html.Raw(Json.Serialize(...))` زي أي داتا JS تانية في المشروع)
-
-### ⚠️ Key Rules تتراعى وإحنا بنبني الجزء ده
-- الـ Admin Dashboard **مش بيتترجم ومفيهوش دارك/لايت مود** — الـ Analytics Panel هيتبني إنجليزي بس، بدون أي ربط بنظام الدارك مود
-- أي عمود جديد بيتضاف يدوي بـ SQL مباشر (لو احتجنا) → لازم Empty Migration بعده (زي درس `SymbolAr`/Gods)
-- `[Column(TypeName = "decimal(18,2)")]` لازم على أي حقل decimal جديد (زي `TotalPrice`/`Amount` بالظبط)
-- الاستبعاد المعتاد لحالة `PendingPayment` من أي إحصائية حجوزات/إيرادات (زي ما بيحصل في `Admin/Index` الحالي)
+البند **"Admin Financial Dashboard + Revenue Tracking + Revenue Forecasting"** (تحت قسم البنك) اتقفل جزئيًا مع الجزء ده (Revenue Trend chart بيغطّي جزء كبير منه).
 
 ---
 

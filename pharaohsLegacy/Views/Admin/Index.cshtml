@@ -4275,14 +4275,19 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const goldColor = '#c9a227';
-    const chartCommonOptions = {
-        responsive: true,
-        plugins: { legend: { labels: { color: '#e8d5b0' } } },
-        scales: {
-            x: { ticks: { color: '#a89178' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-            y: { ticks: { color: '#a89178' }, grid: { color: 'rgba(255,255,255,0.05)' } }
-        }
-    };
+    // 🛠️ دالة بدل object ثابت — كل نداية بترجع scales/plugins objects جداد تمامًا،
+    // عشان مفيش شارتين ياخدوا نفس الـ reference (Chart.js بيعدّل الـ config من جوّه
+    // وقت البناء، فمشاركة نفس الأوبجكت بين شارتس مختلفة كانت بتبوظ آخر واحد بيتبني).
+    function getChartOptions() {
+        return {
+            responsive: true,
+            plugins: { legend: { labels: { color: '#e8d5b0' } } },
+            scales: {
+                x: { ticks: { color: '#a89178' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                y: { ticks: { color: '#a89178' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+            }
+        };
+    }
 
     let analyticsChartsInitialized = false;
     function initAnalyticsCharts() {
@@ -4299,7 +4304,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     { label: 'Shop Revenue', data: analyticsData.revenueTrend.map(p => p.shopRevenue), borderColor: '#5b8dd9', backgroundColor: 'rgba(91,141,217,0.12)', tension: 0.3, fill: true }
                 ]
             },
-            options: chartCommonOptions
+            options: getChartOptions()
         });
 
         // 2) Most Booked Places
@@ -4309,7 +4314,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 labels: analyticsData.topBookedPlaces.map(p => p.placeName),
                 datasets: [{ label: 'Bookings', data: analyticsData.topBookedPlaces.map(p => p.count), backgroundColor: goldColor }]
             },
-            options: { ...chartCommonOptions, plugins: { legend: { display: false } } }
+            options: { ...getChartOptions(), plugins: { legend: { display: false } } }
         });
 
         // 3) User Growth
@@ -4319,17 +4324,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 labels: analyticsData.userGrowth.map(p => p.label),
                 datasets: [{ label: 'New Users', data: analyticsData.userGrowth.map(p => p.newUsers), borderColor: '#4caf80', backgroundColor: 'rgba(76,175,128,0.15)', tension: 0.3, fill: true }]
             },
-            options: { ...chartCommonOptions, plugins: { legend: { display: false } } }
+            options: { ...getChartOptions(), plugins: { legend: { display: false } } }
         });
 
         // 4) Reviews By Type
+        // 🛠️ ده كان Horizontal bar (indexAxis:'y') بيشارك نفس nested scales object (by reference)
+        // مع باقي الشارتس — Chart.js بيعدّل الـ config object من جوّه وقت ما بيبني كل شارت،
+        // فلما الأوبجكت مشترك بين شارتس مختلفة بيحصل تعارض وآخر شارت بيتبني بيبوظ (الأعمدة بتختفي).
+        // الحل: Vertical bar عادي (زي Most Booked Places) بـ scales مستقلة تمامًا (fresh objects).
         new Chart(document.getElementById('chartReviewsByType'), {
             type: 'bar',
             data: {
                 labels: analyticsData.reviewsByType.map(p => p.type),
                 datasets: [{ label: 'Avg Rating', data: analyticsData.reviewsByType.map(p => p.averageRating), backgroundColor: '#9b6dd9' }]
             },
-            options: { ...chartCommonOptions, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { ...chartCommonOptions.scales, x: { ...chartCommonOptions.scales.x, max: 5 } } }
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { color: '#a89178' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                    y: { min: 0, max: 5, ticks: { color: '#a89178', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                }
+            }
         });
 
         // 5) Quiz Grade Distribution
@@ -4339,7 +4355,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 labels: analyticsData.quizGrades.map(p => p.grade),
                 datasets: [{ label: 'Players', data: analyticsData.quizGrades.map(p => p.count), backgroundColor: '#e09050' }]
             },
-            options: { ...chartCommonOptions, plugins: { legend: { display: false } } }
+            options: { ...getChartOptions(), plugins: { legend: { display: false } } }
         });
     }
 
