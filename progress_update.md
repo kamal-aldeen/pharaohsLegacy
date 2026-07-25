@@ -1,6 +1,6 @@
 # 🏺 Pharaohs Legacy — Project Progress & Ultimate Roadmap
 
-> **الهدف:** تحويل Pharaohs Legacy من مشروع تخرج إلى منصة سياحية/ثقافية/ذكية متكاملة بمستوى Startup أو Enterprise Platform.
+> **الهدف:** تحويل Pharaohs Legacy من مشروع تخرج إلى منصة سياحية/ثقافية/ذكية متكاملة بمستوى Startup أو Enterprise Platform.AI Trip Planner
 
 ---
 
@@ -957,6 +957,114 @@ public List<DailyFact> Facts { get; set; }
 - [ ] Modes: Family / Student / Luxury
 - [ ] Offline itinerary export + PDF itinerary generation
 - [ ] Interactive trip map + AI trip assistant
+
+---
+
+## 🧭 AI Trip Planner — خطة العمل الكاملة (🔵 قيد التنفيذ — Model + Controller + الـ 3 Views + الترجمة (عربي/إنجليزي) + Dark/Light Mode + تكامل Dashboard + تصحيح الأسعار الحقيقية + إلغاء Pharaoh/God + PDF Export خلصوا، باقي التأكد من الفيكس الأخير للعربي في الـ PDF بعد rebuild)
+
+> اتفقنا على كل التفاصيل دي قبل ما نبدأ أي شغل. الجزء ده بيتحدث أول ما بنخلص كل خطوة فعليًا.
+
+### 🎯 الـ Scope النهائي لأول نسخة (v1) — كل حاجة مع بعض
+- [ ] Text Itinerary (الأساس) — اليوزر يدخل days / budget / interests / mode → الـ AI يرجع خطة رحلة يوم بيوم
+- [ ] Interactive Trip Map (Leaflet.js — نفس المكتبة المستخدمة أصلاً في خريطة المعابد والمتاحف)
+- [ ] PDF Export للخطة
+- [ ] Modes: Family / Student / Luxury
+
+### 🔒 قرارات اتاخدت (نهائية، مش هترجع فيها من غير سبب)
+| القرار | الاختيار | السبب |
+|---|---|---|
+| مصدر التوصيات | **من الداتا بيز بس** (Temples/Museums/Pharaohs/Gods الموجودين فعلاً) | عشان اللينكات والحجز (Booking) يشتغلوا صح على الأماكن اللي الـ AI يقترحها |
+| AI Service | **نفس Groq + LLaMA 3.1 اللي شغال في الـ AI Tour Guide Chatbot حالياً** (مش local model، ومش service منفصل) | مفيش هوستينج إضافي، الـ integration ده مجرب وشغال أصلاً، والمشروع لسه محلي فأولوية السرعة والبساطة |
+| حفظ الخطة | **أيوه، بتتحفظ في الداتا بيز** (جدول جديد TripPlans) عشان اليوزر يرجعلها تاني من MyTripPlans | — |
+| مكتبة الـ PDF | **QuestPDF** (Free/Community license) — مفيش مكتبة PDF مضافة في المشروع قبل كده | Clean C# API + رخصة مجانية للمشاريع الصغيرة/الطلابية |
+| مشكلة الإحداثيات | ~~هنحتاج Geocoding~~ — **✅ اتأكد إن Temple.cs أصلاً فيه Latitude/Longitude، وكل الـ 29 معبد متملية بقيم حقيقية في الداتا بيز فعليًا (اتأكد بالصورة من SSMS بتاريخ 24 يوليو).** الملاحظة القديمة هنا كانت غلط/قديمة. **مفيش داعي لسكريبت Geocoding خالص، الخطوة دي اتشالت من الخطة.** | — |
+
+### 🗄️ الجداول الجديدة المقترحة
+| Table | Fields |
+|---|---|
+| TripPlans | Id, UserEmail, Days, Budget, Interests, Mode (Family/Student/Luxury), CreatedAt |
+| TripPlanStops | Id, TripPlanId (FK), DayNumber, PlaceType (Temple/Museum/Pharaoh/God), PlaceId, PlaceName, SuggestedTime, EstimatedCost, Notes |
+
+### 🎮 الـ Controller المقترح: `TripPlannerController`
+- Index (GET) — الفورم: days, budget, interests, mode
+- Generate (POST) — بيجيب أماكن مرشحة من الداتا بيز حسب الـ interests، يبني الـ prompt، يكلم الـ AI، يحلل الرد (JSON بس، بيرجع IDs حقيقية من الداتا بيز)، يحفظ النتيجة، يودي اليوزر لصفحة النتيجة
+- Result/Details/{id} (GET) — عرض الخطة يوم بيوم + خريطة Leaflet + زرار Export PDF
+- MyTripPlans (GET) — الخطط المحفوظة السابقة لليوزر
+- Delete (POST)
+- ExportPdf/{id} (GET) — توليد وتنزيل PDF بالـ QuestPDF
+
+### 📁 Views المقترحة
+```
+Views/TripPlanner/
+├── Index.cshtml       ← فورم الإدخال
+├── Result.cshtml       ← الخطة + الخريطة + زرار PDF
+└── MyTripPlans.cshtml  ← الخطط المحفوظة
+```
+
+### 🪜 ترتيب التنفيذ المتفق عليه
+1. ✅ `TripPlan.cs` + `TripPlanStop.cs` + تسجيلهم في `AppDbContext.cs` — **خلص**. محتاج تشغّل `Add-Migration AddTripPlanner` ثم `Update-Database` عندك.
+   - `TripPlan`: Id, UserEmail, Days, Budget (decimal 18,2), Interests, Mode, CreatedAt, + navigation `Stops` (متهيأة `= new()` ✅)
+   - `TripPlanStop`: Id, TripPlanId (FK), DayNumber, PlaceType, PlaceId, **PlaceName (عمود حقيقي مخزّن، مش NotMapped زي Booking — snapshot وقت التوليد)**, SuggestedTime, EstimatedCost (decimal 18,2), Notes
+   - ✅ **راجعت الملفين فعليًا (24 يوليو) — كل الـ types والأسماء متطابقة 100% مع `TripPlannerController.cs`، مفيش أي تعديل مطلوب فيهم.**
+2. ~~سكريبت Geocoding للمعابد~~ — **اتشالت، مش لازمة** (الإحداثيات موجودة فعلاً في الداتا بيز)
+3. ✅ **خلص:** `TripPlannerController.cs` — كامل (Index, Generate, Result, MyTripPlans, Delete) + منطق الـ AI Prompt (reuse لنفس Groq service بنفس نمط `ChatbotController.cs` بالظبط: نفس الـ endpoint، نفس `GroqApiKey` من الـ config، نفس موديل `llama-3.1-8b-instant`). راجعته وموجود فيه:
+   - جلب candidates من الداتا بيز بس (Temple/Museum/Pharaoh/God) حسب الـ interests
+   - System prompt بيجبر الـ AI يرجع JSON خام بس + يستخدم IDs من الـ candidates بس
+   - Validation بعد رد الـ AI: أي `(PlaceType, PlaceId)` مش موجود فعليًا في candidates بيتم تجاهله (حماية من الـ hallucination) — وبيتخزن اسم المكان الحقيقي من الداتا بيز مش اسم الـ AI
+   - ⚠️ **ملاحظات تحسين مؤجلة (مش blocking، نرجعلها بعدين):**
+     - مفيش فحص `response.IsSuccessStatusCode` قبل قراءة رد Groq (لو فشل الـ request هيدي رسالة error مش واضحة)
+     - مفيش whitelist check على `request.Mode` (`Family/Student/Luxury`)
+     - مطابقة `PlaceType` بين رد الـ AI والداتا بيز حساسة لحالة الأحرف (case-sensitive) — ممكن نضيف normalize احتياطي
+4. ✅ **خلص:** الـ Views التلاتة (`Index.cshtml`, `Result.cshtml`, `MyTripPlans.cshtml`)
+   - ✅ **قرار اتاخد (24 يوليو):** تسمية الـ Interests في كل حتة في المشروع هتكون **بالمفرد** (`Temple`, `Museum`, `Pharaoh`, `God`) — من غير "s" — لأنها هي المستخدمة فعليًا جوه `TripPlannerController.Generate()`. يعني الـ checkbox values في `Index.cshtml` لازم تتكتب بالظبط `value="Temple"` مش `value="Temples"`، وإلا الفلترة بتفشل بصمت ("مفيش أماكن متاحة" حتى لو اليوزر فعلاً اختار).
+   - ⚠️ **قرار جديد بيلغي جزء من قرار 24 يوليو (25 يوليو):** `Pharaoh` و `God` اتشالوا نهائيًا من الـ Interests — مش أماكن ليها موقع/إحداثيات تتزار زي المعابد والمتاحف، فمنطقيًا معندهمش مكان في تخطيط رحلة. اتشالوا من:
+     - `Index.cshtml` — الشيبتين اتمسحوا من فورم الاهتمامات
+     - `MyTripPlans.cshtml` و `Result.cshtml` — اتمسحوا من `interestLabels` / `placeGlyphs` / `placeControllers`
+     - `TripPlannerController.cs` — اتمسح الكود اللي بيجيب `Pharaohs`/`Gods` من الداتا بيز كـ candidates، وتعليق الـ system prompt بتاع الـ AI اتعدّل عشان يبطّل يذكرهم
+   - ملاحظة صغيرة: التعليق جوه `TripPlan.cs` بيدي مثال بالجمع (`"Temples,Museums,Gods"`) — التعليق بس هو الغلط، مش الكود؛ محتاج يتصحح لاحقًا ليطابق القرار ده (مش عاجل، تعليق بس مش منطق).
+   - `Index.cshtml` ✅ — فورم days/budget/mode/interests بالـ Egyptian dark-gold theme (CSS vars بـ prefix `tp-`)، stepper للأيام، mode cards (Family/Student/Luxury)، interest chips
+   - `Result.cshtml` ✅ — خريطة Leaflet.js (نفس المكتبة المستخدمة في خريطة المعابد/المتاحف) + خطة يوم بيوم + زرار PDF (✅ بقى شغال، شايف Export.PDF أول ما خلصنا الخطوة 5) + زرار حذف (CSS vars بـ prefix `tpr-`)
+   - `MyTripPlans.cshtml` ✅ — Grid من كروت الخطط المحفوظة (أيام/ميزانية/عدد محطات/اهتمامات/تاريخ) + Empty state + زراير عرض/حذف (CSS vars بـ prefix `tpm-`)
+   - راجعت الكود الفعلي بتاع `TripPlannerController.cs` (24 يوليو) وطابقت الـ Views عليه سطر بسطر — الموديل والـ actions والـ routes كلهم متطابقين 100%
+   - ✅ **باگ اتصحح:** `TripPlannerController.MyTripPlans()` كانت مفيهاش `.Include(p => p.Stops)` (فـ "📍 0 محطة" كان بيظهر غلط). **راجعت نسخة اليوزر (25 يوليو) — `.Include(p => p.Stops)` موجودة فعليًا دلوقتي، الباگ مش موجود.**
+5. ✅ **خلص:** الترجمة الكاملة (عربي/إنجليزي) للـ 3 Views بتاعت الـ Trip Planner
+   - كل نص ثابت (labels, hints, أزرار, رسائل تأكيد الحذف, نص الخريطة الفاضية) بقى بينادي `Html.L("key")` بدل نص عربي/إنجليزي مكتوب مباشرة
+   - الأرقام (أيام، ميزانية، تكلفة) بتتحول بـ `Html.Num(...)` والتاريخ بـ `Html.DateLoc(...)` — نفس الـ helpers الموجودة أصلاً في `HtmlHelperExtensions.cs`
+   - 🆕 اتضافت method جديدة `Html.LF(key, args...)` في `HtmlHelperExtensions.cs` (بتنادي `LocalizationService.GetFormatted` اللي كانت موجودة أصلاً بس مش متاحة من الـ View) — لجمل فيها متغيرين زي "رحلة {0} أيام — {1}" أو "≈ {0} جنيه لهذا اليوم"
+   - ~55 مفتاح ترجمة جديد اتضافوا لـ `ar.json` و `en.json` (بادئة `trip.*`)
+6. ✅ **خلص:** إصلاح Dark/Light Mode
+   - الـ 3 Views كانت بتستخدم `:root` مستقل بألوان hex ثابتة (`--tp-*`, `--tpm-*`, `--tpr-*`) من غير ما تسمع لزرار الـ toggle — اتضاف `html[data-theme="light"]` override لكل واحد فيهم بنفس الـ palette المستخدم في باقي الموقع
+   - في `pharaoh.css`: `#back-to-top`, `.btn-fav` (+ `.active`), `.fav-guest-msg`, `.hero-stars` كانوا بألوان hex ثابتة تمامًا (مش بتستجيب للـ toggle خالص) — اتبدّلوا بـ `var(--gold)`, `var(--border)`, `var(--muted)`, `var(--dark3)`, `var(--gold-rgb)` اللي أصلاً معرّفة ومربوطة بـ light mode في `_Layout.cshtml`
+   - ⚠️ ملاحظة صغيرة مؤجلة: فيه `#toast` (id) قديم لسه موجود في `pharaoh.css` بجانب `.pl-toast` الجديد في الـ Layout — شكله كود ميت مش مستخدم، محتاج تتأكد ولو فعلاً مش مستخدم نقدر نشيله
+7. ✅ **خلص:** تكامل مع User Dashboard
+   - تاب جديد "خطط رحلتي" 𓊪 اتضاف في `Dashboard.cshtml` جنب "My Orders" و "My Coupons" — لينك مباشر لـ `/TripPlanner/MyTripPlans` (مش تاب داخلي بيبدّل بانل، بنفس أسلوب Orders/Coupons)
+   - `UserController.Dashboard()`: اتضاف query بسيط بيحسب `ViewBag.TotalTripPlans` (عدد خطط اليوزر) بيتعرض كـ badge على التاب، بنفس أسلوب `TotalOrders`/`TotalCoupons` الموجودين أصلاً
+   - محتاج مفتاح ترجمة جديد `Dash_Tab_TripPlans` في `ar.json`/`en.json`
+8. ✅ **خلص:** تصحيح مشكلة الأسعار الوهمية
+   - ⚠️ **كان فيه باگ:** الـ AI كان بيتقال له "estimate" السعر بنفسه لكل محطة (حتى Temple/Museum اللي ليهم سعر حقيقي في جدول `Prices`) — طلع مثال حقيقي: هرم خوفو سعره الحقيقي 700 جنيه، والـ AI رجع 150
+   - الإصلاح على مستويين: (1) بنجيب الأسعار الحقيقية من `Prices` قبل ما نكلم الـ AI ونحطها في الـ candidates كـ `TicketPrice`، ونقول له صراحة يستخدمها زي ما هي بدل التخمين (وده كمان بيخلي حساب الميزانية بتاعه أدق)، (2) شبكة أمان بعد رد الـ AI: أي Temple/Museum ليه سعر حقيقي بنفرضه فوق أي رقم رجع من الـ AI. الـ Pharaoh/God (مفيهمش تذاكر فعلية) بيفضلوا على تقدير الـ AI
+9. 🔵 **قيد التنفيذ:** PDF Export بالـ QuestPDF (الكود خلص، باقي تأكيد آخر فيكس بعد rebuild عند صاحب المشروع)
+   - ✅ **خلص:** ملف جديد `Services/TripPlanPdfBuilder.cs` — بيبني الـ PDF كامل بالـ QuestPDF Fluent API، بيدعم عربي (RTL عبر `page.ContentFromRightToLeft()` + فونت Amiri) وإنجليزي (LTR + Arial) حسب `Session["Lang"]`. فيه Header (اسم الموقع + تاريخ الإنشاء)، Summary pills (أيام/ميزانية/تكلفة تقديرية/mode)، كارت لكل يوم بمحطاته (اسم/وقت/سعر/ملاحظات)، Footer برقم الصفحة. الأرقام بتتحول لهندي-عربي لو اللغة عربي (نسخة مبسطة من فكرة `Html.Num` تشتغل من غير `IHtmlHelper`). بيستخدم مفاتيح ترجمة موجودة أصلاً (`trip.mode.*`, `trip.interest.*`, `trip.currency`, `trip.result.day.label`) + 3 مفاتيح جديدة (`trip.pdf.title`, `trip.pdf.generated`, `trip.pdf.footer`) لازم تتضاف لـ `ar.json`/`en.json`
+   - ✅ **خلص:** `TripPlannerController.cs` — اتضاف `LocalizationService` في الـ constructor، وأكشن `ExportPdf(int id)` (GET) بنفس فحص ملكية الخطة بتاع `Result()`، بيجيب اللغة من `Session["Lang"]`، وبيرجع الملف كـ `File(pdfBytes, "application/pdf", fileName)`
+   - ✅ **خلص:** `Result.cshtml` — زرار الـ Export بقى شغال (`asp-action="ExportPdf"`) بدل الـ disabled
+   - ✅ **خلص:** `Program.cs` — تسجيل `QuestPDF.Settings.License = LicenseType.Community` + تسجيل فونت Amiri (Regular/Bold) من `wwwroot/font/` (مش `fonts` — الفولدر عند صاحب المشروع اسمه مفرد) عبر `FontManager.RegisterFont` وقت الـ startup
+   - ⚠️ **باگ اتكتشف من نسخة PDF فعلية اتبعتت (25 يوليو):** الحروف العربية طلعت مكسورة — تحديدًا حرف "ي" كان بيختفي من أي كلمة عربية ملزوقة برقم (`"٥ أيام"` طلعت `"٥ أ م"`، `"يوم ١"` طلعت `"١ ام"`، بنفس النمط في كل الأيام الخمسة). اتأكد إنه مش مجرد مشكلة استخراج نص عادي (raster inspection بـ `pdftoppm` + `pdftotext -layout` أكدوا إن المشكلة حقيقية وبصرية مش استخراج بس) — السبب: محرك الـ Arabic shaping بتاع QuestPDF/SkiaSharp بيكسر عند تقاطع حرف عربي + رقم في نفس الـ `Text()` call الواحد، حتى لو اتقسّموا بـ `.Span()` منفصلة (لسه بيتحسبوا كـ paragraph واحد للـ shaping). أي جزء كان `Text()` منفصل تمامًا (زي اسم المكان أو الرمز الهيروغليفي) طلع سليم 100%.
+   - ✅ **الفيكس المطبّق (مش متأكد لسه لحد ما يتعمل rebuild):** `TripPlanPdfBuilder.cs` اتعاد كتابته بالكامل — أي رقم ولزيقه كلمة عربية (تسمية اليوم + رقمه، تكلفة اليوم/المحطة + "جنيه"، تاريخ الإنشاء + تسميته) بقى في عنصرين `Text()` منفصلين تمامًا جوه `Row()` بدل string واحد ملزّق أو `.Span()` واحد. **لسه محتاج rebuild + تجربة فعلية من صاحب المشروع للتأكيد.**
+   - 📌 **قاعدة اتسجلت في تعليق أعلى الملف** عشان متتنساش لو حد ضاف نص جديد بعدين: أي رقم + كلمة عربية = عنصرين `Text()` منفصلين، مش string واحد ولا `.Span()` في نفس الـ `Text()`
+
+### 📥 ملفات مطلوبة من صاحب المشروع قبل بداية الكود
+- [x] AI Tour Guide Chatbot Service (`ChatbotController.cs`) — **اتراجع، الـ TripPlannerController بيستخدم نفس النمط بالظبط**
+- [x] `AppDbContext.cs`
+- [x] `Temple.cs`, `Museum.cs`, `Pharaoh.cs`, `God.cs`
+- [x] `Program.cs`
+- [x] `TripPlan.cs`, `TripPlanStop.cs`
+- [x] `TripPlannerController.cs` كامل — **راجعته فعليًا (24 يوليو)، مطابق تمامًا لكل الـ Views**
+- [x] `Index.cshtml`, `Result.cshtml` — رفعهم صاحب المشروع، راجعتهم وطابقت عليهم
+- [x] `MyTripPlans.cshtml` — اتبنت (24 يوليو) بنفس الستايل والـ naming convention
+- [x] `HtmlHelperExtensions.cs`, `LocalizationService.cs` — راجعتهم (25 يوليو) قبل شغل الترجمة، اتضافت `Html.LF(...)` جديدة في `HtmlHelperExtensions.cs`
+- [x] `_Layout.cshtml`, `pharaoh.css` — راجعتهم (25 يوليو) لتشخيص وإصلاح مشكلة Dark/Light Mode
+- [x] `UserController.cs`, `Dashboard.cshtml` — راجعتهم (25 يوليو) لإضافة تاب "خطط رحلتي" في الـ User Dashboard
+- [x] `AppDbContext.cs`, `Price.cs` — راجعتهم (25 يوليو) لتصحيح مشكلة الأسعار الوهمية في `TripPlannerController.Generate()`
 
 ---
 

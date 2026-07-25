@@ -1,0 +1,466 @@
+@model List<pharaohsLegacy.Models.TripPlan>
+@{
+    ViewData["Title"] = Html.L("trip.mytrips.pagetitle");
+
+    var modeLabels = new Dictionary<string, string> { { "Family", Html.L("trip.mode.family") }, { "Student", Html.L("trip.mode.student") }, { "Luxury", Html.L("trip.mode.luxury") } };
+    var modeIcons = new Dictionary<string, string> { { "Family", "𓀀" }, { "Student", "𓂀" }, { "Luxury", "𓋴" } };
+    var interestLabels = new Dictionary<string, string> { { "Temple", Html.L("trip.interest.temple") }, { "Museum", Html.L("trip.interest.museum") } };
+}
+
+<style>
+    /* ===========================================================
+       AI Trip Planner — MyTripPlans (Egyptian dark-gold theme)
+       نفس الـ palette المستخدم في Index.cshtml و Result.cshtml
+       =========================================================== */
+
+    :root {
+        --tpm-bg: #14110d;
+        --tpm-panel: #1d1810;
+        --tpm-panel-alt: #241d13;
+        --tpm-gold: #c9a24b;
+        --tpm-gold-bright: #e6c56b;
+        --tpm-lapis: #2e4a6b;
+        --tpm-papyrus: #ece3ce;
+        --tpm-papyrus-dim: #b8ac93;
+        --tpm-line: rgba(201, 162, 75, 0.25);
+        --tpm-danger: #b4573f;
+    }
+
+    /* 🆕 Light Mode — نفس منطق الـ Layout (html[data-theme="light"])
+       عشان زرار الـ toggle في الناف بار يشتغل هنا كمان */
+    html[data-theme="light"] {
+        --tpm-bg: #f3e8d0;
+        --tpm-panel: #fffaf0;
+        --tpm-panel-alt: #ece0bc;
+        --tpm-gold: #b8860b;
+        --tpm-gold-bright: #a9780f;
+        --tpm-lapis: #2f6fb8;
+        --tpm-papyrus: #3b2411;
+        --tpm-papyrus-dim: #8a6f45;
+        --tpm-line: rgba(184, 134, 11, 0.25);
+        --tpm-danger: #c0392b;
+    }
+
+    .tpm-hero {
+        position: relative;
+        padding: 3rem 2rem 2rem;
+        text-align: center;
+        background: radial-gradient(ellipse at top, var(--tpm-panel-alt) 0%, var(--tpm-bg) 70%);
+        border-bottom: 1px solid var(--tpm-line);
+    }
+
+    .tpm-eyebrow {
+        display: inline-block;
+        font-size: 0.8rem;
+        letter-spacing: 0.12em;
+        color: var(--tpm-gold);
+        border: 1px solid var(--tpm-line);
+        padding: 0.3rem 0.9rem;
+        border-radius: 999px;
+        margin-bottom: 1rem;
+    }
+
+    .tpm-title {
+        font-family: "Amiri", "Georgia", serif;
+        font-size: clamp(1.6rem, 3.6vw, 2.3rem);
+        color: var(--tpm-papyrus);
+        margin: 0 0 0.75rem;
+    }
+
+    .tpm-title span {
+        color: var(--tpm-gold-bright);
+    }
+
+    .tpm-subtitle {
+        color: var(--tpm-papyrus-dim);
+        font-size: 0.98rem;
+        margin: 0 auto;
+        max-width: 560px;
+        line-height: 1.7;
+    }
+
+    .tpm-new-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 1.4rem;
+        background: linear-gradient(135deg, var(--tpm-gold-bright), var(--tpm-gold));
+        color: var(--tpm-bg);
+        border: none;
+        border-radius: 999px;
+        padding: 0.65rem 1.4rem;
+        font-size: 0.9rem;
+        font-weight: 700;
+        text-decoration: none;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .tpm-new-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 24px rgba(201, 162, 75, 0.25);
+        color: var(--tpm-bg);
+    }
+
+    /* Container */
+    .tpm-wrap {
+        max-width: 960px;
+        margin: 2.5rem auto 4rem;
+        padding: 0 1.5rem;
+    }
+
+    /* Empty state */
+    .tpm-empty {
+        text-align: center;
+        padding: 4rem 1.5rem;
+        background: var(--tpm-panel);
+        border: 1px dashed var(--tpm-line);
+        border-radius: 14px;
+    }
+
+    .tpm-empty-glyph {
+        font-size: 2.4rem;
+        color: var(--tpm-gold);
+        opacity: 0.7;
+        margin-bottom: 0.8rem;
+        display: block;
+    }
+
+    .tpm-empty h2 {
+        color: var(--tpm-papyrus);
+        margin: 0 0 0.5rem;
+        font-size: 1.15rem;
+    }
+
+    .tpm-empty p {
+        color: var(--tpm-papyrus-dim);
+        margin: 0 0 1.4rem;
+        font-size: 0.9rem;
+    }
+
+    /* Plans grid */
+    .tpm-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.4rem;
+    }
+
+    .tpm-card {
+        display: flex;
+        flex-direction: column;
+        background: var(--tpm-panel);
+        border: 1px solid var(--tpm-line);
+        border-radius: 14px;
+        overflow: hidden;
+        transition: border-color 0.15s ease, transform 0.15s ease;
+    }
+
+    .tpm-card:hover {
+        border-color: var(--tpm-gold);
+        transform: translateY(-2px);
+    }
+
+    .tpm-card-head {
+        display: flex;
+        align-items: center;
+        gap: 0.9rem;
+        padding: 1.1rem 1.2rem 0.9rem;
+        border-bottom: 1px solid var(--tpm-line);
+    }
+
+    .tpm-card-icon {
+        flex-shrink: 0;
+        width: 2.8rem;
+        height: 2.8rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        background: linear-gradient(160deg, rgba(201, 162, 75, 0.18), var(--tpm-panel-alt));
+        border: 1px solid var(--tpm-line);
+        color: var(--tpm-gold-bright);
+        font-size: 1.4rem;
+    }
+
+    .tpm-card-head h2 {
+        margin: 0;
+        font-size: 1.05rem;
+        color: var(--tpm-papyrus);
+    }
+
+    .tpm-card-date {
+        margin: 0.2rem 0 0;
+        font-size: 0.78rem;
+        color: var(--tpm-papyrus-dim);
+    }
+
+    .tpm-card-body {
+        padding: 1rem 1.2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+        flex: 1;
+    }
+
+    .tpm-stat-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .tpm-stat-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        background: var(--tpm-panel-alt);
+        border: 1px solid var(--tpm-line);
+        border-radius: 999px;
+        padding: 0.35rem 0.75rem;
+        color: var(--tpm-papyrus);
+        font-size: 0.8rem;
+    }
+
+    .tpm-stat-pill strong {
+        color: var(--tpm-gold-bright);
+    }
+
+    .tpm-interests {
+        color: var(--tpm-papyrus-dim);
+        font-size: 0.82rem;
+        line-height: 1.6;
+    }
+
+    .tpm-interests strong {
+        color: var(--tpm-papyrus);
+        font-weight: 600;
+    }
+
+    .tpm-card-actions {
+        display: flex;
+        gap: 0.6rem;
+        padding: 1rem 1.2rem;
+        border-top: 1px solid var(--tpm-line);
+    }
+
+    .tpm-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        flex: 1;
+        padding: 0.6rem 0.8rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        border: 1px solid var(--tpm-line);
+        cursor: pointer;
+        background: none;
+    }
+
+    .tpm-btn-primary {
+        background: linear-gradient(135deg, var(--tpm-gold-bright), var(--tpm-gold));
+        color: var(--tpm-bg);
+        border: none;
+    }
+
+    .tpm-btn-primary:hover {
+        transform: translateY(-1px);
+    }
+
+    .tpm-btn-danger {
+        background: transparent;
+        color: var(--tpm-danger);
+        border-color: rgba(180, 87, 63, 0.4);
+    }
+
+    .tpm-btn-danger:hover {
+        background: rgba(180, 87, 63, 0.12);
+    }
+
+    .tpm-card-form {
+        flex: 1;
+        display: flex;
+    }
+
+    /* Responsive */
+    @@media (max-width: 640px) {
+        .tpm-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* 🆕 مودال تأكيد الحذف — بديل شكل confirm() الافتراضي بتاع المتصفح */
+    .tpm-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(10, 8, 5, 0.65);
+        backdrop-filter: blur(2px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.2rem;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.18s ease;
+    }
+
+    .tpm-modal-overlay.open {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .tpm-modal {
+        background: var(--tpm-panel);
+        border: 1px solid var(--tpm-line);
+        border-radius: 16px;
+        padding: 1.8rem 1.6rem 1.5rem;
+        max-width: 380px;
+        width: 100%;
+        text-align: center;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+        transform: translateY(10px) scale(0.97);
+        transition: transform 0.18s ease;
+    }
+
+    .tpm-modal-overlay.open .tpm-modal {
+        transform: translateY(0) scale(1);
+    }
+
+    .tpm-modal-icon {
+        width: 3rem;
+        height: 3rem;
+        margin: 0 auto 0.9rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        background: rgba(180, 87, 63, 0.14);
+        color: var(--tpm-danger);
+        border: 1px solid rgba(180, 87, 63, 0.35);
+    }
+
+    .tpm-modal h3 {
+        margin: 0 0 0.5rem;
+        color: var(--tpm-papyrus);
+        font-size: 1.05rem;
+    }
+
+    .tpm-modal p {
+        margin: 0 0 1.4rem;
+        color: var(--tpm-papyrus-dim);
+        font-size: 0.88rem;
+        line-height: 1.6;
+    }
+
+    .tpm-modal-actions {
+        display: flex;
+        gap: 0.6rem;
+    }
+
+    .tpm-modal-actions .tpm-btn {
+        flex: 1;
+    }
+</style>
+
+<section class="tpm-hero">
+    <span class="tpm-eyebrow">@Html.L("trip.mytrips.eyebrow")</span>
+    <h1 class="tpm-title">@Html.L("trip.mytrips.heading.prefix") <span>@Html.L("trip.mytrips.heading.highlight")</span></h1>
+    <p class="tpm-subtitle">@Html.L("trip.mytrips.subtitle")</p>
+    <a class="tpm-new-btn" asp-controller="TripPlanner" asp-action="Index">
+        <span>@Html.L("trip.mytrips.newbtn")</span> 𓊪
+    </a>
+</section>
+
+<div class="tpm-wrap">
+    @if (Model == null || !Model.Any())
+    {
+        <div class="tpm-empty">
+            <span class="tpm-empty-glyph" aria-hidden="true">𓅓</span>
+            <h2>@Html.L("trip.mytrips.empty.title")</h2>
+            <p>@Html.L("trip.mytrips.empty.text")</p>
+            <a class="tpm-new-btn" asp-controller="TripPlanner" asp-action="Index">
+                <span>@Html.L("trip.mytrips.empty.cta")</span> 𓊪
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="tpm-grid">
+            @foreach (var plan in Model.OrderByDescending(p => p.CreatedAt))
+            {
+                var icon = modeIcons.TryGetValue(plan.Mode, out var ic) ? ic : "𓆓";
+                var modeLabel = modeLabels.TryGetValue(plan.Mode, out var ml) ? ml : plan.Mode;
+                var interestsList = (plan.Interests ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries);
+                var placeCount = plan.Stops?.Count ?? 0;
+
+                <div class="tpm-card">
+                    <div class="tpm-card-head">
+                        <span class="tpm-card-icon" aria-hidden="true">@icon</span>
+                        <div>
+                            <h2>@Html.LF("trip.mytrips.card.title", Html.Num(plan.Days), modeLabel)</h2>
+                            <p class="tpm-card-date">@Html.LF("trip.mytrips.card.generated", Html.DateLoc(plan.CreatedAt, "d MMMM yyyy"))</p>
+                        </div>
+                    </div>
+                    <div class="tpm-card-body">
+                        <div class="tpm-stat-row">
+                            <span class="tpm-stat-pill">📅 <strong>@Html.Num(plan.Days)</strong> @Html.L("trip.stat.days")</span>
+                            <span class="tpm-stat-pill">💰 <strong>@Html.Num(plan.Budget.ToString("N0"))</strong> @Html.L("trip.currency")</span>
+                            <span class="tpm-stat-pill">📍 <strong>@Html.Num(placeCount)</strong> @Html.L("trip.stat.stop")</span>
+                        </div>
+                        <p class="tpm-interests">
+                            <strong>@Html.L("trip.mytrips.interests.label")</strong>
+                            @string.Join(" · ", interestsList.Select(i => interestLabels.TryGetValue(i, out var lbl) ? lbl : i))
+                        </p>
+                    </div>
+                    <div class="tpm-card-actions">
+                        <a class="tpm-btn tpm-btn-primary" asp-controller="TripPlanner" asp-action="Result" asp-route-id="@plan.Id">@Html.L("trip.mytrips.view")</a>
+                        <form class="tpm-card-form" asp-controller="TripPlanner" asp-action="Delete" asp-route-id="@plan.Id" method="post">
+                            <button type="button" class="tpm-btn tpm-btn-danger" style="width: 100%;" onclick="tpmOpenDeleteModal(this)">@Html.L("trip.mytrips.delete")</button>
+                        </form>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- 🆕 مودال تأكيد الحذف — واحد بس لكل الصفحة، بيتنقل عليه الفورم اللي اتضغط عليه -->
+<div class="tpm-modal-overlay" id="tpmDeleteModal">
+    <div class="tpm-modal" role="alertdialog" aria-modal="true">
+        <div class="tpm-modal-icon" aria-hidden="true">𓄿</div>
+        <h3>@Html.L("trip.delete.title")</h3>
+        <p>@Html.L("trip.delete.confirm")</p>
+        <div class="tpm-modal-actions">
+            <button type="button" class="tpm-btn" onclick="tpmCloseDeleteModal()">@Html.L("trip.delete.cancel")</button>
+            <button type="button" class="tpm-btn tpm-btn-danger" onclick="tpmConfirmDelete()">@Html.L("trip.mytrips.delete")</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let tpmDeleteForm = null;
+
+    function tpmOpenDeleteModal(btn) {
+        tpmDeleteForm = btn.closest('form');
+        document.getElementById('tpmDeleteModal').classList.add('open');
+    }
+
+    function tpmCloseDeleteModal() {
+        document.getElementById('tpmDeleteModal').classList.remove('open');
+        tpmDeleteForm = null;
+    }
+
+    function tpmConfirmDelete() {
+        if (tpmDeleteForm) tpmDeleteForm.submit();
+    }
+
+    // إغلاق بالـ Escape أو بالدوس بره الصندوق
+    document.getElementById('tpmDeleteModal').addEventListener('click', function (e) {
+        if (e.target === this) tpmCloseDeleteModal();
+    });
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') tpmCloseDeleteModal();
+    });
+</script>

@@ -218,6 +218,14 @@ namespace pharaohsLegacy.Controllers
                 Console.WriteLine($"[BankService] Coupons count fetch failed for {email}: {ex.Message}");
             }
 
+            // ===== TRIP PLANS COUNT =====
+            // 🆕 عدد خطط الرحلات المحفوظة بتاعت الـ AI Trip Planner — نفس أسلوب TotalOrders
+            // فوق، ViewBag مش جوه DashboardViewModel عشان منلمسش الكلاس. لو اسم الـ DbSet
+            // في AppDbContext مختلف عن "TripPlans" غيّره هنا بس.
+            ViewBag.TotalTripPlans = await context.TripPlans
+                .Where(t => t.UserEmail == email)
+                .CountAsync();
+
             // ===== FAVORITES =====
             var favorites = await context.Favorites
                 .Where(f => f.UserEmail == email)

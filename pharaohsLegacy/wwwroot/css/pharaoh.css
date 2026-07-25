@@ -351,7 +351,7 @@ nav.main-nav {
     position: absolute;
     inset: 0;
     pointer-events: none;
-    background-image: radial-gradient(1px 1px at 20% 30%, rgba(201,162,39,.4) 0%, transparent 100%), radial-gradient(1px 1px at 80% 20%, rgba(201,162,39,.3) 0%, transparent 100%), radial-gradient(1px 1px at 60% 70%, rgba(201,162,39,.2) 0%, transparent 100%), radial-gradient(1px 1px at 40% 80%, rgba(201,162,39,.3) 0%, transparent 100%), radial-gradient(1px 1px at 10% 60%, rgba(201,162,39,.2) 0%, transparent 100%);
+    background-image: radial-gradient(1px 1px at 20% 30%, rgba(var(--gold-rgb),.4) 0%, transparent 100%), radial-gradient(1px 1px at 80% 20%, rgba(var(--gold-rgb),.3) 0%, transparent 100%), radial-gradient(1px 1px at 60% 70%, rgba(var(--gold-rgb),.2) 0%, transparent 100%), radial-gradient(1px 1px at 40% 80%, rgba(var(--gold-rgb),.3) 0%, transparent 100%), radial-gradient(1px 1px at 10% 60%, rgba(var(--gold-rgb),.2) 0%, transparent 100%);
 }
 
 .hero-pattern {
@@ -858,9 +858,9 @@ nav.main-nav {
     align-items: center;
     gap: .5rem;
     padding: .75rem 1.5rem;
-    border: 1px solid #3d2a15;
+    border: 1px solid var(--border);
     border-radius: 25px;
-    color: #8a7055;
+    color: var(--muted);
     font-family: 'Cinzel', serif;
     font-size: .7rem;
     letter-spacing: 2px;
@@ -879,7 +879,7 @@ nav.main-nav {
     }
 
 .fav-guest-msg {
-    color: #8a7055;
+    color: var(--muted);
     font-style: italic;
     font-size: .9rem;
 }
@@ -892,13 +892,13 @@ nav.main-nav {
     z-index: 50;
     width: 45px;
     height: 45px;
-    background: #2d1a08;
-    border: 1px solid #3d2a15;
+    background: var(--dark3);
+    border: 1px solid var(--border);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #c9a227;
+    color: var(--gold);
     font-size: 1.2rem;
     cursor: pointer;
     transition: var(--transition);
@@ -913,8 +913,8 @@ nav.main-nav {
     }
 
     #back-to-top:hover {
-        background: #c9a227;
-        color: #0d0702;
+        background: var(--gold);
+        color: var(--dark);
         transform: translateY(-3px);
     }
 

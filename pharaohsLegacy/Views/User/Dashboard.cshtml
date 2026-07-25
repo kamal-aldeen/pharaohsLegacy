@@ -1587,6 +1587,15 @@
                     <span class="tab-badge">@Html.Digits((object)ViewBag.TotalCoupons)</span>
                 }
             </a>
+            @* 🆕 Trip Plans: نفس فكرة My Orders / My Coupons بالظبط — صفحة مستقلة (مش تاب
+               داخلي) لأن خطط الرحلات ليها صفحتها الخاصة بالفعل (TripPlanner/MyTripPlans) *@
+            <a class="db-tab" href="/TripPlanner/MyTripPlans">
+                𓊪 @Html.L("Dash_Tab_TripPlans")
+                @if ((int)(ViewBag.TotalTripPlans ?? 0) > 0)
+                {
+                    <span class="tab-badge">@Html.Digits((object)ViewBag.TotalTripPlans)</span>
+                }
+            </a>
             <button class="db-tab" onclick="switchTab('favorites', this)">
                 𓆣 @Html.L("Dash_Tab_Favorites")
                 @if (Model.TotalFavorites > 0)

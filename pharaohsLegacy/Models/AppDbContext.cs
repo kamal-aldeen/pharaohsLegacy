@@ -35,6 +35,9 @@ namespace pharaohsLegacy.Models
         public DbSet<ShopOrderItem> ShopOrderItems { get; set; } // 🆕 عناصر الأوردر (منتج واحد أو أكتر)
         public DbSet<QuizHistory> QuizHistories { get; set; } // 🆕 تاريخ الكويز الدائم (Grade + Streak + Discount)
 
+        public DbSet<TripPlan> TripPlans { get; set; } // 🆕 AI Trip Planner
+        public DbSet<TripPlanStop> TripPlanStops { get; set; } // 🆕 AI Trip Planner — الوقفات اليومية
+
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

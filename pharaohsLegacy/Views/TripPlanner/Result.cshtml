@@ -1,0 +1,580 @@
+@model pharaohsLegacy.Models.TripPlan
+@{
+    ViewData["Title"] = Html.L("trip.result.pagetitle");
+
+    var modeLabels = new Dictionary<string, string> { { "Family", Html.L("trip.mode.family") }, { "Student", Html.L("trip.mode.student") }, { "Luxury", Html.L("trip.mode.luxury") } };
+    var interestLabels = new Dictionary<string, string> { { "Temple", Html.L("trip.interest.temple") }, { "Museum", Html.L("trip.interest.museum") } };
+    var placeGlyphs = new Dictionary<string, string> { { "Temple", "𓊪" }, { "Museum", "𓏛" } };
+    var placeControllers = new Dictionary<string, string> { { "Temple", "Temple" }, { "Museum", "Museum" } };
+
+    var interestsList = Model.Interests.Split(',', StringSplitOptions.RemoveEmptyEntries);
+    var dayGroups = Model.Stops.GroupBy(s => s.DayNumber).OrderBy(g => g.Key).ToList();
+    var totalCost = Model.Stops.Sum(s => s.EstimatedCost);
+    var modeLabel = modeLabels.TryGetValue(Model.Mode, out var ml) ? ml : Model.Mode;
+}
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<style>
+    /* ===========================================================
+       AI Trip Planner — Result (Egyptian dark-gold theme)
+       نفس الـ palette المستخدم في Index.cshtml
+       =========================================================== */
+
+    :root {
+        --tpr-bg: #14110d;
+        --tpr-panel: #1d1810;
+        --tpr-panel-alt: #241d13;
+        --tpr-gold: #c9a24b;
+        --tpr-gold-bright: #e6c56b;
+        --tpr-lapis: #2e4a6b;
+        --tpr-papyrus: #ece3ce;
+        --tpr-papyrus-dim: #b8ac93;
+        --tpr-line: rgba(201, 162, 75, 0.25);
+        --tpr-danger: #b4573f;
+    }
+
+    /* 🆕 Light Mode — نفس منطق الـ Layout (html[data-theme="light"])
+       عشان زرار الـ toggle في الناف بار يشتغل هنا كمان */
+    html[data-theme="light"] {
+        --tpr-bg: #f3e8d0;
+        --tpr-panel: #fffaf0;
+        --tpr-panel-alt: #ece0bc;
+        --tpr-gold: #b8860b;
+        --tpr-gold-bright: #a9780f;
+        --tpr-lapis: #2f6fb8;
+        --tpr-papyrus: #3b2411;
+        --tpr-papyrus-dim: #8a6f45;
+        --tpr-line: rgba(184, 134, 11, 0.25);
+        --tpr-danger: #c0392b;
+    }
+
+    .tpr-hero {
+        position: relative;
+        padding: 3rem 2rem 2rem;
+        text-align: center;
+        background: radial-gradient(ellipse at top, var(--tpr-panel-alt) 0%, var(--tpr-bg) 70%);
+        border-bottom: 1px solid var(--tpr-line);
+    }
+
+    .tpr-eyebrow {
+        display: inline-block;
+        font-size: 0.8rem;
+        letter-spacing: 0.12em;
+        color: var(--tpr-gold);
+        border: 1px solid var(--tpr-line);
+        padding: 0.3rem 0.9rem;
+        border-radius: 999px;
+        margin-bottom: 1rem;
+    }
+
+    .tpr-title {
+        font-family: "Amiri", "Georgia", serif;
+        font-size: clamp(1.6rem, 3.6vw, 2.3rem);
+        color: var(--tpr-papyrus);
+        margin: 0 0 1rem;
+    }
+
+    .tpr-title span {
+        color: var(--tpr-gold-bright);
+    }
+
+    .tpr-summary-row {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.7rem;
+        max-width: 780px;
+        margin: 0 auto;
+    }
+
+    .tpr-summary-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: var(--tpr-panel);
+        border: 1px solid var(--tpr-line);
+        border-radius: 999px;
+        padding: 0.5rem 1rem;
+        color: var(--tpr-papyrus);
+        font-size: 0.88rem;
+    }
+
+    .tpr-summary-pill strong {
+        color: var(--tpr-gold-bright);
+    }
+
+    /* Container */
+    .tpr-wrap {
+        max-width: 960px;
+        margin: 2.5rem auto 4rem;
+        padding: 0 1.5rem;
+        display: grid;
+        gap: 2rem;
+    }
+
+    /* Map */
+    .tpr-map-card {
+        background: var(--tpr-panel);
+        border: 1px solid var(--tpr-line);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .tpr-map-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.9rem 1.2rem;
+        border-bottom: 1px solid var(--tpr-line);
+    }
+
+    .tpr-map-head h2 {
+        margin: 0;
+        font-size: 1rem;
+        color: var(--tpr-gold-bright);
+    }
+
+    #tpr-map {
+        height: 340px;
+        width: 100%;
+        background: var(--tpr-panel-alt);
+    }
+
+    .tpr-map-empty {
+        padding: 2.5rem 1rem;
+        text-align: center;
+        color: var(--tpr-papyrus-dim);
+        font-size: 0.9rem;
+    }
+
+    /* Timeline */
+    .tpr-day {
+        background: var(--tpr-panel);
+        border: 1px solid var(--tpr-line);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .tpr-day-head {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        padding: 0.9rem 1.2rem;
+        background: var(--tpr-panel-alt);
+        border-bottom: 1px solid var(--tpr-line);
+    }
+
+    .tpr-day-badge {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.3rem;
+        height: 2.3rem;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--tpr-gold-bright), var(--tpr-gold));
+        color: var(--tpr-bg);
+        font-weight: 700;
+        font-size: 0.95rem;
+        flex-shrink: 0;
+    }
+
+    .tpr-day-head h2 {
+        margin: 0;
+        font-size: 1.05rem;
+        color: var(--tpr-papyrus);
+    }
+
+    .tpr-day-cost {
+        margin-inline-start: auto;
+        color: var(--tpr-papyrus-dim);
+        font-size: 0.85rem;
+    }
+
+    .tpr-stop-list {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .tpr-stop {
+        display: flex;
+        gap: 1rem;
+        padding: 1rem 1.2rem;
+        border-bottom: 1px solid var(--tpr-line);
+    }
+
+    .tpr-stop:last-child {
+        border-bottom: none;
+    }
+
+    .tpr-stop-glyph {
+        flex-shrink: 0;
+        width: 2.6rem;
+        height: 2.6rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        background: var(--tpr-panel-alt);
+        border: 1px solid var(--tpr-line);
+        color: var(--tpr-gold);
+        font-size: 1.2rem;
+    }
+
+    .tpr-stop-body {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .tpr-stop-top {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 0.5rem 0.8rem;
+    }
+
+    .tpr-stop-name {
+        color: var(--tpr-papyrus);
+        font-weight: 600;
+        font-size: 1rem;
+        text-decoration: none;
+    }
+
+    .tpr-stop-name:hover {
+        color: var(--tpr-gold-bright);
+    }
+
+    .tpr-stop-time {
+        color: var(--tpr-gold);
+        font-size: 0.82rem;
+    }
+
+    .tpr-stop-cost {
+        color: var(--tpr-papyrus-dim);
+        font-size: 0.82rem;
+    }
+
+    .tpr-stop-notes {
+        margin: 0.4rem 0 0;
+        color: var(--tpr-papyrus-dim);
+        font-size: 0.85rem;
+        line-height: 1.6;
+    }
+
+    /* Actions */
+    .tpr-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.8rem;
+        justify-content: center;
+    }
+
+    .tpr-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.4rem;
+        border-radius: 10px;
+        font-size: 0.92rem;
+        font-weight: 600;
+        text-decoration: none;
+        border: 1px solid var(--tpr-line);
+        cursor: pointer;
+    }
+
+    .tpr-btn-primary {
+        background: linear-gradient(135deg, var(--tpr-gold-bright), var(--tpr-gold));
+        color: var(--tpr-bg);
+        border: none;
+    }
+
+    .tpr-btn-primary:hover {
+        transform: translateY(-1px);
+    }
+
+    .tpr-btn-ghost {
+        background: var(--tpr-panel);
+        color: var(--tpr-papyrus);
+    }
+
+    .tpr-btn-ghost:hover {
+        border-color: var(--tpr-gold);
+        color: var(--tpr-gold-bright);
+    }
+
+    .tpr-btn-disabled {
+        background: var(--tpr-panel);
+        color: var(--tpr-papyrus-dim);
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    .tpr-btn-danger {
+        background: transparent;
+        color: var(--tpr-danger);
+        border-color: rgba(180, 87, 63, 0.4);
+    }
+
+    .tpr-btn-danger:hover {
+        background: rgba(180, 87, 63, 0.12);
+    }
+
+    /* Responsive */
+    @@media (max-width: 640px) {
+        .tpr-summary-row {
+            gap: 0.5rem;
+        }
+
+        .tpr-stop {
+            flex-direction: column;
+        }
+
+        .tpr-day-cost {
+            display: none;
+        }
+    }
+
+    /* 🆕 مودال تأكيد الحذف — بديل شكل confirm() الافتراضي بتاع المتصفح */
+    .tpr-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(10, 8, 5, 0.65);
+        backdrop-filter: blur(2px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.2rem;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.18s ease;
+    }
+
+    .tpr-modal-overlay.open {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .tpr-modal {
+        background: var(--tpr-panel);
+        border: 1px solid var(--tpr-line);
+        border-radius: 16px;
+        padding: 1.8rem 1.6rem 1.5rem;
+        max-width: 380px;
+        width: 100%;
+        text-align: center;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+        transform: translateY(10px) scale(0.97);
+        transition: transform 0.18s ease;
+    }
+
+    .tpr-modal-overlay.open .tpr-modal {
+        transform: translateY(0) scale(1);
+    }
+
+    .tpr-modal-icon {
+        width: 3rem;
+        height: 3rem;
+        margin: 0 auto 0.9rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        background: rgba(180, 87, 63, 0.14);
+        color: var(--tpr-danger);
+        border: 1px solid rgba(180, 87, 63, 0.35);
+    }
+
+    .tpr-modal h3 {
+        margin: 0 0 0.5rem;
+        color: var(--tpr-papyrus);
+        font-size: 1.05rem;
+    }
+
+    .tpr-modal p {
+        margin: 0 0 1.4rem;
+        color: var(--tpr-papyrus-dim);
+        font-size: 0.88rem;
+        line-height: 1.6;
+    }
+
+    .tpr-modal-actions {
+        display: flex;
+        gap: 0.6rem;
+    }
+
+    .tpr-modal-actions .tpr-btn {
+        flex: 1;
+        justify-content: center;
+    }
+</style>
+
+<section class="tpr-hero">
+    <span class="tpr-eyebrow">@Html.L("trip.result.eyebrow")</span>
+    <h1 class="tpr-title">@Html.L("trip.result.heading.prefix") <span>@Html.Num(Model.Days) @Html.L("trip.stat.days")</span> @Html.L("trip.result.heading.suffix")</h1>
+    <div class="tpr-summary-row">
+        <span class="tpr-summary-pill">📅 <strong>@Html.Num(Model.Days)</strong> @Html.L("trip.stat.days")</span>
+        <span class="tpr-summary-pill">💰 @Html.L("trip.result.summary.budget") <strong>@Html.Num(Model.Budget.ToString("N0"))</strong> @Html.L("trip.currency")</span>
+        <span class="tpr-summary-pill">📊 @Html.L("trip.result.summary.estcost") <strong>@Html.Num(totalCost.ToString("N0"))</strong> @Html.L("trip.currency")</span>
+        <span class="tpr-summary-pill">🎯 @Html.L("trip.result.summary.mode") <strong>@modeLabel</strong></span>
+        <span class="tpr-summary-pill">
+            ✨
+            @string.Join(" · ", interestsList.Select(i => interestLabels.TryGetValue(i, out var lbl) ? lbl : i))
+        </span>
+    </div>
+</section>
+
+<div class="tpr-wrap">
+
+    <div class="tpr-map-card">
+        <div class="tpr-map-head">
+            <h2>@Html.L("trip.result.map.title")</h2>
+        </div>
+        <div id="tpr-map"></div>
+    </div>
+
+    @foreach (var day in dayGroups)
+    {
+        var dayCost = day.Sum(s => s.EstimatedCost);
+        <div class="tpr-day">
+            <div class="tpr-day-head">
+                <span class="tpr-day-badge">@Html.Num(day.Key)</span>
+                <h2>@Html.L("trip.result.day.label") @Html.Num(day.Key)</h2>
+                <span class="tpr-day-cost">@Html.LF("trip.result.day.cost", Html.Num(dayCost.ToString("N0")))</span>
+            </div>
+            <div class="tpr-stop-list">
+                @foreach (var stop in day.OrderBy(s => s.SuggestedTime))
+                {
+                    var glyph = placeGlyphs.TryGetValue(stop.PlaceType, out var g) ? g : "𓆓";
+                    var ctrl = placeControllers.TryGetValue(stop.PlaceType, out var c) ? c : null;
+                    <div class="tpr-stop">
+                        <span class="tpr-stop-glyph" aria-hidden="true">@glyph</span>
+                        <div class="tpr-stop-body">
+                            <div class="tpr-stop-top">
+                                @if (ctrl != null)
+                                {
+                                    <a class="tpr-stop-name" asp-controller="@ctrl" asp-action="Details" asp-route-id="@stop.PlaceId">@stop.PlaceName</a>
+                                }
+                                else
+                                {
+                                    <span class="tpr-stop-name">@stop.PlaceName</span>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(stop.SuggestedTime))
+                                {
+                                    <span class="tpr-stop-time">🕐 @Html.Digits(stop.SuggestedTime)</span>
+                                }
+                                <span class="tpr-stop-cost">@Html.LF("trip.result.stop.cost", Html.Num(stop.EstimatedCost.ToString("N0")))</span>
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(stop.Notes))
+                            {
+                                <p class="tpr-stop-notes">@stop.Notes</p>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <div class="tpr-actions">
+        <button type="button" class="tpr-btn tpr-btn-primary" onclick="tprOpenModal('tprPdfLangModal')">
+            <span>@Html.L("trip.result.export")</span> 𓊪
+        </button>
+        <a class="tpr-btn tpr-btn-ghost" asp-controller="TripPlanner" asp-action="MyTripPlans">@Html.L("trip.mytrips.pagetitle")</a>
+        <form id="tprDeleteForm" asp-controller="TripPlanner" asp-action="Delete" asp-route-id="@Model.Id" method="post">
+            <button type="button" class="tpr-btn tpr-btn-danger" onclick="tprOpenModal('tprDeleteModal')">@Html.L("trip.result.delete")</button>
+        </form>
+    </div>
+
+</div>
+
+<!-- 🆕 مودال تأكيد الحذف — صفحة فيها خطة واحدة بس، فمفيش داعي لتتبع فورم متغير زي MyTripPlans -->
+<div class="tpr-modal-overlay" id="tprDeleteModal">
+    <div class="tpr-modal" role="alertdialog" aria-modal="true">
+        <div class="tpr-modal-icon" aria-hidden="true">𓄿</div>
+        <h3>@Html.L("trip.delete.title")</h3>
+        <p>@Html.L("trip.delete.confirm")</p>
+        <div class="tpr-modal-actions">
+            <button type="button" class="tpr-btn tpr-btn-ghost" onclick="tprCloseModal('tprDeleteModal')">@Html.L("trip.delete.cancel")</button>
+            <button type="button" class="tpr-btn tpr-btn-danger" onclick="tprConfirmDelete()">@Html.L("trip.result.delete")</button>
+        </div>
+    </div>
+</div>
+
+<!-- 🆕 مودال اختيار لغة الـ PDF — بيتصدر بالعربي أو الإنجليزي حسب اختيار اليوزر، مش لغة الموقع تلقائيًا -->
+<div class="tpr-modal-overlay" id="tprPdfLangModal">
+    <div class="tpr-modal" role="dialog" aria-modal="true">
+        <div class="tpr-modal-icon" aria-hidden="true">𓊪</div>
+        <h3>@Html.L("trip.pdf.lang.title")</h3>
+        <p>@Html.L("trip.pdf.lang.subtitle")</p>
+        <div class="tpr-modal-actions">
+            <a class="tpr-btn tpr-btn-ghost" href="@Url.Action("ExportPdf", "TripPlanner", new { id = Model.Id, lang = "ar" })">
+                🇪🇬 العربية
+            </a>
+            <a class="tpr-btn tpr-btn-ghost" href="@Url.Action("ExportPdf", "TripPlanner", new { id = Model.Id, lang = "en" })">
+                🇬🇧 English
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function tprOpenModal(id) {
+        document.getElementById(id).classList.add('open');
+    }
+
+    function tprCloseModal(id) {
+        document.getElementById(id).classList.remove('open');
+    }
+
+    function tprConfirmDelete() {
+        document.getElementById('tprDeleteForm').submit();
+    }
+
+    // نفس منطق الفتح/القفل شغال على أي مودال بـ class="tpr-modal-overlay" في الصفحة
+    document.querySelectorAll('.tpr-modal-overlay').forEach(function (overlay) {
+        overlay.addEventListener('click', function (e) {
+            if (e.target === this) tprCloseModal(this.id);
+        });
+    });
+    document.addEventListener('keydown', function (e) {
+        if (e.key !== 'Escape') return;
+        document.querySelectorAll('.tpr-modal-overlay.open').forEach(function (overlay) {
+            overlay.classList.remove('open');
+        });
+    });
+</script>
+
+<script>
+    (function () {
+        var mapPoints = @Html.Raw(ViewBag.MapPointsJson ?? "[]");
+        var mapEl = document.getElementById('tpr-map');
+        var dayLabel = '@Html.L("trip.result.day.label")';
+
+        if (!mapPoints.length) {
+            mapEl.innerHTML = '<div class="tpr-map-empty">@Html.L("trip.result.map.empty")</div>';
+            return;
+        }
+
+        var map = L.map('tpr-map');
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
+            maxZoom: 18
+        }).addTo(map);
+
+        var bounds = [];
+        mapPoints.forEach(function (p) {
+            var marker = L.marker([p.lat, p.lng]).addTo(map);
+            marker.bindPopup('<strong>' + dayLabel + ' ' + p.day + '</strong><br>' + p.name);
+            bounds.push([p.lat, p.lng]);
+        });
+
+        if (bounds.length === 1) {
+            map.setView(bounds[0], 13);
+        } else {
+            map.fitBounds(bounds, { padding: [30, 30] });
+        }
+    })();
+</script>

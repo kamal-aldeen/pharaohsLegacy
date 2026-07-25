@@ -3,6 +3,8 @@ using pharaohsLegacy.Models;
 using pharaohsLegacy.Services;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
+using QuestPDF.Infrastructure;
+using QuestPDF.Drawing;
 
 namespace pharaohsLegacy
 {
@@ -51,6 +53,16 @@ namespace pharaohsLegacy
 
             // 🆕 التحديث التلقائي لتراك الشحن (Processing → Shipped → Delivered) حسب المحافظة
             builder.Services.AddHostedService<pharaohsLegacy.Services.ShopOrderShippingBackgroundService>();
+
+            // 🆕 QuestPDF — تصدير خطط الرحلة كـ PDF (TripPlanner/ExportPdf)
+            // الرخصة المجانية (Community) كافية للمشروع ده (طالب/شركة صغيرة تحت سقف الإيراد بتاعها)
+            QuestPDF.Settings.License = LicenseType.Community;
+
+            // فونت Amiri عشان يدعم النصوص العربية RTL جوه الـ PDF (نفس الفونت المستخدم
+            // في عناوين الموقع). لازم يكون موجود فعليًا في wwwroot/fonts قبل ما تشغل المشروع،
+            // وإلا هيرمي Exception هنا وقت التشغيل (مش بس وقت التصدير).
+            FontManager.RegisterFont(File.OpenRead(Path.Combine(builder.Environment.WebRootPath, "fonts", "Amiri-Regular.ttf")));
+            FontManager.RegisterFont(File.OpenRead(Path.Combine(builder.Environment.WebRootPath, "fonts", "Amiri-Bold.ttf")));
 
             var app = builder.Build();
 

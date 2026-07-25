@@ -1,0 +1,431 @@
+@model pharaohsLegacy.Controllers.TripPlannerGenerateRequest
+@{
+    ViewData["Title"] = Html.L("trip.index.pagetitle");
+}
+
+<style>
+    /* ===========================================================
+       AI Trip Planner — Index (Egyptian dark-gold theme)
+       Palette: onyx background, papyrus text, gold accent, lapis for contrast
+       =========================================================== */
+
+    :root {
+        --tp-bg: #14110d;
+        --tp-panel: #1d1810;
+        --tp-panel-alt: #241d13;
+        --tp-gold: #c9a24b;
+        --tp-gold-bright: #e6c56b;
+        --tp-lapis: #2e4a6b;
+        --tp-papyrus: #ece3ce;
+        --tp-papyrus-dim: #b8ac93;
+        --tp-line: rgba(201, 162, 75, 0.25);
+        --tp-danger: #b4573f;
+    }
+
+    /* 🆕 Light Mode — نفس منطق الـ Layout (html[data-theme="light"])
+       عشان زرار الـ toggle في الناف بار يشتغل هنا كمان */
+    html[data-theme="light"] {
+        --tp-bg: #f3e8d0;
+        --tp-panel: #fffaf0;
+        --tp-panel-alt: #ece0bc;
+        --tp-gold: #b8860b;
+        --tp-gold-bright: #a9780f;
+        --tp-lapis: #2f6fb8;
+        --tp-papyrus: #3b2411;
+        --tp-papyrus-dim: #8a6f45;
+        --tp-line: rgba(184, 134, 11, 0.25);
+        --tp-danger: #c0392b;
+    }
+
+    .tp-hero {
+        position: relative;
+        padding: 3.5rem 2rem 2.5rem;
+        text-align: center;
+        overflow: hidden;
+        background: radial-gradient(ellipse at top, var(--tp-panel-alt) 0%, var(--tp-bg) 70%);
+        border-bottom: 1px solid var(--tp-line);
+    }
+
+    .tp-hero-inner {
+        max-width: 680px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 2;
+    }
+
+    .tp-eyebrow {
+        display: inline-block;
+        font-size: 0.8rem;
+        letter-spacing: 0.12em;
+        color: var(--tp-gold);
+        border: 1px solid var(--tp-line);
+        padding: 0.3rem 0.9rem;
+        border-radius: 999px;
+        margin-bottom: 1rem;
+    }
+
+    .tp-title {
+        font-family: "Amiri", "Georgia", serif;
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        color: var(--tp-papyrus);
+        line-height: 1.3;
+        margin: 0 0 0.75rem;
+    }
+
+    .tp-title span {
+        color: var(--tp-gold-bright);
+    }
+
+    .tp-subtitle {
+        color: var(--tp-papyrus-dim);
+        font-size: 1.02rem;
+        line-height: 1.7;
+        margin: 0;
+    }
+
+    .tp-hero-glyphs {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 2rem;
+        font-size: 3rem;
+        color: var(--tp-gold);
+        opacity: 0.06;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    /* Alert */
+    .tp-alert {
+        max-width: 720px;
+        margin: 1.5rem auto 0;
+        background: rgba(180, 87, 63, 0.12);
+        border: 1px solid var(--tp-danger);
+        color: #e8b8ab;
+        border-radius: 10px;
+        padding: 0.9rem 1.2rem;
+    }
+
+    .tp-alert p {
+        margin: 0.2rem 0;
+    }
+
+    /* Form */
+    .tp-form {
+        max-width: 720px;
+        margin: 2.5rem auto 4rem;
+        padding: 0 1.5rem;
+    }
+
+    .tp-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+
+    .tp-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .tp-field-wide {
+        grid-column: 1 / -1;
+    }
+
+    .tp-field label {
+        color: var(--tp-gold-bright);
+        font-size: 0.92rem;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+    }
+
+    .tp-hint {
+        color: var(--tp-papyrus-dim);
+        font-size: 0.78rem;
+    }
+
+    .tp-field input[type="number"] {
+        background: var(--tp-panel);
+        border: 1px solid var(--tp-line);
+        border-radius: 8px;
+        color: var(--tp-papyrus);
+        padding: 0.7rem 0.9rem;
+        font-size: 1rem;
+        width: 100%;
+    }
+
+    .tp-field input[type="number"]:focus {
+        outline: none;
+        border-color: var(--tp-gold);
+        box-shadow: 0 0 0 3px rgba(201, 162, 75, 0.18);
+    }
+
+    /* Days stepper */
+    .tp-stepper {
+        display: flex;
+        align-items: stretch;
+        background: var(--tp-panel);
+        border: 1px solid var(--tp-line);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .tp-stepper input {
+        border: none !important;
+        text-align: center;
+        background: transparent !important;
+        flex: 1;
+    }
+
+    .tp-step-btn {
+        background: var(--tp-panel-alt);
+        color: var(--tp-gold);
+        border: none;
+        width: 2.6rem;
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .tp-step-btn:hover {
+        background: var(--tp-gold);
+        color: var(--tp-bg);
+    }
+
+    /* Mode cards */
+    .tp-mode-group {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.9rem;
+    }
+
+    .tp-mode-card {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 0.35rem;
+        background: var(--tp-panel);
+        border: 1px solid var(--tp-line);
+        border-radius: 10px;
+        padding: 1rem 0.6rem;
+        cursor: pointer;
+        transition: border-color 0.15s ease, transform 0.15s ease, background 0.15s ease;
+    }
+
+    .tp-mode-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--tp-gold);
+    }
+
+    .tp-mode-card input {
+        position: absolute;
+        opacity: 0;
+        inset: 0;
+        margin: 0;
+        cursor: pointer;
+    }
+
+    .tp-mode-card:has(input:checked) {
+        background: linear-gradient(160deg, rgba(201, 162, 75, 0.16), var(--tp-panel));
+        border-color: var(--tp-gold-bright);
+    }
+
+    .tp-mode-icon {
+        font-size: 1.6rem;
+        color: var(--tp-gold);
+    }
+
+    .tp-mode-label {
+        color: var(--tp-papyrus);
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+
+    .tp-mode-desc {
+        color: var(--tp-papyrus-dim);
+        font-size: 0.72rem;
+        line-height: 1.4;
+    }
+
+    /* Interests chips */
+    .tp-interest-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+    }
+
+    .tp-interest-chip {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        padding: 0.55rem 1.1rem;
+        border: 1px solid var(--tp-line);
+        border-radius: 999px;
+        background: var(--tp-panel);
+        color: var(--tp-papyrus-dim);
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .tp-interest-chip input {
+        position: absolute;
+        opacity: 0;
+        inset: 0;
+        margin: 0;
+        cursor: pointer;
+    }
+
+    .tp-interest-chip:has(input:checked) {
+        background: var(--tp-gold);
+        color: var(--tp-bg);
+        border-color: var(--tp-gold);
+        font-weight: 600;
+    }
+
+    /* Submit */
+    .tp-submit {
+        margin-top: 2.2rem;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6rem;
+        background: linear-gradient(135deg, var(--tp-gold-bright), var(--tp-gold));
+        color: var(--tp-bg);
+        border: none;
+        border-radius: 10px;
+        padding: 1rem;
+        font-size: 1.05rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .tp-submit:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 24px rgba(201, 162, 75, 0.25);
+    }
+
+    .tp-submit-glyph {
+        font-size: 1.1rem;
+    }
+
+    /* Responsive */
+    @@media (max-width: 640px) {
+        .tp-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .tp-mode-group {
+            grid-template-columns: 1fr;
+        }
+
+        .tp-hero-glyphs {
+            display: none;
+        }
+    }
+</style>
+
+<section class="tp-hero">
+    <div class="tp-hero-inner">
+        <span class="tp-eyebrow">@Html.L("trip.index.eyebrow")</span>
+        <h1 class="tp-title">@Html.L("trip.index.heading.prefix") <span>@Html.L("trip.index.heading.highlight")</span></h1>
+        <p class="tp-subtitle">@Html.L("trip.index.subtitle")</p>
+    </div>
+    <div class="tp-hero-glyphs" aria-hidden="true">𓁹 𓆣 𓊪 𓅓</div>
+</section>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="tp-alert">
+        @foreach (var err in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+        {
+            <p>@err.ErrorMessage</p>
+        }
+    </div>
+}
+
+<form class="tp-form" asp-controller="TripPlanner" asp-action="Generate" method="post">
+
+    <div class="tp-grid">
+
+        <div class="tp-field">
+            <label for="days">@Html.L("trip.index.days.label")</label>
+            <div class="tp-stepper">
+                <button type="button" class="tp-step-btn" data-step="-1" aria-label="@Html.L("trip.index.days.decrease")">−</button>
+                <input type="number" id="days" name="Days" value="3" min="1" max="14" required />
+                <button type="button" class="tp-step-btn" data-step="1" aria-label="@Html.L("trip.index.days.increase")">+</button>
+            </div>
+            <span class="tp-hint">@Html.L("trip.index.days.hint")</span>
+        </div>
+
+        <div class="tp-field">
+            <label for="budget">@Html.L("trip.index.budget.label")</label>
+            <input type="number" id="budget" name="Budget" value="1500" min="0" step="50" required />
+            <span class="tp-hint">@Html.L("trip.index.budget.hint")</span>
+        </div>
+
+        <div class="tp-field tp-field-wide">
+            <label>@Html.L("trip.index.mode.label")</label>
+            <div class="tp-mode-group" role="radiogroup" aria-label="@Html.L("trip.index.mode.label")">
+                <label class="tp-mode-card">
+                    <input type="radio" name="Mode" value="Family" />
+                    <span class="tp-mode-icon" aria-hidden="true">𓀀</span>
+                    <span class="tp-mode-label">@Html.L("trip.mode.family")</span>
+                    <span class="tp-mode-desc">@Html.L("trip.index.mode.family.desc")</span>
+                </label>
+                <label class="tp-mode-card">
+                    <input type="radio" name="Mode" value="Student" checked />
+                    <span class="tp-mode-icon" aria-hidden="true">𓂀</span>
+                    <span class="tp-mode-label">@Html.L("trip.mode.student")</span>
+                    <span class="tp-mode-desc">@Html.L("trip.index.mode.student.desc")</span>
+                </label>
+                <label class="tp-mode-card">
+                    <input type="radio" name="Mode" value="Luxury" />
+                    <span class="tp-mode-icon" aria-hidden="true">𓋴</span>
+                    <span class="tp-mode-label">@Html.L("trip.mode.luxury")</span>
+                    <span class="tp-mode-desc">@Html.L("trip.index.mode.luxury.desc")</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="tp-field tp-field-wide">
+            <label>@Html.L("trip.index.interests.label")</label>
+            <div class="tp-interest-group">
+                <label class="tp-interest-chip">
+                    <input type="checkbox" name="Interests" value="Temple" checked />
+                    <span>@Html.L("trip.interest.temple")</span>
+                </label>
+                <label class="tp-interest-chip">
+                    <input type="checkbox" name="Interests" value="Museum" checked />
+                    <span>@Html.L("trip.interest.museum")</span>
+                </label>
+            </div>
+            <span class="tp-hint">@Html.L("trip.index.interests.hint")</span>
+        </div>
+
+    </div>
+
+    <button type="submit" class="tp-submit">
+        <span>@Html.L("trip.index.submit")</span>
+        <span class="tp-submit-glyph" aria-hidden="true">𓊪</span>
+    </button>
+</form>
+
+<script>
+    document.querySelectorAll('.tp-step-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var input = document.getElementById('days');
+            var delta = parseInt(btn.getAttribute('data-step'), 10);
+            var next = (parseInt(input.value, 10) || 1) + delta;
+            next = Math.min(14, Math.max(1, next));
+            input.value = next;
+        });
+    });
+</script>

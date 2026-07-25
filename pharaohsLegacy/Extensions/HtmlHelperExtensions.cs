@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using pharaohsLegacy.Services;
 
@@ -11,6 +11,15 @@ namespace pharaohsLegacy.Extensions
             var lang = html.ViewContext.HttpContext.Session.GetString("Lang") ?? "en";
             var service = html.ViewContext.HttpContext.RequestServices.GetRequiredService<LocalizationService>();
             return service.Get(key, lang);
+        }
+
+        // 🆕 لنص فيه متغيرات جوا الترجمة نفسها (زي "رحلة {0} أيام — {1}")
+        // بيجيب القالب المترجم ويعمله Format بالقيم اللي جايالك من الـ View
+        public static string LF(this IHtmlHelper html, string key, params object[] args)
+        {
+            var lang = html.ViewContext.HttpContext.Session.GetString("Lang") ?? "en";
+            var service = html.ViewContext.HttpContext.RequestServices.GetRequiredService<LocalizationService>();
+            return service.GetFormatted(key, lang, args);
         }
 
         public static IHtmlContent D(this IHtmlHelper html, string? arabicValue, string englishValue)
