@@ -244,6 +244,24 @@ Candidate places (choose ONLY from this list):
             _context.TripPlans.Add(tripPlan);
             await _context.SaveChangesAsync();
 
+            // 🔔 بند 15 — Notification System: تأكيد إنشاء خطة الرحلة
+            try
+            {
+                var lang = HttpContext.Session.GetString("Lang") ?? "en";
+                NotificationHelper.Create(
+                    _context,
+                    userEmail: userEmail,
+                    title: _loc.Get("TripPlanner_CreatedNotifTitle", lang),
+                    message: _loc.GetFormatted("TripPlanner_CreatedNotifMessage", lang, tripPlan.Days),
+                    type: "TripPlanner",
+                    link: $"/TripPlanner/Result/{tripPlan.Id}");
+                await _context.SaveChangesAsync();
+            }
+            catch
+            {
+                // Best effort — الخطة نفسها اتحفظت، متوقفش الـ Flow لو الإشعار فشل
+            }
+
             return RedirectToAction("Result", new { id = tripPlan.Id });
         }
 

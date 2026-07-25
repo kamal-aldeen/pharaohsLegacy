@@ -1,0 +1,80 @@
+@model List<pharaohsLegacy.Models.Notification>
+@{
+    ViewData["Title"] = Html.L("Notif_PageTitle");
+}
+
+<div class="notif-page container">
+    <div class="notif-page-header">
+        <h2>🔔 @Html.L("Notif_PageTitle")</h2>
+        <button class="notif-mark-all-btn" onclick="markAllReadPage()">@Html.L("Nav_MarkAllRead")</button>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="notif-page-empty">@Html.L("Notif_Empty")</div>
+    }
+    else
+    {
+        <div class="notif-page-list">
+            @foreach (var n in Model)
+            {
+                <div class="notif-page-item @(n.IsRead ? "" : "unread")" data-id="@n.Id" data-link="@n.Link" onclick="openNotifPage(@n.Id, '@n.Link')">
+                    <div class="notif-page-item-icon">
+                        @(n.Type == "Booking" ? "🎟️" : n.Type == "Review" ? "⭐" : n.Type == "Admin" ? "🛠️" : n.Type == "Quiz" ? "🏆" : "📌")
+                    </div>
+                    <div class="notif-page-item-body">
+                        <div class="notif-page-item-title">@n.Title</div>
+                        <div class="notif-page-item-msg">@n.Message</div>
+                        <div class="notif-page-item-time">@Html.DateLoc(n.CreatedAt)</div>
+                    </div>
+                    @if (!n.IsRead)
+                    {
+                        <span class="notif-page-dot"></span>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .notif-page { max-width: 700px; margin: 30px auto; }
+    .notif-page-header {
+        display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+    }
+    .notif-page-header h2 { color: #d4af37; }
+    .notif-mark-all-btn {
+        background: transparent; border: 1px solid #d4af37; color: #d4af37;
+        padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem;
+    }
+    .notif-mark-all-btn:hover { background: #d4af37; color: #1a1a1a; }
+    .notif-page-empty { text-align: center; color: #888; padding: 60px 0; }
+    .notif-page-list { display: flex; flex-direction: column; gap: 8px; }
+    .notif-page-item {
+        display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px;
+        background: #1f1f1f; border-radius: 8px; cursor: pointer; position: relative;
+        border: 1px solid #2a2a2a; transition: background 0.15s;
+    }
+    .notif-page-item:hover { background: #262626; }
+    .notif-page-item.unread { border-color: #d4af37; background: #262218; }
+    .notif-page-item-icon { font-size: 1.4rem; }
+    .notif-page-item-body { flex: 1; }
+    .notif-page-item-title { font-weight: bold; color: #eee; margin-bottom: 4px; }
+    .notif-page-item-msg { color: #bbb; font-size: 0.9rem; }
+    .notif-page-item-time { color: #777; font-size: 0.75rem; margin-top: 6px; }
+    .notif-page-dot { width: 8px; height: 8px; border-radius: 50%; background: #d4af37; margin-top: 6px; }
+</style>
+
+<script>
+    function openNotifPage(id, link) {
+        fetch('/Notification/MarkAsRead/' + id, { method: 'POST' })
+            .then(() => {
+                if (link) window.location.href = link;
+            });
+    }
+
+    function markAllReadPage() {
+        fetch('/Notification/MarkAllAsRead', { method: 'POST' })
+            .then(() => location.reload());
+    }
+</script>

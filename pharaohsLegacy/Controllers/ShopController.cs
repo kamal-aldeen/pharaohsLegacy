@@ -657,6 +657,32 @@ namespace pharaohsLegacy.Controllers
             _db.ShopPayments.Add(payment);
             await _db.SaveChangesAsync();
 
+            // 🔔 بند 15 — Notification System: إشعار تأكيد الأوردر + تنبيه أدمن
+            try
+            {
+                NotificationHelper.Create(
+                    _db,
+                    userEmail: userEmail,
+                    title: _loc.Get("Shop_OrderConfirmedNotifTitle", lang),
+                    message: _loc.GetFormatted("Shop_OrderConfirmedNotifMessage", lang, order.Id, order.Items.Count),
+                    type: "Shop",
+                    link: "/Shop/MyOrders");
+
+                // ⚠️ نفس ملاحظة إشعار الأدمن في BookingController — بيتسجل بلغة اليوزر
+                // اللي أكد الأوردر (lang)، مش لغة الأدمن، لعدم توفر Session خاصة بالأدمن هنا
+                NotificationHelper.NotifyAdmin(
+                    _db,
+                    title: _loc.Get("Shop_AdminNewOrderTitle", lang),
+                    message: _loc.GetFormatted("Shop_AdminNewOrderMessage", lang, userEmail, order.Id, order.TotalPrice.ToString("N2")),
+                    link: "/Admin/Index");
+
+                await _db.SaveChangesAsync();
+            }
+            catch
+            {
+                // Best effort — الشراء نفسه خلص، متوقفش الـ Flow لو الإشعار فشل
+            }
+
             TempData["Message"] = chargeResult.discount_applied > 0
                 ? _loc.GetFormatted("Booking_SuccessWithCoupon", lang, chargeResult.discount_applied.ToString("N2"))
                 : _loc.Get("Shop_PurchaseSuccess", lang);
@@ -703,6 +729,23 @@ namespace pharaohsLegacy.Controllers
 
             var statusService = new ShopOrderStatusService(_db, _httpClientFactory);
             var result = await statusService.ChangeStatusAsync(order, "Cancelled");
+
+            // 🔔 بند 15 — Notification System
+            try
+            {
+                NotificationHelper.Create(
+                    _db,
+                    userEmail: order.UserEmail,
+                    title: _loc.Get("Shop_OrderCancelledNotifTitle", lang),
+                    message: _loc.GetFormatted("Shop_OrderCancelledNotifMessage", lang, order.Id),
+                    type: "Shop",
+                    link: "/Shop/MyOrders");
+                await _db.SaveChangesAsync();
+            }
+            catch
+            {
+                // Best effort — الإلغاء نفسه خلص، متوقفش الـ Flow لو الإشعار فشل
+            }
 
             TempData["Message"] = result.Message;
             return RedirectToAction("MyOrders");

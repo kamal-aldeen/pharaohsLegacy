@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using pharaohsLegacy.Models;
 using pharaohsLegacy.Models.DTOs;
 using pharaohsLegacy.ViewModels;
+using pharaohsLegacy.Services;
 using System.Net.Http.Json;
 
 namespace pharaohsLegacy.Controllers
@@ -11,15 +12,20 @@ namespace pharaohsLegacy.Controllers
     {
         private readonly AppDbContext context;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly LocalizationService _loc;
 
         // 🆕 إيميل التواصل لتفعيل الحساب البنكي يدويًا — نفس إيميل الأدمن المستخدم في AdminController
         private const string BankContactEmail = "kamalabdlbast89@gmail.com";
 
-        public UserController(AppDbContext _context, IHttpClientFactory httpClientFactory)
+        public UserController(AppDbContext _context, IHttpClientFactory httpClientFactory, LocalizationService loc)
         {
             context = _context;
             _httpClientFactory = httpClientFactory;
+            _loc = loc;
         }
+
+        // 🆕 بدل ما نكرر HttpContext.Session.GetString("Lang") ?? "en" في كل Action (زي باقي الكنترولرز)
+        private string Lang() => HttpContext.Session.GetString("Lang") ?? "en";
 
         private static string ToArabicDigits(string input)
         {
@@ -122,6 +128,16 @@ namespace pharaohsLegacy.Controllers
             };
 
             context.Users.Add(user);
+            context.SaveChanges();
+
+            // 🔔 بند 15 — Notification System: ترحيب بعد التسجيل
+            NotificationHelper.Create(
+                context,
+                userEmail: user.Email,
+                title: _loc.Get("User_WelcomeNotifTitle", Lang()),
+                message: _loc.Get("User_WelcomeNotifMessage", Lang()),
+                type: "System",
+                link: "/Home/Index");
             context.SaveChanges();
 
             return RedirectToAction("Login", "User");

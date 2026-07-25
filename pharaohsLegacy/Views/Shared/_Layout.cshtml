@@ -283,6 +283,34 @@
         }
         .nav-search button:hover { color: var(--gold); }
 
+        /* 🆕 بند 16 — Smart Search Autocomplete dropdown */
+        .smart-search-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 6px);
+            inset-inline-start: 0;
+            min-width: 240px;
+            max-height: 320px;
+            overflow-y: auto;
+            background: var(--dark3);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            box-shadow: 0 10px 28px rgba(var(--dark-rgb),.45);
+            z-index: 200;
+        }
+        .smart-search-item {
+            display: flex; align-items: center; gap: .6rem;
+            padding: .55rem .8rem;
+            color: var(--text); text-decoration: none;
+            font-family: 'Crimson Pro', serif; font-size: .85rem;
+            border-bottom: 1px solid var(--border);
+            transition: background .2s ease;
+        }
+        .smart-search-item:last-child { border-bottom: none; }
+        .smart-search-item:hover { background: var(--surface-tint-strong); color: var(--gold); }
+        .smart-search-icon { color: var(--gold); font-size: 1rem; flex-shrink: 0; }
+        .smart-search-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
         /* 🆕 السلة — أيقونة في الـ nav */
         .nav-cart-link {
             position: relative;
@@ -299,6 +327,60 @@
             display: inline-flex; align-items: center; justify-content: center;
             padding: 0 3px; font-family: 'Cinzel', serif;
         }
+
+        /* 🆕 بند 15 — جرس الإشعارات، بنفس منطق أيقونة السلة بالظبط */
+        .nav-notif-wrapper { position: relative; display: inline-flex; align-items: center; }
+        .nav-notif-link {
+            position: relative;
+            display: inline-flex; align-items: center;
+            color: var(--muted); text-decoration: none; cursor: pointer;
+            background: none; border: none; padding: 0;
+            transition: color .3s;
+        }
+        .nav-notif-link:hover { color: var(--gold); }
+        .nav-notif-badge {
+            position: absolute; top: -7px; inset-inline-end: -9px;
+            background: var(--gold); color: #1a0a00;
+            font-size: .6rem; font-weight: 700;
+            border-radius: 999px; min-width: 15px; height: 15px;
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 0 3px; font-family: 'Cinzel', serif;
+        }
+        .nav-notif-dropdown {
+            display: none; position: absolute; top: 130%; inset-inline-end: 0; width: 320px;
+            background: var(--dark2); border: 1px solid var(--border); border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(var(--dark-rgb),.4); z-index: 1000; overflow: hidden;
+        }
+        .nav-notif-dropdown.show { display: block; }
+        .nav-notif-dropdown-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: .6rem .9rem; border-bottom: 1px solid var(--border);
+            color: var(--gold); font-family: 'Cinzel', serif; font-size: .68rem;
+            letter-spacing: 1px; text-transform: uppercase;
+        }
+        .nav-notif-dropdown-header button {
+            background: none; border: none; color: var(--muted); font-size: .68rem;
+            cursor: pointer; font-family: 'Crimson Pro', serif;
+        }
+        .nav-notif-dropdown-header button:hover { color: var(--gold); }
+        .nav-notif-dropdown-list { max-height: 320px; overflow-y: auto; }
+        .nav-notif-item {
+            padding: .6rem .9rem; border-bottom: 1px solid var(--border);
+            cursor: pointer; display: block; color: var(--text); text-decoration: none;
+        }
+        .nav-notif-item:hover { background: var(--surface-tint); }
+        .nav-notif-item.unread { border-inline-start: 3px solid var(--gold); background: var(--surface-tint-strong); }
+        .nav-notif-item-title { font-weight: 600; font-size: .82rem; margin-bottom: 3px; }
+        .nav-notif-item-msg { font-size: .78rem; color: var(--muted); }
+        .nav-notif-item-time { font-size: .68rem; color: var(--muted); margin-top: 4px; opacity: .8; }
+        .nav-notif-empty { padding: 1.2rem; text-align: center; color: var(--muted); font-size: .82rem; }
+        .nav-notif-dropdown-footer {
+            display: block; text-align: center; padding: .6rem;
+            color: var(--gold); font-size: .72rem; letter-spacing: .5px;
+            border-top: 1px solid var(--border); text-decoration: none;
+            font-family: 'Cinzel', serif; text-transform: uppercase;
+        }
+        .nav-notif-dropdown-footer:hover { background: var(--surface-tint); }
 
         .nav-logout {
             font-family: 'Cinzel', serif; font-size: .6rem;
@@ -1032,6 +1114,7 @@
     <svg style="display:none" aria-hidden="true">
         <symbol id="ic-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><line x1="20" y1="20" x2="15.5" y2="15.5"/></symbol>
         <symbol id="ic-cart" viewBox="0 0 24 24"><path d="M3 4h2l2.4 12.2a2 2 0 0 0 2 1.8h7.6a2 2 0 0 0 2-1.6L21 8H6"/><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/></symbol>
+        <symbol id="ic-bell" viewBox="0 0 24 24"><path d="M6 10a6 6 0 0 1 12 0c0 4 1.5 5.5 2 6.5H4c.5-1 2-2.5 2-6.5z"/><path d="M10 19a2.2 2.2 0 0 0 4 0"/></symbol>
         <symbol id="ic-login" viewBox="0 0 24 24"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><line x1="15" y1="12" x2="3" y2="12"/></symbol>
         <symbol id="ic-logout" viewBox="0 0 24 24"><path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4"/><path d="M14 17l5-5-5-5"/><line x1="19" y1="12" x2="7" y2="12"/></symbol>
         <symbol id="ic-caret" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
@@ -1139,9 +1222,10 @@
             <span class="nav-group-divider" aria-hidden="true"></span>
 
             <div class="nav-utils">
-                <form method="get" action="/Home/Search" class="nav-search">
-                    <input type="text" name="q" placeholder="@Html.L("Nav_SearchPlaceholder")" />
+                <form method="get" action="/Home/Search" class="nav-search" style="position:relative;" autocomplete="off">
+                    <input type="text" id="smartSearchInput" name="q" placeholder="@Html.L("Nav_SearchPlaceholder")" />
                     <button type="submit" aria-label="@Html.L("Nav_SearchPlaceholder")"><svg class="nav-ic"><use href="#ic-search"></use></svg></button>
+                    <div id="smartSearchSuggestions" class="smart-search-dropdown"></div>
                 </form>
 
                 @if (Context.Session.GetString("UserEmail") != null &&
@@ -1152,6 +1236,27 @@
                         <svg class="nav-ic" style="width:18px;height:18px;"><use href="#ic-cart"></use></svg>
                         <span id="navCartBadge" class="nav-cart-badge" style="display:none">0</span>
                     </a>
+                }
+
+                @if (Context.Session.GetString("UserEmail") != null &&
+                     Context.Session.GetString("UserEmail") != "guest")
+                {
+                    <div class="nav-notif-wrapper" id="navNotifWrapper">
+                        <button class="nav-notif-link" id="navNotifBtn" onclick="navNotifToggle()" title="@Html.L("Nav_Notifications")" aria-label="@Html.L("Nav_Notifications")">
+                            <svg class="nav-ic" style="width:18px;height:18px;"><use href="#ic-bell"></use></svg>
+                            <span id="navNotifBadge" class="nav-notif-badge" style="display:none">0</span>
+                        </button>
+                        <div class="nav-notif-dropdown" id="navNotifDropdown">
+                            <div class="nav-notif-dropdown-header">
+                                <span>@Html.L("Nav_Notifications")</span>
+                                <button onclick="navNotifMarkAllRead()">@Html.L("Nav_MarkAllRead")</button>
+                            </div>
+                            <div class="nav-notif-dropdown-list" id="navNotifList">
+                                <div class="nav-notif-empty">@Html.L("Nav_NoNotifications")</div>
+                            </div>
+                            <a href="/Notification/Index" class="nav-notif-dropdown-footer">@Html.L("Nav_ViewAllNotifications")</a>
+                        </div>
+                    </div>
                 }
 
                 <div class="lang-switch">
@@ -1364,6 +1469,7 @@
 
 @await RenderSectionAsync("Scripts", required: false)
 <script src="~/js/pharaoh.js"></script>
+<script src="~/js/smart-search.js"></script>
     <!-- ═══════════ AI Tour Guide Widget ═══════════ -->
     <style>
         .aichat-btn {
@@ -1957,6 +2063,81 @@
                 if (e.key === 'Escape') closeAllNavMenus(null);
             });
         })();
+
+        // ═══ بند 15 — Notification System ═══
+        let navNotifOpen = false;
+
+        function navNotifToggle() {
+            navNotifOpen = !navNotifOpen;
+            document.getElementById('navNotifDropdown').classList.toggle('show', navNotifOpen);
+            if (navNotifOpen) navNotifLoadRecent();
+        }
+
+        document.addEventListener('click', function (e) {
+            const wrapper = document.getElementById('navNotifWrapper');
+            if (wrapper && !wrapper.contains(e.target) && navNotifOpen) {
+                navNotifOpen = false;
+                document.getElementById('navNotifDropdown').classList.remove('show');
+            }
+        });
+
+        function navNotifRefreshCount() {
+            const badge = document.getElementById('navNotifBadge');
+            if (!badge) return;
+            fetch('/Notification/GetUnreadCount')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.count > 0) {
+                        badge.style.display = 'inline-flex';
+                        badge.textContent = data.count > 9 ? '9+' : data.count;
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                })
+                .catch(() => {});
+        }
+
+        function navNotifLoadRecent() {
+            const list = document.getElementById('navNotifList');
+            if (!list) return;
+            fetch('/Notification/GetRecent')
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.items || data.items.length === 0) {
+                        list.innerHTML = '<div class="nav-notif-empty">@Html.L("Nav_NoNotifications")</div>';
+                        return;
+                    }
+                    list.innerHTML = data.items.map(n => `
+                        <a class="nav-notif-item ${n.isRead ? '' : 'unread'}" onclick="navNotifOpenItem(${n.id}, '${n.link ?? ''}')">
+                            <div class="nav-notif-item-title">${n.title}</div>
+                            <div class="nav-notif-item-msg">${n.message}</div>
+                            <div class="nav-notif-item-time">${n.createdAt}</div>
+                        </a>
+                    `).join('');
+                })
+                .catch(() => {});
+        }
+
+        function navNotifOpenItem(id, link) {
+            fetch('/Notification/MarkAsRead/' + id, { method: 'POST' })
+                .then(() => {
+                    navNotifRefreshCount();
+                    window.location.href = link || '/Notification/Index';
+                });
+        }
+
+        function navNotifMarkAllRead() {
+            fetch('/Notification/MarkAllAsRead', { method: 'POST' })
+                .then(() => {
+                    navNotifRefreshCount();
+                    navNotifLoadRecent();
+                });
+        }
+
+        if (document.getElementById('navNotifWrapper')) {
+            navNotifRefreshCount();
+            setInterval(navNotifRefreshCount, 20000); // Polling — SignalR مؤجل لبعدين
+        }
 
         function aiToggle() {
         const popup = document.getElementById('aichatPopup');

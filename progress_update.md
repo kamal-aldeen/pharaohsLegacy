@@ -146,6 +146,7 @@ Views/
 - Multi-language (عربي/إنجليزي) ✅ (مكتمل بالكامل)
 - Bank + Shop + Quiz Ecosystem ✅ (مكتمل بالكامل — تفاصيل كاملة في `BANK_SHOP_QUIZ_DETAILS.md`)
 - Email Confirmation + QR Code (E-Ticket) ✅ (مكتمل بالكامل — تفاصيل كاملة تحت في قسم "Email Confirmation + QR Code")
+- Smart Search (بند 16) ✅ (مكتمل بالكامل — بحث موحّد + Autocomplete + Fuzzy matching + Search History + Trending — تفاصيل كاملة تحت في قسم "Smart Search")
 
 ---
 
@@ -734,9 +735,9 @@ public List<DailyFact> Facts { get; set; }
 
 ```
 [x] 13. Analytics Dashboard (Admin) — ✅ مكتمل (تفاصيل تحت)
-[ ] 14. AI Trip Planner
+[x] 14. AI Trip Planner — ✅ مكتمل (تفاصيل تحت)
 [ ] 15. Notification System
-[ ] 16. Smart Search
+[x] 16. Smart Search — ✅ مكتمل (تفاصيل تحت)
 [ ] 17. Achievements & Badges
 [ ] 19. Google Login (OAuth)
 [ ] 20. Photo Gallery
@@ -960,7 +961,7 @@ public List<DailyFact> Facts { get; set; }
 
 ---
 
-## 🧭 AI Trip Planner — خطة العمل الكاملة (🔵 قيد التنفيذ — Model + Controller + الـ 3 Views + الترجمة (عربي/إنجليزي) + Dark/Light Mode + تكامل Dashboard + تصحيح الأسعار الحقيقية + إلغاء Pharaoh/God + PDF Export خلصوا، باقي التأكد من الفيكس الأخير للعربي في الـ PDF بعد rebuild)
+## 🧭 AI Trip Planner — خطة العمل الكاملة (✅ **قُفل بالكامل** — Model + Controller + الـ 3 Views + الترجمة (عربي/إنجليزي) + Dark/Light Mode + تكامل Dashboard + تصحيح الأسعار الحقيقية + إلغاء Pharaoh/God + PDF Export (مع اختيار اللغة) + مودالات حذف مصممة خلصوا كلهم. الـ checklist النهائي اللي لازم صاحب المشروع يتأكد منه بنفسه تحت في آخر الـ section)
 
 > اتفقنا على كل التفاصيل دي قبل ما نبدأ أي شغل. الجزء ده بيتحدث أول ما بنخلص كل خطوة فعليًا.
 
@@ -1043,14 +1044,32 @@ Views/TripPlanner/
 8. ✅ **خلص:** تصحيح مشكلة الأسعار الوهمية
    - ⚠️ **كان فيه باگ:** الـ AI كان بيتقال له "estimate" السعر بنفسه لكل محطة (حتى Temple/Museum اللي ليهم سعر حقيقي في جدول `Prices`) — طلع مثال حقيقي: هرم خوفو سعره الحقيقي 700 جنيه، والـ AI رجع 150
    - الإصلاح على مستويين: (1) بنجيب الأسعار الحقيقية من `Prices` قبل ما نكلم الـ AI ونحطها في الـ candidates كـ `TicketPrice`، ونقول له صراحة يستخدمها زي ما هي بدل التخمين (وده كمان بيخلي حساب الميزانية بتاعه أدق)، (2) شبكة أمان بعد رد الـ AI: أي Temple/Museum ليه سعر حقيقي بنفرضه فوق أي رقم رجع من الـ AI. الـ Pharaoh/God (مفيهمش تذاكر فعلية) بيفضلوا على تقدير الـ AI
-9. 🔵 **قيد التنفيذ:** PDF Export بالـ QuestPDF (الكود خلص، باقي تأكيد آخر فيكس بعد rebuild عند صاحب المشروع)
-   - ✅ **خلص:** ملف جديد `Services/TripPlanPdfBuilder.cs` — بيبني الـ PDF كامل بالـ QuestPDF Fluent API، بيدعم عربي (RTL عبر `page.ContentFromRightToLeft()` + فونت Amiri) وإنجليزي (LTR + Arial) حسب `Session["Lang"]`. فيه Header (اسم الموقع + تاريخ الإنشاء)، Summary pills (أيام/ميزانية/تكلفة تقديرية/mode)، كارت لكل يوم بمحطاته (اسم/وقت/سعر/ملاحظات)، Footer برقم الصفحة. الأرقام بتتحول لهندي-عربي لو اللغة عربي (نسخة مبسطة من فكرة `Html.Num` تشتغل من غير `IHtmlHelper`). بيستخدم مفاتيح ترجمة موجودة أصلاً (`trip.mode.*`, `trip.interest.*`, `trip.currency`, `trip.result.day.label`) + 3 مفاتيح جديدة (`trip.pdf.title`, `trip.pdf.generated`, `trip.pdf.footer`) لازم تتضاف لـ `ar.json`/`en.json`
-   - ✅ **خلص:** `TripPlannerController.cs` — اتضاف `LocalizationService` في الـ constructor، وأكشن `ExportPdf(int id)` (GET) بنفس فحص ملكية الخطة بتاع `Result()`، بيجيب اللغة من `Session["Lang"]`، وبيرجع الملف كـ `File(pdfBytes, "application/pdf", fileName)`
-   - ✅ **خلص:** `Result.cshtml` — زرار الـ Export بقى شغال (`asp-action="ExportPdf"`) بدل الـ disabled
-   - ✅ **خلص:** `Program.cs` — تسجيل `QuestPDF.Settings.License = LicenseType.Community` + تسجيل فونت Amiri (Regular/Bold) من `wwwroot/font/` (مش `fonts` — الفولدر عند صاحب المشروع اسمه مفرد) عبر `FontManager.RegisterFont` وقت الـ startup
-   - ⚠️ **باگ اتكتشف من نسخة PDF فعلية اتبعتت (25 يوليو):** الحروف العربية طلعت مكسورة — تحديدًا حرف "ي" كان بيختفي من أي كلمة عربية ملزوقة برقم (`"٥ أيام"` طلعت `"٥ أ م"`، `"يوم ١"` طلعت `"١ ام"`، بنفس النمط في كل الأيام الخمسة). اتأكد إنه مش مجرد مشكلة استخراج نص عادي (raster inspection بـ `pdftoppm` + `pdftotext -layout` أكدوا إن المشكلة حقيقية وبصرية مش استخراج بس) — السبب: محرك الـ Arabic shaping بتاع QuestPDF/SkiaSharp بيكسر عند تقاطع حرف عربي + رقم في نفس الـ `Text()` call الواحد، حتى لو اتقسّموا بـ `.Span()` منفصلة (لسه بيتحسبوا كـ paragraph واحد للـ shaping). أي جزء كان `Text()` منفصل تمامًا (زي اسم المكان أو الرمز الهيروغليفي) طلع سليم 100%.
-   - ✅ **الفيكس المطبّق (مش متأكد لسه لحد ما يتعمل rebuild):** `TripPlanPdfBuilder.cs` اتعاد كتابته بالكامل — أي رقم ولزيقه كلمة عربية (تسمية اليوم + رقمه، تكلفة اليوم/المحطة + "جنيه"، تاريخ الإنشاء + تسميته) بقى في عنصرين `Text()` منفصلين تمامًا جوه `Row()` بدل string واحد ملزّق أو `.Span()` واحد. **لسه محتاج rebuild + تجربة فعلية من صاحب المشروع للتأكيد.**
+9. ✅ **خلص:** PDF Export بالـ QuestPDF
+   - ✅ ملف جديد `Services/TripPlanPdfBuilder.cs` — بيبني الـ PDF كامل بالـ QuestPDF Fluent API، بيدعم عربي (RTL عبر `page.ContentFromRightToLeft()` + فونت Amiri) وإنجليزي (LTR + Arial). فيه Header (اسم الموقع + تاريخ الإنشاء)، Summary pills (أيام/ميزانية/تكلفة تقديرية/mode)، كارت لكل يوم بمحطاته (اسم/وقت/سعر/ملاحظات)، Footer برقم الصفحة. الأرقام بتتحول لهندي-عربي لو اللغة عربي (نسخة مبسطة من فكرة `Html.Num` تشتغل من غير `IHtmlHelper`). بيستخدم مفاتيح ترجمة موجودة أصلاً (`trip.mode.*`, `trip.interest.*`, `trip.currency`, `trip.result.day.label`) + 3 مفاتيح جديدة (`trip.pdf.title`, `trip.pdf.generated`, `trip.pdf.footer`)
+   - ✅ `TripPlannerController.cs` — اتضاف `LocalizationService` في الـ constructor، وأكشن `ExportPdf(int id, string? lang = null)` (GET) بنفس فحص ملكية الخطة بتاع `Result()`
+   - ✅ `Program.cs` — تسجيل `QuestPDF.Settings.License = LicenseType.Community` + تسجيل فونت Amiri (Regular/Bold) من `wwwroot/font/` عبر `FontManager.RegisterFont` وقت الـ startup
+   - ⚠️ **باگ اتكتشف من نسخة PDF فعلية اتبعتت (25 يوليو):** حرف "ي" كان بيختفي من أي كلمة عربية ملزوقة برقم (`"٥ أيام"` طلعت `"٥ أ م"`، `"يوم ١"` طلعت `"١ ام"`). السبب: محرك الـ Arabic shaping بتاع QuestPDF/SkiaSharp بيكسر عند تقاطع حرف عربي + رقم في نفس الـ `Text()` call الواحد، حتى لو اتقسّموا بـ `.Span()` منفصلة
+   - ✅ **الفيكس اتأكد إنه شغال (25 يوليو):** `TripPlanPdfBuilder.cs` اتعاد كتابته — أي رقم ولزيقه كلمة عربية بقى في عنصرين `Text()` منفصلين تمامًا جوه `Row()`. **صاحب المشروع عمل rebuild وبعت لقطة فعلية من الـ PDF بعد الفيكس — "اليوم ١" و"٥ أيام" ظهروا صح بالكامل، اتأكد بصريًا**
    - 📌 **قاعدة اتسجلت في تعليق أعلى الملف** عشان متتنساش لو حد ضاف نص جديد بعدين: أي رقم + كلمة عربية = عنصرين `Text()` منفصلين، مش string واحد ولا `.Span()` في نفس الـ `Text()`
+   - ⚠️ **مش متأكد بتجربة فعلية:** مسار الإنجليزي (`lang="en"`) — الكود مكتوب بنفس منطق العربي (مُتأكد منه) بس معرفتش أختبره فعليًا (معنديش .NET SDK). صاحب المشروع لازم يجرب الزرار ويتأكد
+10. ✅ **خلص:** مودالات حذف مصممة بدل `confirm()` الافتراضي بتاع المتصفح
+    - `MyTripPlans.cshtml` (`.tpm-modal-*`) و `Result.cshtml` (`.tpr-modal-*`) — نفس الـ Egyptian dark-gold theme بتاع كل صفحة، بمودال overlay + blur + أنيميشن fade/scale، إغلاق بالدوس بره الصندوق أو Escape
+    - `MyTripPlans.cshtml`: مودال واحد للصفحة كلها بيتتبع الفورم اللي اتضغط عليه (`btn.closest('form')`) لأن فيه أكتر من كارت/فورم حذف في نفس الصفحة
+    - `Result.cshtml`: مودال ثابت (فورم واحد بس في الصفحة، `id="tprDeleteForm"`)، ودوال الفتح/القفل اتعممت (`tprOpenModal(id)` / `tprCloseModal(id)`) عشان تخدم أي مودال تاني يتضاف بعدين (زي بند 11)
+    - مفتاحين ترجمة جديدين: `trip.delete.title`, `trip.delete.cancel` (النص التحذيري نفسه `trip.delete.confirm` كان موجود أصلاً)
+11. ✅ **خلص:** اختيار لغة الـ PDF وقت التصدير
+    - زرار "تصدير PDF" في `Result.cshtml` بقى بيفتح مودال (`tprPdfLangModal`) بخيارين: 🇪🇬 العربية / 🇬🇧 English — كل واحد لينك مباشر لـ `ExportPdf?lang=ar` أو `?lang=en` (مش تلقائي حسب لغة الموقع زي الأول)
+    - `TripPlannerController.ExportPdf` بقى بياخد `lang` كـ query parameter، بيتأكد إنه `"ar"` أو `"en"` بس، ولو مش موجود/غلط بيرجع لمنطق `Session["Lang"]` القديم كـ fallback (اللينكات القديمة تفضل شغالة)
+    - مفتاحين ترجمة جديدين: `trip.pdf.lang.title`, `trip.pdf.lang.subtitle` (أسماء اللغتين نفسها "العربية"/"English" اتسابت ثابتة مش عن طريق `Html.L` — أسماء لغات بتتكتب دايمًا بلغتها هي، مش نص UI بيتترجم)
+
+### ✅ Checklist نهائي — لازم صاحب المشروع يتأكد منه بنفسه قبل ما يعتبر الـ feature جاهز للإنتاج فعليًا
+(الحاجات دي معملتش عليها اختبار فعلي — معنديش .NET SDK ولا بيئة تشغيل حقيقية طول السيشن ده، غير اللقطة الوحيدة اللي بعتها صاحب المشروع بعد الفيكس)
+- [ ] الـ 7 مفاتيح ترجمة الجديدة اتضافوا فعليًا لـ `ar.json` **و** `en.json`: `trip.pdf.title`, `trip.pdf.generated`, `trip.pdf.footer`, `trip.delete.title`, `trip.delete.cancel`, `trip.pdf.lang.title`, `trip.pdf.lang.subtitle`
+- [ ] فونت `Amiri-Regular.ttf` / `Amiri-Bold.ttf` موجودين في `wwwroot/font/` (لو اتحركوا/اتمسحوا، المشروع كله مش هيشتغل من الـ startup مش بس الـ PDF)
+- [ ] NuGet package `QuestPDF` متضاف فعليًا (`dotnet add package QuestPDF`)
+- [ ] تجربة فعلية: تصدير PDF عربي ✅ (اتأكدت بلقطة)، تصدير PDF إنجليزي ⚠️ (لسه محتاج تجربة)، مودال الحذف في الصفحتين
+- ⚠️ حاجات قديمة معروفة لسه من غير حل (مش من السيشن ده): مفيش whitelist check على `request.Mode` في `Generate()`، مفيش فحص `response.IsSuccessStatusCode` قبل قراءة رد Groq، تعليق `TripPlan.cs` لسه بمثال `"Temples,Museums,Gods"` القديم
+- 💡 ملاحظة اختيارية: نص ملاحظة "Luxor Temple" في اللقطة اللي بعتها طلع عربي مكسور لغويًا ("الحيثات الكلية للاحيثات القديمة") — جاي من رد الـ AI نفسه مش من الـ PDF builder، ممكن يستاهل مراجعة الـ system prompt بتاع `Generate()` بعدين
 
 ### 📥 ملفات مطلوبة من صاحب المشروع قبل بداية الكود
 - [x] AI Tour Guide Chatbot Service (`ChatbotController.cs`) — **اتراجع، الـ TripPlannerController بيستخدم نفس النمط بالظبط**
@@ -1065,6 +1084,47 @@ Views/TripPlanner/
 - [x] `_Layout.cshtml`, `pharaoh.css` — راجعتهم (25 يوليو) لتشخيص وإصلاح مشكلة Dark/Light Mode
 - [x] `UserController.cs`, `Dashboard.cshtml` — راجعتهم (25 يوليو) لإضافة تاب "خطط رحلتي" في الـ User Dashboard
 - [x] `AppDbContext.cs`, `Price.cs` — راجعتهم (25 يوليو) لتصحيح مشكلة الأسعار الوهمية في `TripPlannerController.Generate()`
+
+---
+
+## 🔍 Smart Search — بند 16 — ✅ مكتمل بالكامل
+
+### 🎯 النطاق المتفق عليه
+- بحث موحّد لايف على كل الجداول السبعة: Pharaohs, Temples, Museums, Gods, Dynasties, Artifacts, HistoricalEvents
+- Autocomplete أثناء الكتابة (debounce)
+- Search History لكل يوزر
+- Fuzzy matching — يتحمل غلطة إملائية بسيطة
+- Trending Searches — محسوبة live من الـ History، من غير جدول منفصل
+
+### ✅ اللي اتكتب فعليًا (نسخة أولى — ملفات جاهزة في المحادثة)
+- **`SearchHistory.cs`** — موديل جديد: `Id, UserEmail (nullable), Query, SearchedAt, ResultType (nullable)`
+- **`AppDbContext.cs`** — اتضاف `DbSet<SearchHistory> SearchHistories`
+- **`HomeController.cs`** — تعديل كامل على الـ `Search` action + إضافات جديدة:
+  - `HistoricalEvents` بقى جزء من نتيجة البحث الموحّد (كان ناقص)
+  - كل جدول بيدور أول حاجة بـ `Contains` العادي (زي الأول)، ولو رجّع صفر نتائج بيرجع تاني بـ **Fuzzy fallback** (Levenshtein distance، يدوي من غير مكتبة خارجية)
+  - `SearchSuggestions(string term)` — GET endpoint جديد للـ Autocomplete، بيرجع JSON (Take 8) من Pharaohs/Temples/Museums/Gods/Artifacts/Dynasties
+  - `TrackSearchClick(query, resultType)` — POST endpoint جديد، بيسجل ResultType لما اليوزر يضغط على نتيجة
+  - `LogSearch` — بيسجل كل بحث في `SearchHistories`
+  - `GetRecentSearches` / `GetTrendingSearches` — بيرجعوا لـ `Search.cshtml` عن طريق `ViewBag.RecentSearches` / `ViewBag.TrendingSearches`
+- **`Search.cshtml`** — اتضاف: قسم "بحثت عنه قبل كده" + "الأكتر بحثاً" فوق النتائج، قسم HistoricalEvents جديد، `onclick="trackSearchClick(...)"` على كل كارت نتيجة، وربط `smart-search.js`
+- **`smart-search.js`** جديد — بيدور على `#smartSearchInput` + `#smartSearchSuggestions` في أي صفحة، debounce 300ms
+
+### ⚠️ افتراضات اتحطت — ✅ اتأكدت
+- `HistoricalEvent.cs` اتبعت وراجعته: عنده فعلاً `TitleAr`, `CategoryAr`, `DescriptionAr`. الـ `Search` action و`Search.cshtml` اتعدّلوا يستخدموا `TitleAr`/`CategoryAr` زي باقي الجداول (لايف + Fuzzy فالاتنين)
+- الـ Fuzzy fallback بيعمل `ToList()` على الجدول كله لما الـ Contains يرجّع صفر بس — مقبول للأحجام الحالية (≤160 صف)، مش الحل لو الجداول كبرت أوي مستقبلاً
+
+### ⏳ خطوات يدوية — كلها اتعملت ✅
+- [x] حفظ `SearchHistory.cs` في `Models/`
+- [x] Migration `AddSearchHistory` اتعملت وطُبّقت على الداتا بيز
+- [x] إضافة `#smartSearchInput` + `#smartSearchSuggestions` + CSS الـ dropdown + تضمين `smart-search.js` في `_Layout.cshtml` — اتعمل مباشرة على الملف اللي اتبعت (مربع البحث في الـ Navbar)
+- [x] مفاتيح الترجمة `Search_RecentSearches`, `Search_TrendingSearches`, `Common_HistoricalEventsPlural` اتضافوا في `wwwroot/lang/ar.json` و`en.json`
+- [x] تأكيد حقول `HistoricalEvent.cs` — ✅ اتأكدت (`TitleAr`, `CategoryAr` موجودين واتضافوا للكود)
+
+### 📌 مستبعد من السكوب الحالي (موجود في المرجع الكامل تحت بس مش دلوقتي)
+- Semantic / Natural Language / Voice Search
+- AI-powered Search (Groq)
+- OCR Search from Images
+- Search Analytics (Dashboard منفصل)
 
 ---
 
@@ -1261,6 +1321,102 @@ Views/TripPlanner/
 - [ ] Real-time Notifications + Live Dashboard Updates
 - [ ] Real-time Booking Status + Live Visitor Counters
 - [ ] Live Chat + Real-time Maps + Live Events Feed
+
+---
+
+## 🔔 Notification System — بند 15 — 🟢 الكود والدمج خلصوا بالكامل، باقي بس خطوات التفعيل اليدوية
+
+> القسم ده توثيق لبند 15. كل الـ 5 Triggers المتفق عليها اتدمجت فعليًا (كود حقيقي جوه كنترولرز المشروع، مش تعليمات ولا demo). باقي بس صاحب المشروع يعمل الـ Migration + يستبدل الملفات + يضيف مفاتيح الترجمة عشان يشتغل فعليًا (تفاصيل في `INTEGRATION_NOTES.md`). لما يتأكد إنها شغالة، الحالة تتغير لـ ✅ مكتمل.
+
+### 🎯 الفكرة الأساسية
+بند 15 = **الأساس** بس (In-app Notification System بسيط وشغال بالكامل) — مش النسخة المتقدمة. الحاجات المتقدمة (SignalR Real-time، Push Notifications، Email Alerts، Smart Preferences) مؤجلة ومكانها قسم "🔔 Notification Ecosystem" تحت في المرجع الكامل، مش دلوقتي.
+
+### ✅ قرارات اتاخدت (سيبها لتقديري)
+| القرار | الاختيار |
+|---|---|
+| نطاق الـ Triggers | 5: Booking Confirmed، Booking Cancelled، حل Report على ريفيو، كوبون Quiz Streak، ترحيب بعد التسجيل — زائد تنبيه أدمن عند تأكيد أي حجز |
+| Real-time ولا Polling | Polling بـ JS كل 20 ثانية (SignalR مؤجل لقسم "Notification Ecosystem" تحت) |
+| إشعارات الأدمن | نفس جدول `Notifications`، بيتفلتر بـ `UserEmail = kamalabdlbast89@gmail.com` عبر `NotificationHelper.NotifyAdmin()` |
+| أرشفة/حذف | من غير حذف تلقائي دلوقتي |
+
+### ✅ اتعمل فعليًا (اتبعت للمشروع الحقيقي، مش demo)
+- **`AppDbContext.cs`** — `DbSet<Notification> Notifications` موجود بالفعل ✅
+- **`_Layout.cshtml`** — الجرس + الدروب داون + JS Polling اتدمجوا كاملين **جوه الملف نفسه مباشرة** (مش partial منفصل) — بيستخدم `@Html.L(...)` زي باقي الموقع بالظبط، مش نصوص Hardcoded
+  - ⚠️ **`_NotificationBell.cshtml`** كان أول اقتراح (partial منفصل) قبل ما أشوف الـ `_Layout.cshtml` الحقيقي — **اتلغى ومش جزء من التسليم النهائي**، الجرس كله جوه `_Layout.cshtml` دلوقتي
+- **`BookingController.cs`** — `Confirm()` (تأكيد الحجز لليوزر + تنبيه أدمن) و`Cancel()` (إلغاء، موضّح إن الاسترداد بعد 24 ساعة)
+- **`ReviewController.cs`** — `ResolveReport()` (إشعار للمُبلّغ)
+- **`UserController.cs`** — `Register()` (ترحيب) — الـ context field اسمها `context` مش `_context`، اتعامل معاها صح
+- **`QuizController.cs`** — `Answer()`، بعد `_db.QuizHistories.Add(...)`: إشعار "مبروك! كسبت كوبون خصم" **بس لو `couponCode` اتولّد فعليًا** (مش لو الـ Streak اتحسب بس من غير كوبون)، وبعد الـ `SaveChangesAsync()` الأساسي علشان الـ QuizHistory يتسجل أولًا
+
+كل الـ 5 نداءات جوه `try/catch` أو بعد الحفظ الأساسي مباشرة — Best effort زي إيميل التأكيد بالظبط، فشل الإشعار مبيوقفش أي عملية أساسية.
+
+### 📋 باقي — خطوة يدوية واحدة بس ناقصة (اكتشفناها من فحص `LocalizationService.cs`)
+نظام الترجمة بتاع المشروع عبارة عن ملفين JSON مسطحين: `wwwroot/lang/ar.json` و`wwwroot/lang/en.json` (Dictionary key → value، بيتقروا مرة واحدة في constructor بتاع `LocalizationService`). لازم تتضاف فيهم الـ 4 مفاتيح دول:
+| Key | EN | AR |
+|---|---|---|
+| Nav_Notifications | Notifications | الإشعارات |
+| Nav_MarkAllRead | Mark all as read | تحديد الكل كمقروء |
+| Nav_NoNotifications | No notifications | لا توجد إشعارات |
+| Nav_ViewAllNotifications | View all notifications | عرض كل الإشعارات |
+
+بعد كده، خطوات التفعيل المتبقية:
+1. `Add-Migration AddNotifications` + تصحيح `CreatedAt` لـ `GETDATE()` + `Update-Database`
+2. استبدال `_Layout.cshtml` و`BookingController.cs`/`ReviewController.cs`/`UserController.cs`/`QuizController.cs` بالنسخ المدموجة
+3. إضافة الـ 4 مفاتيح فوق في `ar.json`/`en.json`
+4. اختبار الـ Flow الكامل (تفاصيل في `INTEGRATION_NOTES.md`)
+
+### 🔗 Overlap مع بنود تانية في الروادماب
+- "Auto Notification Rules + AI Content Prioritization" (تحت 🤖 AI Systems)
+- "Real-time Notifications + Live Dashboard Updates" (تحت 📡 Real-time Systems)
+- "🔔 Notification Ecosystem" بالكامل تحت — ده المرحلة المتقدمة اللي بند 15 بيبني الأساس ليها
+
+### 🌐 تصليح الترجمة في الإشعارات (25 يوليو — اتعمل فعليًا)
+اكتشفنا وقت الاختبار إن الترجمة (EN/AR) مكانتش شغالة صح في جزء الإشعارات، بسببين مختلفين اتصلحوا الاتنين:
+
+1. **`Views/Notification/Index.cshtml`** — الصفحة كانت مبنية بالكامل بنصوص عربي Hardcoded (العنوان، زرار "تحديد الكل كمقروء"، رسالة "مفيش إشعارات لسه") من غير ما تستخدم `Html.L(...)` خالص. ✅ اتصلحت — كل النصوص بقت بتستخدم مفاتيح ترجمة، والتاريخ بقى بينادي `Html.DateLoc(...)` بدل `.ToString(...)` المباشر. محتاج تضيف مفتاحين جداد في `ar.json`/`en.json`: `Notif_PageTitle`، `Notif_Empty` (`Nav_MarkAllRead` أصلاً موجود من قبل).
+
+2. **محتوى الإشعارات نفسه (Title/Message) في الكنترولرز** — كان Hardcoded عربي مباشرة جوه الكود بدل ما يستخدم `_loc.Get(...)`/`_loc.GetFormatted(...)`. ✅ اتصلحت في الأربع كنترولرز:
+   - `BookingController.cs` — إشعار الإلغاء + إشعار التأكيد + تنبيه الأدمن عند تأكيد حجز
+   - `QuizController.cs` — إشعار كوبون الكويز
+   - `UserController.cs` — إشعار الترحيب بعد التسجيل (الكنترولر ده مكانش فيه `LocalizationService` أصلاً، اتضافت في الـ constructor + `Lang()` helper جديد)
+   - `ReviewController.cs` — إشعار حل البلاغ (نفس الحالة، اتضافت `LocalizationService` + `Lang()` helper)
+   
+   ⚠️ **سلوك متعمد ومش باگ:** الإشعار بيتسجل بلغة اليوزر وقت حصول الحدث نفسه، ومبيتحدثش تلقائي لو بدّل اللغة بعد كده (اتأكد بالاختبار الفعلي: إشعار اتعمل إنجليزي فضل إنجليزي حتى بعد تبديل اللغة). الإشعارات القديمة اللي اتسجلت قبل التعديل ده هتفضل عربي زي ما هي (مش هتتحدث رجعيًا) إلا لو اتمسحت يدوي من جدول `Notifications`.
+   
+   مفاتيح الترجمة الجديدة المطلوب إضافتها في `ar.json`/`en.json`: `Booking_CancelNotifTitle`, `Booking_CancelNotifMessage`, `Booking_ConfirmNotifTitle`, `Booking_ConfirmNotifMessage`, `Booking_AdminNewBookingTitle`, `Booking_AdminNewBookingMessage`, `Quiz_CouponWonNotifTitle`, `Quiz_CouponWonNotifMessage`, `User_WelcomeNotifTitle`, `User_WelcomeNotifMessage`, `Review_ReportResolvedNotifTitle`, `Review_ReportResolvedNotifMessage`.
+
+### 🆕 Triggers جداد اتضافوا (25 يوليو — اتعملوا فعليًا)
+بعد ما بعت صاحب المشروع `ShopController.cs`، `AdminController.cs`، `TripPlannerController.cs`، اتضافت 7 Triggers جداد فوق الـ 5 الأساسيين (بند 15):
+
+**`ShopController.cs`** (كان فيه `_loc`/`Lang()` أصلاً، مفيش تعديل في الـ constructor):
+- إشعار للمستخدم + تنبيه للأدمن لما أوردر الشوب يتأكد (بعد نجاح الدفع في `Confirm()`)
+- إشعار للمستخدم لما يلغي أوردره (`Cancel()`)
+- الاتنين بيستخدموا `_loc.Get(...)`/`_loc.GetFormatted(...)` زي باقي الموقع، ومفاتيح الترجمة الجديدة: `Shop_OrderConfirmedNotifTitle/Message`، `Shop_AdminNewOrderTitle/Message`، `Shop_OrderCancelledNotifTitle/Message`
+
+**`TripPlannerController.cs`** (كان فيه `_loc` أصلاً):
+- إشعار تأكيد بعد ما اليوزر يعمل خطة رحلة جديدة بنجاح (`Generate()`) — لينك مباشر لـ `/TripPlanner/Result/{id}`
+- مفاتيح الترجمة الجديدة: `TripPlanner_CreatedNotifTitle/Message`
+
+**`AdminController.cs`** ⚠️ **بدون نظام ترجمة خالص — قرار سابق إن الأدمن داشبورد مالوش Localization**، فالإشعارات دي اتضافت بنص إنجليزي ثابت (Hardcoded) مباشرة، من غير `_loc`/`Lang()`/`LocalizationService` خالص (الكنترولر رجع لنفس الـ constructor الأصلي بتاعه: `AppDbContext` + `IHttpClientFactory` بس):
+- إشعار للمستخدم لما الأدمن يحدّث حالة الشحن يدويًا لـ **Shipped** أو **Delivered** (`UpdateShopOrderShipping()`)
+- إشعار للمستخدم لما الأدمن يحوّل حجزه يدويًا لـ **Refunded** (`ChangeBookingStatus()`)
+- إشعار للمستخدم لما الأدمن يحوّل أوردر الشوب بتاعه يدويًا لـ **Refunded** (`ChangeShopOrderStatus()`)
+
+مفاتيح الترجمة الجديدة المطلوب إضافتها في `ar.json`/`en.json` (بس بتاعة `ShopController`/`TripPlannerController`، مش الأدمن):
+
+| Key | AR | EN |
+|---|---|---|
+| `Shop_OrderConfirmedNotifTitle` | تم تأكيد أوردرك 🛍️ | Your order is confirmed 🛍️ |
+| `Shop_OrderConfirmedNotifMessage` | أوردرك رقم #{0} ({1} منتج) اتأكد وجاري تجهيزه. | Your order #{0} ({1} item(s)) is confirmed and being prepared. |
+| `Shop_AdminNewOrderTitle` | أوردر جديد اتأكد | New order confirmed |
+| `Shop_AdminNewOrderMessage` | {0} أكد أوردر رقم #{1} بقيمة {2}. | {0} confirmed order #{1} worth {2}. |
+| `Shop_OrderCancelledNotifTitle` | تم إلغاء أوردرك | Your order was cancelled |
+| `Shop_OrderCancelledNotifMessage` | طلب إلغاء أوردرك رقم #{0} اتسجل. الفلوس هترجع لحسابك خلال 24 ساعة. | Your cancellation request for order #{0} was recorded. Your money will be refunded within 24 hours. |
+| `TripPlanner_CreatedNotifTitle` | خطة رحلتك جاهزة 🗺️ | Your trip plan is ready 🗺️ |
+| `TripPlanner_CreatedNotifMessage` | خطة رحلتك لـ {0} يوم اتعملت بنجاح. | Your {0}-day trip plan has been created successfully. |
+
+### ⏳ لسه مستني — التحديث التلقائي للشحن
+لسه معملناش حاجة في `ShopOrderShippingBackgroundService.cs` (التحديث التلقائي لتراك الشحن Processing → Shipped → Delivered اللي بيحصل من غير تدخل يدوي من الأدمن). المسار اليدوي (`AdminController.UpdateShopOrderShipping`) بقى بيبعت إشعار، لكن لو فيه مسار تاني أوتوماتيكي بيغيّر نفس الحقل من غير الأدمن، محتاج نراجع الملف ده كمان عشان الإشعار يغطي الحالتين. مستني الملف من صاحب المشروع لو حابب يكمل الجزء ده.
 
 ---
 

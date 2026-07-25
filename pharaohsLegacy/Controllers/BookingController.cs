@@ -97,6 +97,23 @@ namespace pharaohsLegacy.Controllers
             var statusService = new BookingStatusService(_db, _httpClientFactory);
             var result = await statusService.ChangeStatusAsync(booking, "Cancelled");
 
+            // 🔔 بند 15 — Notification System
+            try
+            {
+                NotificationHelper.Create(
+                    _db,
+                    userEmail: booking.UserEmail,
+                    title: _loc.Get("Booking_CancelNotifTitle", lang),
+                    message: _loc.GetFormatted("Booking_CancelNotifMessage", lang, booking.Id),
+                    type: "Booking",
+                    link: "/Booking/MyBookings");
+                await _db.SaveChangesAsync();
+            }
+            catch
+            {
+                // Best effort — الإلغاء نفسه خلص، متوقفش الـ Flow لو الإشعار فشل
+            }
+
             // 🆕 result.Message جاي من BookingStatusService — لو مش مترجم أصلاً هيفضل زي ما هو،
             // لكن على الأقل بطلنا نلزق "❌" يدويًا فوق رسالة ممكن تبقى مترجمة فعلاً
             TempData["Message"] = result.Message;
@@ -415,6 +432,45 @@ namespace pharaohsLegacy.Controllers
             };
             _db.Payments.Add(payment);
             await _db.SaveChangesAsync();
+
+            // 🔔 بند 15 — Notification System: تأكيد الحجز لليوزر + تنبيه للأدمن
+            try
+            {
+                string notifPlaceName = booking.PlaceType;
+                if (booking.PlaceType == "Temple")
+                {
+                    var t = await _db.Temples.FindAsync(booking.PlaceId);
+                    notifPlaceName = (lang == "ar" && !string.IsNullOrEmpty(t?.NameAr)) ? t.NameAr : (t?.Name ?? booking.PlaceType);
+                }
+                else if (booking.PlaceType == "Museum")
+                {
+                    var m = await _db.Museums.FindAsync(booking.PlaceId);
+                    notifPlaceName = (lang == "ar" && !string.IsNullOrEmpty(m?.NameAr)) ? m.NameAr : (m?.Name ?? booking.PlaceType);
+                }
+
+                NotificationHelper.Create(
+                    _db,
+                    userEmail: booking.UserEmail,
+                    title: _loc.Get("Booking_ConfirmNotifTitle", lang),
+                    message: _loc.GetFormatted("Booking_ConfirmNotifMessage", lang, notifPlaceName, booking.VisitDate.ToString("dd MMM yyyy")),
+                    type: "Booking",
+                    link: "/Booking/MyBookings");
+
+                // ⚠️ إشعار الأدمن بيتسجل بلغة اليوزر اللي أكد الحجز (lang)، مش لغة الأدمن نفسه —
+                // مفيش Session خاصة بالأدمن متاحة في نفس السياق ده، والحل الأدق (تخزين لغة تفضيلية
+                // للأدمن في الداتا بيز) خارج نطاق التعديل ده.
+                NotificationHelper.NotifyAdmin(
+                    _db,
+                    title: _loc.Get("Booking_AdminNewBookingTitle", lang),
+                    message: _loc.GetFormatted("Booking_AdminNewBookingMessage", lang, booking.UserEmail, notifPlaceName, booking.TotalPrice.ToString("N2")),
+                    link: "/Admin/Index");
+
+                await _db.SaveChangesAsync();
+            }
+            catch
+            {
+                // نفس منطق إيميل التأكيد تحت — Best effort، لو فشل منوقفش الحجز اللي خلص بنجاح
+            }
 
             // 🆕 إيميل تأكيد الحجز — Best effort: لو الإرسال فشل (السيرفر واقع، مشكلة SMTP...)
             // منلغيش الحجز ولا نوقف الـ Flow، الدفع خلص بنجاح فعلاً. بنبلع الاستثناء بس.

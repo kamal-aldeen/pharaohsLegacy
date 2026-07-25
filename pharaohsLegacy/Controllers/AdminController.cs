@@ -554,6 +554,27 @@ namespace pharaohsLegacy.Controllers
             var statusService = new BookingStatusService(_context, _httpClientFactory);
             var result = await statusService.ChangeStatusAsync(booking, status);
 
+            // 🔔 بند 15 — Notification System: نبلّغ اليوزر بس لو الأدمن حوّل الحجز فعليًا لـ Refunded
+            // ⚠️ نص إنجليزي ثابت (مش بيستخدم _loc) — نفس السبب فوق
+            if (result.Success && status == "Refunded")
+            {
+                try
+                {
+                    NotificationHelper.Create(
+                        _context,
+                        userEmail: booking.UserEmail,
+                        title: "Your booking was refunded",
+                        message: $"The money for your booking #{booking.Id} has been refunded to your account.",
+                        type: "Booking",
+                        link: "/Booking/MyBookings");
+                    await _context.SaveChangesAsync();
+                }
+                catch
+                {
+                    // Best effort
+                }
+            }
+
             if (!result.Success)
                 TempData["Error"] = result.Message;
             else
@@ -574,6 +595,27 @@ namespace pharaohsLegacy.Controllers
 
             var statusService = new ShopOrderStatusService(_context, _httpClientFactory);
             var result = await statusService.ChangeStatusAsync(order, status);
+
+            // 🔔 بند 15 — Notification System: نبلّغ اليوزر بس لو الأدمن حوّل الأوردر فعليًا لـ Refunded
+            // ⚠️ نص إنجليزي ثابت (مش بيستخدم _loc) — نفس السبب فوق
+            if (result.Success && status == "Refunded")
+            {
+                try
+                {
+                    NotificationHelper.Create(
+                        _context,
+                        userEmail: order.UserEmail,
+                        title: "Your order was refunded",
+                        message: $"The money for your order #{order.Id} has been refunded to your account.",
+                        type: "Shop",
+                        link: "/Shop/MyOrders");
+                    await _context.SaveChangesAsync();
+                }
+                catch
+                {
+                    // Best effort
+                }
+            }
 
             if (!result.Success)
                 TempData["Error"] = result.Message;
@@ -618,6 +660,31 @@ namespace pharaohsLegacy.Controllers
             // 🆕 لو نقلها لـ Delivered مباشرة (تخطي Shipped)، سجل DeliveredAt للعرض بس في MyOrders
             if (shippingStatus == "Delivered" && order.DeliveredAt == null)
                 order.DeliveredAt = DateTime.Now;
+
+            // 🔔 بند 15 — Notification System: نبلّغ اليوزر بس لما الحالة تبقى Shipped أو Delivered
+            // (Processing هي الحالة الافتراضية من الأول، مفيش داعي نبلّغ عليها)
+            // ⚠️ نص إنجليزي ثابت (مش بيستخدم _loc) لأن الأدمن داشبورد مالوش نظام ترجمة أصلاً — قرار سابق
+            if (shippingStatus == "Shipped" || shippingStatus == "Delivered")
+            {
+                try
+                {
+                    var (notifTitle, notifMessage) = shippingStatus == "Shipped"
+                        ? ("Your order has shipped 🚚", $"Your order #{order.Id} has shipped and should arrive soon.")
+                        : ("Your order was delivered ✅", $"Your order #{order.Id} has been delivered. We hope you love it!");
+
+                    NotificationHelper.Create(
+                        _context,
+                        userEmail: order.UserEmail,
+                        title: notifTitle,
+                        message: notifMessage,
+                        type: "Shop",
+                        link: "/Shop/MyOrders");
+                }
+                catch
+                {
+                    // Best effort — تحديث حالة الشحن نفسه خلص، متوقفش الـ Flow لو الإشعار فشل
+                }
+            }
 
             await _context.SaveChangesAsync();
 

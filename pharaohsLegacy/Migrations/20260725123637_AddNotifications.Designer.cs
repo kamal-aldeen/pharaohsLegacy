@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using pharaohsLegacy.Models;
 
@@ -11,9 +12,11 @@ using pharaohsLegacy.Models;
 namespace pharaohsLegacy.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260725123637_AddNotifications")]
+    partial class AddNotifications
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -843,32 +846,6 @@ namespace pharaohsLegacy.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ReviewReports");
-                });
-
-            modelBuilder.Entity("pharaohsLegacy.Models.SearchHistory", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Query")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ResultType")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("SearchedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UserEmail")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("SearchHistories");
                 });
 
             modelBuilder.Entity("pharaohsLegacy.Models.ShopOrder", b =>

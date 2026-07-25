@@ -259,6 +259,19 @@ namespace pharaohsLegacy.Controllers
                     CouponCode = couponCode
                 });
                 await _db.SaveChangesAsync();
+
+                // 🔔 بند 15 — Notification System: إشعار بس لما كوبون فعلي اتولّد
+                if (!string.IsNullOrEmpty(couponCode))
+                {
+                    NotificationHelper.Create(
+                        _db,
+                        userEmail: userEmail,
+                        title: _loc.Get("Quiz_CouponWonNotifTitle", lang),
+                        message: _loc.GetFormatted("Quiz_CouponWonNotifMessage", lang, grade, discountPercent, couponCode),
+                        type: "Quiz",
+                        link: "/Shop/Index");
+                    await _db.SaveChangesAsync();
+                }
             }
             else
             {

@@ -38,7 +38,9 @@ namespace pharaohsLegacy.Models
         public DbSet<TripPlan> TripPlans { get; set; } // 🆕 AI Trip Planner
         public DbSet<TripPlanStop> TripPlanStops { get; set; } // 🆕 AI Trip Planner — الوقفات اليومية
 
+        public DbSet<Notification> Notifications { get; set; }
 
+        public DbSet<SearchHistory> SearchHistories { get; set; } // 🆕 Smart Search — بند 16 (History + Trending)
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

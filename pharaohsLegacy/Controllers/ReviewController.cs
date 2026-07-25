@@ -1,17 +1,23 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using pharaohsLegacy.Models;
+using pharaohsLegacy.Services;
 
 namespace pharaohsLegacy.Controllers
 {
     public class ReviewController : Controller
     {
         private readonly AppDbContext _context;
+        private readonly LocalizationService _loc;
         private const string AdminEmail = "kamalabdlbast89@gmail.com";
 
-        public ReviewController(AppDbContext context)
+        public ReviewController(AppDbContext context, LocalizationService loc)
         {
             _context = context;
+            _loc = loc;
         }
+
+        // 🆕 بدل ما نكرر HttpContext.Session.GetString("Lang") ?? "en" في كل Action (زي باقي الكنترولرز)
+        private string Lang() => HttpContext.Session.GetString("Lang") ?? "en";
 
         // ─────────────────────────────────────────────
         //  ADD
@@ -236,6 +242,16 @@ namespace pharaohsLegacy.Controllers
                 return Json(new { success = false });
 
             report.IsResolved = true;
+
+            // 🔔 بند 15 — Notification System: نبلّغ اللي عمل الـ Report إن الأدمن راجعه
+            NotificationHelper.Create(
+                _context,
+                userEmail: report.ReporterEmail,
+                title: _loc.Get("Review_ReportResolvedNotifTitle", Lang()),
+                message: _loc.Get("Review_ReportResolvedNotifMessage", Lang()),
+                type: "Review",
+                link: null);
+
             _context.SaveChanges();
             return Json(new { success = true });
         }

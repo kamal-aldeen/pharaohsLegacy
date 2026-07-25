@@ -9,6 +9,9 @@
     var artifacts = ViewBag.Artifacts as List<pharaohsLegacy.Models.Artifact>;
     var dynasties = ViewBag.Dynasties as List<pharaohsLegacy.Models.Dynasty>;
     var products = ViewBag.Products as List<pharaohsLegacy.Models.Product>;
+    var historicalEvents = ViewBag.HistoricalEvents as List<pharaohsLegacy.Models.HistoricalEvent>;
+    var recentSearches = ViewBag.RecentSearches as List<string> ?? new List<string>();
+    var trendingSearches = ViewBag.TrendingSearches as List<string> ?? new List<string>();
     var lang = Context.Session.GetString("Lang") ?? "en";
 }
 
@@ -19,6 +22,36 @@
         <div class="section-line"></div>
     </div>
 
+    @if (recentSearches.Count > 0 || trendingSearches.Count > 0)
+    {
+        <div style="display:flex; flex-wrap:wrap; gap:2rem; margin-bottom:2rem;">
+            @if (recentSearches.Count > 0)
+            {
+                <div>
+                    <span style="color:var(--muted); font-size:.85rem;">@Html.L("Search_RecentSearches")</span>
+                    <div style="display:flex; flex-wrap:wrap; gap:.5rem; margin-top:.4rem;">
+                        @foreach (var rq in recentSearches)
+                        {
+                            <a href="/Home/Search?q=@Uri.EscapeDataString(rq)" class="card-tag" style="text-decoration:none;">@rq</a>
+                        }
+                    </div>
+                </div>
+            }
+            @if (trendingSearches.Count > 0)
+            {
+                <div>
+                    <span style="color:var(--muted); font-size:.85rem;">@Html.L("Search_TrendingSearches")</span>
+                    <div style="display:flex; flex-wrap:wrap; gap:.5rem; margin-top:.4rem;">
+                        @foreach (var tq in trendingSearches)
+                        {
+                            <a href="/Home/Search?q=@Uri.EscapeDataString(tq)" class="card-tag" style="text-decoration:none;">🔥 @tq</a>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
     @if (pharaohs != null && pharaohs.Count > 0)
     {
         <h3 style="font-family:'Cinzel',serif; color:var(--gold); margin-bottom:1rem;">@Html.L("Common_PharaohsPlural")</h3>
@@ -27,7 +60,7 @@
             {
                 var pName = (lang == "ar" && !string.IsNullOrEmpty(p.NameAr)) ? p.NameAr : p.Name;
                 var pDynasty = (lang == "ar" && !string.IsNullOrEmpty(p.DynastyAr)) ? p.DynastyAr : p.Dynasty;
-                <a href="/Pharaoh/Details/@p.Id" class="card">
+                <a href="/Pharaoh/Details/@p.Id" class="card" onclick="trackSearchClick('@ViewBag.Query', 'pharaoh')">
                     <div class="card-img"><img src="@p.ImageUrl" alt="@pName" /></div>
                     <div class="card-body">
                         <span class="card-tag">@pDynasty</span>
@@ -46,7 +79,7 @@
             {
                 var tName = (lang == "ar" && !string.IsNullOrEmpty(t.NameAr)) ? t.NameAr : t.Name;
                 var tLocation = (lang == "ar" && !string.IsNullOrEmpty(t.LocationAr)) ? t.LocationAr : t.Location;
-                <a href="/Temple/Details/@t.Id" class="card">
+                <a href="/Temple/Details/@t.Id" class="card" onclick="trackSearchClick('@ViewBag.Query', 'temple')">
                     <div class="card-img"><img src="@t.ImageUrl" alt="@tName" /></div>
                     <div class="card-body">
                         <span class="card-tag">@tLocation</span>
@@ -65,7 +98,7 @@
             {
                 var gName = (lang == "ar" && !string.IsNullOrEmpty(g.NameAr)) ? g.NameAr : g.Name;
                 var gRole = (lang == "ar" && !string.IsNullOrEmpty(g.RoleAr)) ? g.RoleAr : g.Role;
-                <a href="/God/Details/@g.Id" class="card">
+                <a href="/God/Details/@g.Id" class="card" onclick="trackSearchClick('@ViewBag.Query', 'god')">
                     <div class="card-img"><img src="@g.ImageUrl" alt="@gName" /></div>
                     <div class="card-body">
                         <span class="card-tag">@gRole</span>
@@ -84,7 +117,7 @@
             {
                 var mName = (lang == "ar" && !string.IsNullOrEmpty(m.NameAr)) ? m.NameAr : m.Name;
                 var mLocation = (lang == "ar" && !string.IsNullOrEmpty(m.LocationAr)) ? m.LocationAr : m.Location;
-                <a href="/Museum/Details/@m.Id" class="card">
+                <a href="/Museum/Details/@m.Id" class="card" onclick="trackSearchClick('@ViewBag.Query', 'museum')">
                     <div class="card-img"><img src="@m.ImageUrl" alt="@mName" /></div>
                     <div class="card-body">
                         <span class="card-tag">@mLocation</span>
@@ -103,7 +136,7 @@
             {
                 var aName = (lang == "ar" && !string.IsNullOrEmpty(a.NameAr)) ? a.NameAr : a.Name;
                 var aCategory = (lang == "ar" && !string.IsNullOrEmpty(a.CategoryAr)) ? a.CategoryAr : a.Category;
-                <a href="/Artifact/Details/@a.Id" class="card">
+                <a href="/Artifact/Details/@a.Id" class="card" onclick="trackSearchClick('@ViewBag.Query', 'artifact')">
                     <div class="card-img"><img src="@a.ImageUrl" alt="@aName" /></div>
                     <div class="card-body">
                         <span class="card-tag">@aCategory</span>
@@ -121,11 +154,30 @@
             @foreach (var d in dynasties)
             {
                 var dName = (lang == "ar" && !string.IsNullOrEmpty(d.NameAr)) ? d.NameAr : d.Name;
-                <a href="/Dynasty/Details/@d.Id" class="card">
+                <a href="/Dynasty/Details/@d.Id" class="card" onclick="trackSearchClick('@ViewBag.Query', 'dynasty')">
                     <div class="card-img"><img src="@d.ImageUrl" alt="@dName" /></div>
                     <div class="card-body">
                         <span class="card-tag">@Html.YearLabel(d.StartYear) – @Html.YearLabel(d.EndYear)</span>
                         <h3 class="card-title">@dName</h3>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+
+    @if (historicalEvents != null && historicalEvents.Count > 0)
+    {
+        <h3 style="font-family:'Cinzel',serif; color:var(--gold); margin:2rem 0 1rem;">@Html.L("Common_HistoricalEventsPlural")</h3>
+        <div class="cards-grid">
+            @foreach (var e in historicalEvents)
+            {
+                var eTitle = (lang == "ar" && !string.IsNullOrEmpty(e.TitleAr)) ? e.TitleAr : e.Title;
+                var eCategory = (lang == "ar" && !string.IsNullOrEmpty(e.CategoryAr)) ? e.CategoryAr : e.Category;
+                <a href="/HistoricalEvent/Details/@e.Id" class="card" onclick="trackSearchClick('@ViewBag.Query', 'event')">
+                    <div class="card-img"><img src="@e.ImageUrl" alt="@eTitle" /></div>
+                    <div class="card-body">
+                        <span class="card-tag">@eCategory</span>
+                        <h3 class="card-title">@eTitle</h3>
                     </div>
                 </a>
             }
@@ -142,7 +194,7 @@
                 var prTag = pr.Category != null
                     ? ((lang == "ar" && !string.IsNullOrEmpty(pr.Category.NameAr)) ? pr.Category.NameAr : pr.Category.Name)
                     : $"{pr.Price} {Html.L("Common_EGP")}";
-                <a href="/Shop/Details/@pr.Id" class="card">
+                <a href="/Shop/Details/@pr.Id" class="card" onclick="trackSearchClick('@ViewBag.Query', 'product')">
                     <div class="card-img"><img src="@pr.ImageUrl" alt="@prName" /></div>
                     <div class="card-body">
                         <span class="card-tag">@prTag</span>
@@ -159,6 +211,7 @@
          (museums == null || museums.Count == 0) &&
          (artifacts == null || artifacts.Count == 0) &&
          (dynasties == null || dynasties.Count == 0) &&
+         (historicalEvents == null || historicalEvents.Count == 0) &&
          (products == null || products.Count == 0))
     {
         <div style="text-align:center; padding:3rem; color:var(--muted); font-style:italic;">
@@ -167,3 +220,15 @@
         </div>
     }
 </div>
+
+<script src="~/js/smart-search.js"></script>
+<script>
+    // بيتنادى من onclick على كل كارت نتيجة — بيسجل ResultType في SearchHistories (fire-and-forget)
+    function trackSearchClick(query, resultType) {
+        fetch('/Home/TrackSearchClick', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `query=${encodeURIComponent(query)}&resultType=${encodeURIComponent(resultType)}`
+        });
+    }
+</script>

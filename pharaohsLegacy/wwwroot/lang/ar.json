@@ -657,7 +657,37 @@
   "trip.delete.title": "تأكيد الحذف",
   "trip.delete.cancel": "إلغاء",
   "trip.pdf.lang.title": "اختر لغة الملف",
-  "trip.pdf.lang.subtitle": "هيتصدر ملف الـ PDF باللغة اللي تختارها"
+  "trip.pdf.lang.subtitle": "هيتصدر ملف الـ PDF باللغة اللي تختارها",
+  "Nav_Notifications": "الإشعارات",
+  "Nav_MarkAllRead": "تحديد الكل كمقروء",
+  "Nav_NoNotifications": "لا توجد إشعارات",
+  "Nav_ViewAllNotifications": "عرض كل الإشعارات",
+  "Notif_PageTitle": "الإشعارات",
+  "Notif_Empty": "مفيش إشعارات لسه.",
+  "Booking_CancelNotifTitle": "تم إلغاء حجزك",
+  "Booking_CancelNotifMessage": "طلب إلغاء حجزك رقم #{0} اتسجل. الفلوس هترجع لحسابك خلال 24 ساعة.",
+  "Booking_ConfirmNotifTitle": "تم تأكيد حجزك ✅",
+  "Booking_ConfirmNotifMessage": "حجزك لـ {0} بتاريخ {1} اتأكد وجاهز.",
+  "Booking_AdminNewBookingTitle": "حجز جديد اتأكد",
+  "Booking_AdminNewBookingMessage": "{0} أكد حجز لـ {1} بقيمة {2}.",
+  "Quiz_CouponWonNotifTitle": "مبروك! كسبت كوبون خصم 🏆",
+  "Quiz_CouponWonNotifMessage": "درجتك {0} وكسبت كوبون خصم {1}% (كود: {2}). استخدمه في أي حجز أو من المتجر.",
+  "User_WelcomeNotifTitle": "أهلًا بيك في Pharaohs Legacy 🏺",
+  "User_WelcomeNotifMessage": "اتسجلت بنجاح! استكشف الفراعنة والمعابد والمتاحف وابدأ رحلتك دلوقتي.",
+  "Review_ReportResolvedNotifTitle": "تمت مراجعة البلاغ بتاعك",
+  "Review_ReportResolvedNotifMessage": "البلاغ اللي بعتّه على أحد التقييمات اتراجع من الأدمن.",
+  "Shop_OrderConfirmedNotifTitle": "تم تأكيد أوردرك 🛍️",
+  "Shop_OrderConfirmedNotifMessage": "أوردرك رقم #{0} ({1} منتج) اتأكد وجاري تجهيزه.",
+  "Shop_AdminNewOrderTitle": "أوردر جديد اتأكد",
+  "Shop_AdminNewOrderMessage": "{0} أكد أوردر رقم #{1} بقيمة {2}.",
+  "Shop_OrderCancelledNotifTitle": "تم إلغاء أوردرك",
+  "Shop_OrderCancelledNotifMessage": "طلب إلغاء أوردرك رقم #{0} اتسجل. الفلوس هترجع لحسابك خلال 24 ساعة.",
+  "TripPlanner_CreatedNotifTitle": "خطة رحلتك جاهزة 🗺️",
+  "TripPlanner_CreatedNotifMessage": "خطة رحلتك لـ {0} يوم اتعملت بنجاح.",
+  "Search_RecentSearches": "بحثت عنه قبل كده",
+  "Search_TrendingSearches": "الأكتر بحثاً",
+  "Common_HistoricalEventsPlural": "الأحداث التاريخية"
+
 
 
 
