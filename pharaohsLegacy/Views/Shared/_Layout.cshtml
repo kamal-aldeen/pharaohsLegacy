@@ -1099,6 +1099,60 @@
         @@media (max-width: 560px) {
             .pl-toast { inset-inline-end: 12px; inset-inline-start: 12px; max-width: none; top: 78px; }
         }
+
+        /* 🆕 بند 17 — Achievements & Badges: Toast احتفالي فوري لما شارة تتفتح */
+        .pl-badge-toast {
+            position: fixed;
+            top: 100px;
+            inset-inline-end: 24px;
+            z-index: 10001;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            max-width: 340px;
+            padding: 16px 18px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(20,16,8,0.97), rgba(30,22,10,0.97));
+            border: 1px solid rgba(var(--gold-rgb), 0.5);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5), 0 0 30px rgba(var(--gold-rgb), 0.25);
+            opacity: 0;
+            transform: translateY(-14px) scale(0.96);
+            transition: opacity .35s ease, transform .35s ease;
+        }
+            .pl-badge-toast.show {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        .pl-badge-toast-icon {
+            font-size: 1.8rem;
+            flex-shrink: 0;
+            animation: pl-badge-pop .6s ease;
+        }
+        @@keyframes pl-badge-pop {
+            0% { transform: scale(0); }
+            60% { transform: scale(1.25); }
+            100% { transform: scale(1); }
+        }
+        .pl-badge-toast-text { flex: 1; min-width: 0; }
+        .pl-badge-toast-title {
+            font-family: 'Cinzel', serif;
+            color: var(--gold-light);
+            font-size: 0.9rem;
+            margin-bottom: 3px;
+        }
+        .pl-badge-toast-msg {
+            font-family: 'Crimson Pro', serif;
+            font-size: 0.82rem;
+            color: var(--text);
+            line-height: 1.4;
+        }
+        .pl-badge-toast-close {
+            background: none; border: none; color: var(--muted);
+            cursor: pointer; font-size: .9rem; flex-shrink: 0;
+        }
+        @@media (max-width: 560px) {
+            .pl-badge-toast { inset-inline-end: 12px; inset-inline-start: 12px; max-width: none; top: 78px; }
+        }
     </style>
     @RenderSection("Styles", required: false)
 </head>
@@ -2134,9 +2188,69 @@
                 });
         }
 
+        // 🆕 بند 17 — Achievements & Badges: Celebration Toast فوري
+        // بيكتشف إشعارات الشارات الجديدة عن طريق رمز 🏆 الثابت في عنوان
+        // Badge_EarnedNotifTitle (بدل ما نحتاج نضيف "type" في الـ Response أصلاً)،
+        // ويعرضها Toast احتفالي مميز بدل ما اليوزر يستنى يدخل الجرس بنفسه يلاقيها.
+        // ⚠️ مبني فوق نفس الـ Polling الموجود (كل 20 ثانية) — مش فوري 100%، لحد ما
+        // SignalR يتفعّل زي التعليق الأصلي فوق. أحسن بكتير من الوضع الحالي (صفر تفاعل).
+        // ⚠️ بيفترض إن `/Notification/GetRecent` بيرجّع { id, title, message, isRead, ... }
+        // زي ما مستخدم فعليًا في navNotifLoadRecent() فوق — لو الشكل مختلف قولّي.
+        let plSeenBadgeNotifIds = new Set(
+            JSON.parse(localStorage.getItem('pl_seen_badge_notif_ids') || '[]')
+        );
+
+        function navNotifCheckNewBadges() {
+            fetch('/Notification/GetRecent')
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.items) return;
+
+                    data.items
+                        .filter(n => !n.isRead && n.title && n.title.indexOf('🏆') !== -1 && !plSeenBadgeNotifIds.has(n.id))
+                        .forEach(n => {
+                            plSeenBadgeNotifIds.add(n.id);
+                            showBadgeCelebrationToast(n.title, n.message);
+                        });
+
+                    // نقصّر الـ Set على آخر 300 عنصر بس عشان مايكبرش في localStorage للأبد
+                    const trimmed = Array.from(plSeenBadgeNotifIds).slice(-300);
+                    plSeenBadgeNotifIds = new Set(trimmed);
+                    localStorage.setItem('pl_seen_badge_notif_ids', JSON.stringify(trimmed));
+                })
+                .catch(() => {});
+        }
+
+        function showBadgeCelebrationToast(title, message) {
+            const wrap = document.createElement('div');
+            wrap.className = 'pl-badge-toast';
+            wrap.innerHTML = `
+                <div class="pl-badge-toast-icon">🏆</div>
+                <div class="pl-badge-toast-text">
+                    <div class="pl-badge-toast-title"></div>
+                    <div class="pl-badge-toast-msg"></div>
+                </div>
+                <button type="button" class="pl-badge-toast-close" aria-label="Close">✕</button>
+            `;
+            // 🆕 بنحط الاسم بـ textContent مش innerHTML، عشان مانعملش XSS لو أي نص فيه HTML بالغلط
+            wrap.querySelector('.pl-badge-toast-title').textContent = title;
+            wrap.querySelector('.pl-badge-toast-msg').textContent = message;
+            wrap.querySelector('.pl-badge-toast-close').onclick = function () { wrap.remove(); };
+
+            document.body.appendChild(wrap);
+            requestAnimationFrame(function () { wrap.classList.add('show'); });
+
+            setTimeout(function () {
+                wrap.classList.remove('show');
+                setTimeout(function () { wrap.remove(); }, 300);
+            }, 6000);
+        }
+
         if (document.getElementById('navNotifWrapper')) {
             navNotifRefreshCount();
+            navNotifCheckNewBadges();
             setInterval(navNotifRefreshCount, 20000); // Polling — SignalR مؤجل لبعدين
+            setInterval(navNotifCheckNewBadges, 20000);
         }
 
         function aiToggle() {

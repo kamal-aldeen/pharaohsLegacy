@@ -13,15 +13,17 @@ namespace pharaohsLegacy.Controllers
         private readonly AppDbContext context;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly LocalizationService _loc;
+        private readonly BadgeEvaluationService _badges; // 🆕 بند 17 — Achievements & Badges
 
         // 🆕 إيميل التواصل لتفعيل الحساب البنكي يدويًا — نفس إيميل الأدمن المستخدم في AdminController
         private const string BankContactEmail = "kamalabdlbast89@gmail.com";
 
-        public UserController(AppDbContext _context, IHttpClientFactory httpClientFactory, LocalizationService loc)
+        public UserController(AppDbContext _context, IHttpClientFactory httpClientFactory, LocalizationService loc, BadgeEvaluationService badges)
         {
             context = _context;
             _httpClientFactory = httpClientFactory;
             _loc = loc;
+            _badges = badges;
         }
 
         // 🆕 بدل ما نكرر HttpContext.Session.GetString("Lang") ?? "en" في كل Action (زي باقي الكنترولرز)
@@ -241,6 +243,23 @@ namespace pharaohsLegacy.Controllers
             ViewBag.TotalTripPlans = await context.TripPlans
                 .Where(t => t.UserEmail == email)
                 .CountAsync();
+
+            // ===== BADGES (بند 17 — Achievements & Badges) =====
+            // 🆕 نفس أسلوب TotalOrders/TotalTripPlans فوق — ViewBag مش جوه DashboardViewModel
+            // عشان منلمسش الكلاس ده. Best-effort: لو فشل لأي سبب، الداشبورد يفضل شغال عادي
+            // والتاب بتاع الشارات يبقى فاضي بدل ما يكسر الصفحة كلها.
+            ViewBag.Badges = new List<BadgeDisplayItem>();
+            ViewBag.EarnedBadgeCount = 0;
+            try
+            {
+                var badgeItems = await _badges.GetDashboardBadgesAsync(email);
+                ViewBag.Badges = badgeItems;
+                ViewBag.EarnedBadgeCount = badgeItems.Count(b => b.EarnedTier != null);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Badges] Dashboard fetch failed for {email}: {ex.Message}");
+            }
 
             // ===== FAVORITES =====
             var favorites = await context.Favorites

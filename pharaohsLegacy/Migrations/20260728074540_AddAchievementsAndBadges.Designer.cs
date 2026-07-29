@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using pharaohsLegacy.Models;
 
@@ -11,9 +12,11 @@ using pharaohsLegacy.Models;
 namespace pharaohsLegacy.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260728074540_AddAchievementsAndBadges")]
+    partial class AddAchievementsAndBadges
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -235,51 +238,6 @@ namespace pharaohsLegacy.Migrations
                         new
                         {
                             Id = 7,
-                            Category = "Knowledge",
-                            CreatedAt = new DateTime(2026, 7, 28, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            DescriptionAr = "استكشف 5 أسرات",
-                            DescriptionEn = "Explored 5 dynasties",
-                            IconClass = "fa-solid fa-scroll",
-                            IsHidden = false,
-                            Key = "dynasty_expert",
-                            NameAr = "خبير الأسرات",
-                            NameEn = "Dynasty Expert",
-                            Threshold = 5,
-                            Tier = "Bronze"
-                        },
-                        new
-                        {
-                            Id = 8,
-                            Category = "Knowledge",
-                            CreatedAt = new DateTime(2026, 7, 28, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            DescriptionAr = "استكشف 15 أسرة",
-                            DescriptionEn = "Explored 15 dynasties",
-                            IconClass = "fa-solid fa-scroll",
-                            IsHidden = false,
-                            Key = "dynasty_expert",
-                            NameAr = "خبير الأسرات",
-                            NameEn = "Dynasty Expert",
-                            Threshold = 15,
-                            Tier = "Silver"
-                        },
-                        new
-                        {
-                            Id = 9,
-                            Category = "Knowledge",
-                            CreatedAt = new DateTime(2026, 7, 28, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            DescriptionAr = "استكشف 30 أسرة",
-                            DescriptionEn = "Explored 30 dynasties",
-                            IconClass = "fa-solid fa-scroll",
-                            IsHidden = false,
-                            Key = "dynasty_expert",
-                            NameAr = "خبير الأسرات",
-                            NameEn = "Dynasty Expert",
-                            Threshold = 30,
-                            Tier = "Gold"
-                        },
-                        new
-                        {
-                            Id = 10,
                             Category = "Community",
                             CreatedAt = new DateTime(2026, 7, 28, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DescriptionAr = "كتب 3 مراجعات",
@@ -294,7 +252,7 @@ namespace pharaohsLegacy.Migrations
                         },
                         new
                         {
-                            Id = 11,
+                            Id = 8,
                             Category = "Community",
                             CreatedAt = new DateTime(2026, 7, 28, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DescriptionAr = "كتب 10 مراجعات",
@@ -309,7 +267,7 @@ namespace pharaohsLegacy.Migrations
                         },
                         new
                         {
-                            Id = 12,
+                            Id = 9,
                             Category = "Community",
                             CreatedAt = new DateTime(2026, 7, 28, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DescriptionAr = "كتب 25 مراجعة",
@@ -324,7 +282,7 @@ namespace pharaohsLegacy.Migrations
                         },
                         new
                         {
-                            Id = 13,
+                            Id = 10,
                             Category = "Community",
                             CreatedAt = new DateTime(2026, 7, 28, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DescriptionAr = "حصل على 5 أصوات مفيدة",
@@ -339,7 +297,7 @@ namespace pharaohsLegacy.Migrations
                         },
                         new
                         {
-                            Id = 14,
+                            Id = 11,
                             Category = "Community",
                             CreatedAt = new DateTime(2026, 7, 28, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DescriptionAr = "حصل على 20 صوت مفيد",
@@ -354,7 +312,7 @@ namespace pharaohsLegacy.Migrations
                         },
                         new
                         {
-                            Id = 15,
+                            Id = 12,
                             Category = "Community",
                             CreatedAt = new DateTime(2026, 7, 28, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DescriptionAr = "حصل على 50 صوت مفيد",
@@ -369,7 +327,7 @@ namespace pharaohsLegacy.Migrations
                         },
                         new
                         {
-                            Id = 16,
+                            Id = 13,
                             Category = "Knowledge",
                             CreatedAt = new DateTime(2026, 7, 28, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DescriptionAr = "لعب 5 كويزات أو وصل لاستمرارية 3 أيام",
@@ -384,7 +342,7 @@ namespace pharaohsLegacy.Migrations
                         },
                         new
                         {
-                            Id = 17,
+                            Id = 14,
                             Category = "Knowledge",
                             CreatedAt = new DateTime(2026, 7, 28, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DescriptionAr = "لعب 20 كويز أو وصل لاستمرارية 7 أيام",
@@ -399,7 +357,7 @@ namespace pharaohsLegacy.Migrations
                         },
                         new
                         {
-                            Id = 18,
+                            Id = 15,
                             Category = "Knowledge",
                             CreatedAt = new DateTime(2026, 7, 28, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DescriptionAr = "لعب 50 كويز أو وصل لاستمرارية 30 يوم",
@@ -414,7 +372,7 @@ namespace pharaohsLegacy.Migrations
                         },
                         new
                         {
-                            Id = 19,
+                            Id = 16,
                             Category = "Legendary",
                             CreatedAt = new DateTime(2026, 7, 28, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DescriptionAr = "حصل على الذهبي في كل شارة تانية",
@@ -425,96 +383,6 @@ namespace pharaohsLegacy.Migrations
                             NameAr = "المستكشف الأسطوري",
                             NameEn = "Legendary Explorer",
                             Threshold = 0,
-                            Tier = "Gold"
-                        },
-                        new
-                        {
-                            Id = 20,
-                            Category = "Hidden",
-                            CreatedAt = new DateTime(2026, 7, 28, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            DescriptionAr = "حقق 100% في كويز",
-                            DescriptionEn = "Scored 100% on a quiz",
-                            IconClass = "fa-solid fa-star",
-                            IsHidden = true,
-                            Key = "perfect_score",
-                            NameAr = "الدرجة الكاملة",
-                            NameEn = "Perfect Score",
-                            Threshold = 1,
-                            Tier = "Gold"
-                        },
-                        new
-                        {
-                            Id = 21,
-                            Category = "Hidden",
-                            CreatedAt = new DateTime(2026, 7, 28, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            DescriptionAr = "وصل لاستمرارية 30 يوم في الكويز",
-                            DescriptionEn = "Reached a 30-day quiz streak",
-                            IconClass = "fa-solid fa-fire",
-                            IsHidden = true,
-                            Key = "streak_legend",
-                            NameAr = "أسطورة الاستمرارية",
-                            NameEn = "Streak Legend",
-                            Threshold = 30,
-                            Tier = "Gold"
-                        },
-                        new
-                        {
-                            Id = 22,
-                            Category = "Hidden",
-                            CreatedAt = new DateTime(2026, 7, 28, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            DescriptionAr = "زار كل المتاحف",
-                            DescriptionEn = "Visited every museum",
-                            IconClass = "fa-solid fa-building-columns",
-                            IsHidden = true,
-                            Key = "museum_completionist",
-                            NameAr = "جامع المتاحف",
-                            NameEn = "Museum Completionist",
-                            Threshold = 42,
-                            Tier = "Gold"
-                        },
-                        new
-                        {
-                            Id = 23,
-                            Category = "Hidden",
-                            CreatedAt = new DateTime(2026, 7, 28, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            DescriptionAr = "استكشف كل الأسرات",
-                            DescriptionEn = "Explored every dynasty",
-                            IconClass = "fa-solid fa-landmark-dome",
-                            IsHidden = true,
-                            Key = "true_historian",
-                            NameAr = "المؤرخ الحقيقي",
-                            NameEn = "True Historian",
-                            Threshold = 35,
-                            Tier = "Gold"
-                        },
-                        new
-                        {
-                            Id = 24,
-                            Category = "Hidden",
-                            CreatedAt = new DateTime(2026, 7, 28, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            DescriptionAr = "عضو من سنة كاملة",
-                            DescriptionEn = "Member for a full year",
-                            IconClass = "fa-solid fa-heart",
-                            IsHidden = true,
-                            Key = "loyal_explorer",
-                            NameAr = "المستكشف الوفي",
-                            NameEn = "Loyal Explorer",
-                            Threshold = 365,
-                            Tier = "Gold"
-                        },
-                        new
-                        {
-                            Id = 25,
-                            Category = "Hidden",
-                            CreatedAt = new DateTime(2026, 7, 28, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            DescriptionAr = "حجز زيارة أو لعب كويز الساعة 3 الفجر",
-                            DescriptionEn = "Booked a visit or played a quiz at 3 AM",
-                            IconClass = "fa-solid fa-moon",
-                            IsHidden = true,
-                            Key = "night_owl",
-                            NameAr = "بومة الليل",
-                            NameEn = "Night Owl",
-                            Threshold = 1,
                             Tier = "Gold"
                         });
                 });
@@ -813,36 +681,6 @@ namespace pharaohsLegacy.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("HistoricalEvents");
-                });
-
-            modelBuilder.Entity("pharaohsLegacy.Models.ItemView", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("ItemId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("UserEmail")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime>("ViewedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserEmail", "Type", "ItemId")
-                        .IsUnique();
-
-                    b.ToTable("ItemViews");
                 });
 
             modelBuilder.Entity("pharaohsLegacy.Models.Monument", b =>

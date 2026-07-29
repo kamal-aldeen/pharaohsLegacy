@@ -81,6 +81,25 @@ namespace pharaohsLegacy.Services
                 order.ShippingStatus = "Shipped";
                 order.ShippedAt = DateTime.Now;
                 _logger.LogInformation("ShopOrder #{Id}: automatically marked as Shipped 48 hours after confirmation.", order.Id);
+
+                // 🔔 بند 15 — نفس النص والـ pattern بالظبط بتاع AdminController.UpdateShopOrderShipping
+                // (المسار اليدوي) عشان الحالتين (يدوي/أوتوماتيك) يبعتوا نفس الإشعار للحالة نفسها.
+                // ⚠️ نص إنجليزي ثابت (مش بيستخدم _loc) — مفيش LocalizationService هنا أصلاً،
+                // وده Background Service مش مرتبط بـ Session/Request عشان نعرف لغة اليوزر وقت الحدث.
+                try
+                {
+                    NotificationHelper.Create(
+                        db,
+                        userEmail: order.UserEmail,
+                        title: "Your order has shipped 🚚",
+                        message: $"Your order #{order.Id} has shipped and should arrive soon.",
+                        type: "Shop",
+                        link: "/Shop/MyOrders");
+                }
+                catch
+                {
+                    // Best effort — تحديث حالة الشحن نفسه خلص، متوقفش الـ Job لو الإشعار فشل
+                }
             }
 
             await db.SaveChangesAsync(stoppingToken);
@@ -113,6 +132,22 @@ namespace pharaohsLegacy.Services
                 order.DeliveredAt = DateTime.Now;
                 _logger.LogInformation("ShopOrder #{Id}: automatically marked as Delivered ({Days} day(s) after shipping to {Gov}).",
                     order.Id, Governorates.GetDeliveryDays(order.Governorate), order.Governorate);
+
+                // 🔔 بند 15 — نفس النص والـ pattern بالظبط بتاع AdminController.UpdateShopOrderShipping
+                try
+                {
+                    NotificationHelper.Create(
+                        db,
+                        userEmail: order.UserEmail,
+                        title: "Your order was delivered ✅",
+                        message: $"Your order #{order.Id} has been delivered. We hope you love it!",
+                        type: "Shop",
+                        link: "/Shop/MyOrders");
+                }
+                catch
+                {
+                    // Best effort — تحديث حالة الشحن نفسه خلص، متوقفش الـ Job لو الإشعار فشل
+                }
             }
 
             await db.SaveChangesAsync(stoppingToken);

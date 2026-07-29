@@ -1,4 +1,4 @@
-﻿// Controllers/DynastyController.cs
+// Controllers/DynastyController.cs
 using Microsoft.AspNetCore.Mvc;
 using pharaohsLegacy.Models;
 using Microsoft.EntityFrameworkCore;
@@ -9,10 +9,12 @@ namespace pharaohsLegacy.Controllers
     public class DynastyController : Controller
     {
         private readonly AppDbContext _context;
+        private readonly BadgeEvaluationService _badgeService; // 🆕 بند 17
 
-        public DynastyController(AppDbContext context)
+        public DynastyController(AppDbContext context, BadgeEvaluationService badgeService)
         {
             _context = context;
+            _badgeService = badgeService;
         }
 
         // GET: /Dynasty
@@ -32,7 +34,7 @@ namespace pharaohsLegacy.Controllers
         }
 
         // GET: /Dynasty/Details/5
-        public IActionResult Details(int id)
+        public async Task<IActionResult> Details(int id)
         {
             var dynasty = _context.Dynasties.FirstOrDefault(d => d.Id == id);
             if (dynasty == null) return NotFound();
@@ -78,6 +80,48 @@ namespace pharaohsLegacy.Controllers
             ViewBag.Artifacts = artifacts;
             ViewBag.PrevDynasty = prevDynasty;
             ViewBag.NextDynasty = nextDynasty;
+
+            // ============================================================
+            // 🆕 بند 17 — Dynasty Expert / True Historian
+            // تسجيل الزيارة مرة واحدة بس لكل يوزر/أسرة (مش كل مرة يفتح الصفحة)،
+            // وبعدين فحص الشارات (Dynasty Expert + الشارات السرية + Legendary).
+            // Best-effort بالكامل — لو فشل أي حاجة هنا، الصفحة تتفتح عادي زي ما هي.
+            // ⚠️ افتراض: مفتاح اللغة في الـ Session اسمه "Lang" ("ar"/"en") — لو
+            // مختلف عندك، غيّر السطر ده بس.
+            // ============================================================
+            var userEmail = HttpContext.Session.GetString("UserEmail");
+            if (!string.IsNullOrEmpty(userEmail))
+            {
+                try
+                {
+                    bool alreadyViewed = await _context.ItemViews
+                        .AnyAsync(v => v.UserEmail == userEmail && v.Type == "dynasty" && v.ItemId == id);
+
+                    if (!alreadyViewed)
+                    {
+                        _context.ItemViews.Add(new ItemView
+                        {
+                            UserEmail = userEmail,
+                            Type = "dynasty",
+                            ItemId = id,
+                            ViewedAt = DateTime.Now
+                        });
+                        await _context.SaveChangesAsync();
+
+                        string lang = HttpContext.Session.GetString("Lang") ?? "en";
+
+                        var newBadges = await _badgeService.EvaluateDynastyExpertAsync(userEmail);
+                        newBadges.AddRange(await _badgeService.EvaluateHiddenAchievementsAsync(userEmail));
+                        newBadges.AddRange(await _badgeService.EvaluateLegendaryAsync(userEmail));
+
+                        _badgeService.NotifyNewBadges(userEmail, newBadges, lang);
+                    }
+                }
+                catch
+                {
+                    // best-effort — تسجيل الزيارة أو فحص البادجات ميوقفش عرض الصفحة أبدًا
+                }
+            }
 
             return View(dynasty);
         }

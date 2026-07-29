@@ -147,6 +147,8 @@ Views/
 - Bank + Shop + Quiz Ecosystem ✅ (مكتمل بالكامل — تفاصيل كاملة في `BANK_SHOP_QUIZ_DETAILS.md`)
 - Email Confirmation + QR Code (E-Ticket) ✅ (مكتمل بالكامل — تفاصيل كاملة تحت في قسم "Email Confirmation + QR Code")
 - Smart Search (بند 16) ✅ (مكتمل بالكامل — بحث موحّد + Autocomplete + Fuzzy matching + Search History + Trending — تفاصيل كاملة تحت في قسم "Smart Search")
+- Achievements & Badges (بند 17) ✅ (مكتمل بالكامل للنسخة الأساسية + Dynasty Expert/True Historian + الـ 6 Hidden Secret Achievements — كل الكود اتكتب، تفاصيل كاملة تحت في قسم "بند 17 — Achievements & Badges" — باقي بس: Migration جديدة `AddItemViewsAndSecretBadges` + قرار مفتوح واحد بخصوص عرض progress bar للشارات السرية في الداشبورد)
+- Notification System (بند 15) ✅ (مكتمل بالكامل — In-app + Polling + 12 Trigger عبر Booking/Review/User/Quiz/Shop/TripPlanner/Admin + التحديث التلقائي للشحن — تفاصيل كاملة تحت في قسم "Notification System")
 
 ---
 
@@ -736,9 +738,9 @@ public List<DailyFact> Facts { get; set; }
 ```
 [x] 13. Analytics Dashboard (Admin) — ✅ مكتمل (تفاصيل تحت)
 [x] 14. AI Trip Planner — ✅ مكتمل (تفاصيل تحت)
-[ ] 15. Notification System
+[x] 15. Notification System — ✅ مكتمل (تفاصيل تحت)
 [x] 16. Smart Search — ✅ مكتمل (تفاصيل تحت)
-[ ] 17. Achievements & Badges
+[x] 17. Achievements & Badges — ✅ مكتمل (Views + Models + Controllers + Migration + الترجمة + التسجيل في Program.cs + الـ Service) — تفاصيل كاملة تحت في قسم "بند 17 — Achievements & Badges" — باقي بس قرارين مؤجلين (Dynasty Expert/Historian + Hidden Secret Achievements)
 [ ] 19. Google Login (OAuth)
 [ ] 20. Photo Gallery
 [ ] 21. User Profile Expansion
@@ -755,6 +757,161 @@ public List<DailyFact> Facts { get; set; }
 ---
 
 > كل الـ features التانية الكتيرة (3D / AR / Metaverse / Microservices / ...) موجودة في قسم **المرجع الكامل** تحت — للتوثيق بس، مش للتنفيذ دلوقتي.
+
+---
+
+## 🏆 بند 17 — Achievements & Badges — ✅ مكتمل بالكامل (28 يوليو)
+
+> **القرار:** اتعمل كل الشارات المتاحة دلوقتي مرة واحدة (مش MVP تدريجي). القسم ده كان تخطيط بس قبل كده — دلوقتي بيوثق اللي اتنفذ فعليًا في الكود (Views + Models + Controllers + Service + Migration + الترجمة + التسجيل في Program.cs)، عشان في أي شات جديد تبعتلي الملف وأنا أبقى فاهم إحنا واقفين فين بالظبط.
+> ⚠️ لسه باقي قرارين مؤجلين مش جزء من الفيتشر الأساسي: Dynasty Expert/Historian (مصدر بيانات مش مقرر) + Hidden Secret Achievements (شروطها مش محددة) — شوف قسم "لسه Pending" تحت.
+
+### ✅ قرارات اتاخدت وطُبّقت فعليًا
+| القرار | الاختيار |
+|---|---|
+| الـ Visit يتحسب إزاي | `Booking.Status == "Visited"` بس (مش مجرد فتح صفحة Details) |
+| Tiers | متدرجة لكل بادج (Bronze/Silver/Gold) — كل Tier بيتسجل كصف منفصل في `UserBadges` (تاريخ كامل لمتى اتفتح كل درجة) |
+| عرض الـ Hidden Secret Achievements | باهتة/Grayscale (`filter: grayscale(100%); opacity: 0.45`) قبل ما تتفتح — مش "؟؟؟" نصي ومش اختفاء كامل. الاسم والوصف بيتقنّعوا بـ "؟؟؟" لحد ما تتفك عشان السر يفضل سر |
+| شرط Legendary Explorer | لازم Gold في **كل** الشارات التانية المفعّلة حاليًا (Explorer + Pharaoh Expert + Reviewer + Community Helper + Quiz Master) — مش مجرد أي Tier |
+
+### 🗂️ الشارات المتاحة فعليًا دلوقتي (Seed في `BadgeCatalogSeed.cs`)
+| المجموعة | الشارة | Tiers (Threshold) | المصدر |
+|---|---|---|---|
+| Visit | Explorer / Temple Master / Grand Explorer | 3 / 7 / 15 (أماكن Visited) | `Bookings.Status == "Visited"` |
+| Knowledge | Pharaoh Expert | 5 / 15 / 30 (مفضلة) | `Favorites.Type == "pharaoh"` |
+| Knowledge | Quiz Master | 5 / 20 / 50 (أكبر رقم بين عدد مرات اللعب أو الـ Streak) | `QuizHistories` |
+| Community | Reviewer | 3 / 10 / 25 (ريفيوهات) | `Reviews` |
+| Community | Community Helper | 5 / 20 / 50 (Helpful votes مستلمة) | `ReviewHelpfuls` |
+| Legendary | Legendary Explorer | Gold في الخمس شارات فوق | متعدد |
+
+> ⚠️ **الـ Thresholds دي اقتراح مبدئي قابل للتعديل بسهولة** (مجرد أرقام في `BadgeCatalogSeed.cs`) — لو عايز تغيّرها بعد ما تشوف سلوك المستخدمين الحقيقي، عادي.
+
+### ✅ Dynasty Expert / True Historian + Hidden Secret Achievements — اتعملوا بالكامل (تحديث لاحق)
+
+#### 🏛️ Dynasty Expert / True Historian
+- **مصدر البيانات:** تتبع Views فعلي (مش Favorites) — عشان الشارة تعكس معرفة حقيقية مش مجرد حفظ مفضلة.
+- **التصميم:** جدول عام (Generic) جديد اسمه `ItemViews` — نفس فلسفة `Favorites` بالظبط (Type + ItemId)، عشان نقدر نوسّعه لاحقًا لأنواع تانية (متاحف/أماكن) من غير ما نعمل جدول جديد لكل نوع. دلوقتي مفعّل بـ `Type == "dynasty"` بس.
+- **بنية الجدول:** `ItemViews` → Id, UserEmail, Type, ItemId, ViewedAt (+ Unique Index على UserEmail+Type+ItemId على مستوى الداتا بيز)
+- **Dynasty Expert (شارة عادية ظاهرة، Knowledge):** Bronze 5 / Silver 15 / Gold 30 — عدد الأسرات المختلفة اللي اتفتحلها Details (`DISTINCT ItemId`)
+- **True Historian (شارة سرية Hidden):** فتح تفاصيل كل الـ 35 أسرة — نفس المصدر، شرط كامل
+- **التسجيل:** في `DynastyController.Details()` — مرة واحدة بس لكل يوزر/أسرة (مش كل مرة يفتحها)، وبعدين بيفحص Dynasty Expert + كل الـ Hidden Achievements + Legendary Explorer
+
+#### 🕵️ Hidden Secret Achievements (6 شارات) — كتالوجهم اتضاف + منطق الفحص كامل
+| الشارة | الشرط | المصدر | Threshold |
+|---|---|---|---|
+| Perfect Score | 100% في كويز (Score == Total) ولو مرة | `QuizHistories` | 1 (boolean) |
+| Streak Legend | Streak متواصل 30 يوم في الكويز | `QuizHistories.StreakDays` | 30 |
+| Museum Completionist | زيارة (Visited) كل المتاحف بدون استثناء | `Bookings` (Distinct museums Visited) | 42 ⚠️ ثابت، لازم يتحدّث لو اتضاف متحف |
+| True Historian | فتح تفاصيل كل الـ 35 أسرة | `ItemViews` | 35 ⚠️ ثابت، لازم يتحدّث لو اتضافت أسرة |
+| Loyal Explorer | عضو من سنة كاملة | `Users.CreatedAt` | 365 يوم |
+| Night Owl | حجز أو كويز اتسجل الساعة 3 بالظبط (3:00–3:59) | `Bookings.CreatedAt` / `QuizHistories.PlayedAt` (فحص الـ Hour، مفيش عمود جديد) | 1 (boolean) |
+
+> منطق الفحص كله في `BadgeEvaluationService.EvaluateHiddenAchievementsAsync()` — دالة واحدة بتفحص الـ 6 مع بعض، بتتنادى Best-effort من `DynastyController.Details()` دلوقتي (ينفع تتنادى من Trigger points تانية زي BookingStatusUpdater/QuizController لاحقًا لو حابب تزود دقة التوقيت).
+
+> ✅ **القرار اتقفل (28 يوليو):** اتلغى تقنيع "؟؟؟" للشارات السرية خالص. دلوقتي الاسم والوصف بيظهروا عادي حتى وهي مقفولة، وباهتة/Grayscale بس (زي أي بادج مقفول تاني) — و`CurrentProgress` بقى بيرجع رقمها الحقيقي (مفيش تصفير عمدي، مفيش داعي طالما مفيش سر بنحميه أصلاً). التعديل ده في `BadgeEvaluationService.GetDashboardBadgesAsync()`.
+
+#### 🎨 إعادة تصميم الداشبورد (Dashboard.cshtml) — بعد أول تجربة فعلية
+الشكل الأول كان كل الشارات في Grid واحد مبعثر (earned/locked/hidden مخلوطين مع بعض من غير ترتيب) — اتعمل:
+- تجميع الشارات في أقسام حسب الـ Category (زيارات → معرفة → مجتمع → أسطوري → سري)، كل قسم بعنوانه وعداد "X / Y" مكتسب
+- شكل الـ Tile اتظبط (Min-height ثابت، حواف ذهبية للمكتسبة، Spacing أوضح)
+- **مفتاح ترجمة جديد فعليًا محتاج يتضاف** (عكس الرأي الأول اللي قال مش محتاجين، لأن التصميم اتغيّر لعناوين أقسام):
+
+| Key | AR | EN |
+|---|---|---|
+| `Badge_Category_Visit` | زيارات | Visits |
+| `Badge_Category_Knowledge` | معرفة | Knowledge |
+| `Badge_Category_Community` | مجتمع | Community |
+| `Badge_Category_Legendary` | أسطوري | Legendary |
+| `Badge_Category_Hidden` | إنجازات سرية | Secret Achievements |
+
+#### 🪟 Badge Details Modal — كل كارت بقى قابل للضغط (تحديث لاحق)
+بناءً على طلبك، اتضاف Modal احترافي واحد (بيتعاد استخدامه لكل الشارات) بيتفتح لما تدوس على أي كارت في الداشبورد. بيعرض:
+- الـ Tier ladder كامل (Bronze/Silver/Gold) مش بس آخر Tier اتكسب
+- كل Tier: اسمه ووصفه (إيه المطلوب بالظبط) + تاريخ اكتسابه لو خدته
+- الـ Tier الجاي: Progress bar حقيقي (تقدم/المطلوب)
+
+**التعديلات:**
+- `Services/BadgeEvaluationService.cs` — `BadgeDisplayItem` بقى فيه `List<BadgeTierInfo> Tiers`، و`GetDashboardBadgesAsync()` بيبنيها لكل شارة (كل Tier + هل اتكسب + تاريخه)
+- `Views/User/Dashboard.cshtml` — كل `.badge-tile` بقى قابل للضغط (`onclick="openBadgeModal(...)"`)، بيانات كل الشارات (باللغة الحالية بس) بتتبني Server-side كـ JSON مرة واحدة (`window.__badgesData`) والـ JS بيملى الـ Modal منها من غير Round-trip للسيرفر
+#### 🎨 أيقونات SVG مخصّصة بدل Font Awesome (تحديث لاحق)
+كل الـ 13 شارة (بما فيها الـ 6 السرية) بقالها أيقونة SVG مرسومة يدويًا بنفس أسلوب الخط (Line-art) بلون واحد (`currentColor`) — بتورّث الذهبي من الـ CSS المحيطة تلقائيًا (كارت مكتسب = ذهبي كامل، مقفول = رمادي باهت مع باقي الكارت، من غير ما نكتب لون منفصل لكل حالة).
+
+**ملف جديد:**
+- `Models/BadgeIconSvg.cs` — Dictionary ثابتة (Badge.Key → SVG markup)، مع `Get(key)` وFallback لو مفتاح مش موجود
+
+**اتعدلت:**
+- `Views/User/Dashboard.cshtml` — الكارت وModal التفاصيل بقوا بيستخدموا `BadgeIconSvg.Get(b.Key)` بدل `b.IconClass` (Font Awesome). حجم الأيقونة اتظبط في CSS (`.badge-tile-icon svg` / `.badge-modal-icon svg`)
+
+> ملاحظة: أيقونات ✓/🔒 الصغيرة جوه صفوف الـ Tier في الـ Modal (مش أيقونة الشارة نفسها) لسه Font Awesome — مقصود، لأنها أيقونات عامة مش خاصة بكل شارة، قولّي لو عايزها SVG كمان.
+
+#### 🐛 Bug Fix — فجوة في نقاط تفعيل الشارات السرية (تحديث لاحق)
+كان `EvaluateHiddenAchievementsAsync()` بيتنادى بس من `DynastyController.Details()`. المشكلة: 4 من الـ 6 شارات السرية أصلاً مالهاش علاقة بزيارة أسرة (Perfect Score/Streak Legend/Night Owl-quiz مرتبطين بالكويز، Museum Completionist/Night Owl-booking مرتبطين بالحجوزات) — فلو يوزر حقق شرطها بس معملش Details لأي أسرة بعد كده، الشارة ماكانتش هتتفتحله خالص.
+
+**الحل:** إضافة نفس الاستدعاء لأماكن تانية:
+- `Controllers/QuizController.cs` — بعد `EvaluateQuizMasterAsync()` في نفس الـ Trigger Point اللي بيسجل الكويز
+- `Services/BookingStatusUpdater.cs` — بعد `EvaluateVisitAsync()` في نفس الـ Loop اللي بيحوّل الحجوزات لـ Visited
+
+**قرار متعمّد:** مافيش استدعاء في `ReviewController.cs` — مفيش أي شارة من الـ 6 السرية مرتبطة بالريفيوهات، فإضافته هناك هتبقى فحص زيادة من غير فايدة. `Loyal Explorer` (عضو من سنة) مش مرتبطة بأكشن معين أصلاً — بتتفحص عرضًا من أي Trigger من التلاتة دول، اللي كافي كتغطية Best-effort.
+
+#### 🎉 Badge Celebration Toast — إشعار فوري لما شارة تتفتح (تحديث لاحق)
+قبل كده كان اليوزر مايعرفش إنه خد شارة جديدة غير لما يدخل الجرس بنفسه (أو الـ Badge count يتحدث بصمت كل 20 ثانية). دلوقتي فيه Toast احتفالي مميز (Gold glow + 🏆) بيظهر تلقائي.
+
+**الطريقة:** بدل ما نضيف "type" جديد للـ Response أو نلمس `NotificationController.cs`، استخدمنا حاجة موجودة فعلاً: عنوان إشعار الشارة (`Badge_EarnedNotifTitle`) فيه رمز 🏆 ثابت مهما كانت اللغة — فالـ JS بيكتشف بيه أي إشعار شارة جديد من نفس الـ Polling الموجود أصلاً (كل 20 ثانية، لحد ما SignalR يتفعّل زي المخطط له من الأول). الإشعارات اللي اتعرضت كـ Toast بالفعل بتتسجل في `localStorage` عشان ميتكررش نفس التوست تاني لو الصفحة اتعمللها Refresh.
+
+**اتعدلت:**
+- `Views/Shared/_Layout.cshtml` — CSS جديد (`.pl-badge-toast`) + JS (`navNotifCheckNewBadges()` + `showBadgeCelebrationToast()`) مربوطين بنفس دورة الـ Polling الحالية
+
+**⚠️ افتراض محتاج تأكيد:** الكود مبني على افتراض إن `/Notification/GetRecent` بيرجّع `{ id, title, message, isRead }` — زي ما هو مستخدم فعليًا في `navNotifLoadRecent()` الموجودة قبل كده. لو `NotificationController.cs` بيرجّع شكل مختلف (خصوصًا لو `title`/`message` بمفاتيح تانية)، هيحتاج تعديل بسيط. ابعتلي الملف لو عايز تأكيد 100%.
+
+
+#### ⚠️ اعتماد لازم تتأكد منه في `Program.cs`
+`DynastyController` بقى محتاج `BadgeEvaluationService` في الكونستركتور (كان قبل كده `AppDbContext` بس). لو الـ DI مسجلة أصلاً بـ `AddScoped<BadgeEvaluationService>()` من خطوات التفعيل الأساسية، مفيش حاجة إضافية مطلوبة.
+
+#### 📁 الملفات اللي اتعملت/اتعدلت فعليًا
+**جديد بالكامل:**
+- `Models/ItemView.cs` — Id, UserEmail, Type, ItemId, ViewedAt
+- `Models/BadgeIconSvg.cs` — أيقونات SVG مخصّصة لكل شارة
+
+**اتعدلت:**
+- `Models/AppDbContext.cs` — `DbSet<ItemView>` + Unique Index (UserEmail+Type+ItemId)
+- `Controllers/DynastyController.cs` — Constructor بقى بياخد `BadgeEvaluationService` + `Details()` بقت async وبتسجل الزيارة + تفحص الشارات (بترالي/كاتش، Best-effort)
+- `Models/BadgeCatalogSeed.cs` — إضافة `dynasty_expert` (3 Tiers) + الـ 6 Hidden Achievements (`IsHidden = true`) + تحديث تعليق شرط Legendary Explorer
+- `Services/BadgeEvaluationService.cs` (namespace فعليًا `pharaohsLegacy.Models`) — إضافة `EvaluateDynastyExpertAsync()` + `EvaluateHiddenAchievementsAsync()` (الـ 6 مع بعض) + تحديث `requiredGoldKeys` في `EvaluateLegendaryAsync()` ليشمل `dynasty_expert` + تحديث `GetDashboardBadgesAsync()` (progress لـ dynasty_expert + إلغاء تقنيع "؟؟؟" للشارات السرية)
+- `Views/User/Dashboard.cshtml` — إعادة تصميم تبويب الشارات بالكامل: تجميع بالـ Category + CSS جديد للـ Tiles + Modal تفاصيل + أيقونات SVG
+- `Controllers/QuizController.cs` — إضافة `EvaluateHiddenAchievementsAsync()` بعد تسجيل الكويز (Bug fix)
+- `Services/BookingStatusUpdater.cs` — إضافة `EvaluateHiddenAchievementsAsync()` بعد تحديث الحجوزات لـ Visited (Bug fix)
+- `Views/Shared/_Layout.cshtml` — Badge Celebration Toast (CSS + JS)
+
+**Migration مطلوبة (لسه محتاجة تتعمل يدويًا):** `Add-Migration AddItemViewsAndSecretBadges` ثم `Update-Database`
+
+**ترجمة:** أسماء/وصف الشارات كلها bilingual جوه `BadgeCatalogSeed.cs` مباشرة (مفيش مفاتيح ترجمة ليها). لكن بعد إعادة تصميم الداشبورد بأقسام حسب الـ Category، بقينا محتاجين فعليًا الـ 5 مفاتيح الجديدة اللي فوق (`Badge_Category_*`).
+
+### 📁 الملفات اللي اتعملت/اتعدلت (خريطة كاملة)
+**جديد بالكامل:**
+- `Models/Badge.cs`، `Models/UserBadge.cs` — الـ Models
+- `Models/BadgeCatalogSeed.cs` — كتالوج الشارات (Seed data)
+- `Services/BadgeEvaluationService.cs` — منطق الفحص/المنح/الإشعار + `GetDashboardBadgesAsync()` لعرض الداشبورد (بيرجع `BadgeDisplayItem` — DTO فيه حالة كل شارة لليوزر: اتفتحت؟ التقدم؟ الـ Tier الجاي؟)
+
+**اتعدلت:**
+- `AppDbContext.cs` — `DbSet<Badge>` + `DbSet<UserBadge>` + الـ Seed جوه `OnModelCreating`
+- `ReviewController.cs` — `Add()` بيفحص Reviewer Badge، `ToggleHelpful()` بيفحص Community Helper Badge (لصاحب الريفيو، مش اللي داس الزرار)
+- `FavoriteController.cs` — `Add()` بيفحص Pharaoh Expert لما النوع يكون `pharaoh` (اتضاف `BadgeEvaluationService` للـ constructor، الكنترولر مكانش فيه أصلاً)
+- `QuizController.cs` — `Answer()` بيفحص Quiz Master بعد ما `QuizHistory` يتسجل
+- `BookingStatusUpdater.cs` — بعد ما الحجوزات تتحول Visited، بيفحص Explorer Badge لكل يوزر اتأثر (مرة واحدة لكل إيميل مش لكل حجز) — ⚠️ إشعار إنجليزي ثابت، نفس قرار `ShopOrderShippingBackgroundService` بالظبط (الـ Background Service مالوش Session/LocalizationService)
+- `UserController.cs` — `Dashboard()` بقى بيجهز `ViewBag.Badges` (List<BadgeDisplayItem>) و`ViewBag.EarnedBadgeCount`
+- `Views/User/Dashboard.cshtml` — 🆕 تاب "Badges" جديد كامل (Grid كروت، فاتحة/باهتة حسب الحالة، progress bar للـ Tier الجاي) + الـ **Explorer Badge الـ hardcoded القديم في تاب Profile اتحول فعليًا** لجزء من النظام الجديد (بياخد الاسم/الأيقونة من `ViewBag.Badges` بدل الـ thresholds الثابتة اللي كانت 1/5/10 — دلوقتي بتتبع الـ Tiers الجديدة 3/7/15)
+
+> 💡 ملاحظة جانبية اتلاحظت وقت التعديل (مش حاجة اتصلحت): فيه باگ موجود من قبل في الـ Hash Routing JS بتاع `Dashboard.cshtml` — `tabIndex` مبني على افتراض إن كل التابات `<button>`، لكن 3 تابات (My Orders/My Coupons/Trip Plans) عبارة عن `<a>` مش أزرار، فترقيم `.db-tab` الحقيقي في الـ DOM مش مطابق للأرقام في `tabIndex`. لسه من غير تصليح.
+
+### ✅ خطوات التفعيل اليدوية — اتعملت بالكامل
+1. **`Program.cs`**: ✅ `builder.Services.AddScoped<BadgeEvaluationService>();` اتضافت
+2. **Migration**: ✅ `Add-Migration AddAchievementsAndBadges` + `Update-Database` اتعملت
+3. **مفاتيح ترجمة جديدة في `ar.json`/`en.json`**: ✅ اتضافت
+
+| Key | AR | EN |
+|---|---|---|
+| `Badge_EarnedNotifTitle` | مبروك! خدت شارة {0} 🏆 | Congrats! You earned the {0} badge 🏆 |
+| `Badge_EarnedNotifMessage` | خدت شارة {0} ({1}). تقدر تشوفها في البروفايل بتاعك. | You earned the {0} badge ({1}). Check it out in your profile. |
+| `Dash_Tab_Badges` | الإنجازات | Badges |
 
 ---
 
@@ -1324,9 +1481,9 @@ Views/TripPlanner/
 
 ---
 
-## 🔔 Notification System — بند 15 — 🟢 الكود والدمج خلصوا بالكامل، باقي بس خطوات التفعيل اليدوية
+## 🔔 Notification System — بند 15 — ✅ مكتمل بالكامل
 
-> القسم ده توثيق لبند 15. كل الـ 5 Triggers المتفق عليها اتدمجت فعليًا (كود حقيقي جوه كنترولرز المشروع، مش تعليمات ولا demo). باقي بس صاحب المشروع يعمل الـ Migration + يستبدل الملفات + يضيف مفاتيح الترجمة عشان يشتغل فعليًا (تفاصيل في `INTEGRATION_NOTES.md`). لما يتأكد إنها شغالة، الحالة تتغير لـ ✅ مكتمل.
+> كل الـ Triggers اتدمجت فعليًا (كود حقيقي جوه كنترولرز المشروع + الـ Background Service بتاع الشحن) وخطوات التفعيل اليدوية (Migration + استبدال الملفات + مفاتيح الترجمة في `ar.json`/`en.json`) اتعملت وخلصت. تفاصيل الدمج الكاملة في `INTEGRATION_NOTES.md`.
 
 ### 🎯 الفكرة الأساسية
 بند 15 = **الأساس** بس (In-app Notification System بسيط وشغال بالكامل) — مش النسخة المتقدمة. الحاجات المتقدمة (SignalR Real-time، Push Notifications، Email Alerts، Smart Preferences) مؤجلة ومكانها قسم "🔔 Notification Ecosystem" تحت في المرجع الكامل، مش دلوقتي.
@@ -1359,11 +1516,11 @@ Views/TripPlanner/
 | Nav_NoNotifications | No notifications | لا توجد إشعارات |
 | Nav_ViewAllNotifications | View all notifications | عرض كل الإشعارات |
 
-بعد كده، خطوات التفعيل المتبقية:
-1. `Add-Migration AddNotifications` + تصحيح `CreatedAt` لـ `GETDATE()` + `Update-Database`
-2. استبدال `_Layout.cshtml` و`BookingController.cs`/`ReviewController.cs`/`UserController.cs`/`QuizController.cs` بالنسخ المدموجة
-3. إضافة الـ 4 مفاتيح فوق في `ar.json`/`en.json`
-4. اختبار الـ Flow الكامل (تفاصيل في `INTEGRATION_NOTES.md`)
+بعد كده، خطوات التفعيل اتعملت وخلصت (26 يوليو):
+1. ✅ `Add-Migration AddNotifications` + تصحيح `CreatedAt` لـ `GETDATE()` + `Update-Database`
+2. ✅ استبدال `_Layout.cshtml` و`BookingController.cs`/`ReviewController.cs`/`UserController.cs`/`QuizController.cs`/`ShopOrderShippingBackgroundService.cs` بالنسخ المدموجة
+3. ✅ إضافة كل مفاتيح الترجمة المطلوبة في `ar.json`/`en.json`
+4. ✅ اختبار الـ Flow الكامل
 
 ### 🔗 Overlap مع بنود تانية في الروادماب
 - "Auto Notification Rules + AI Content Prioritization" (تحت 🤖 AI Systems)
@@ -1415,8 +1572,14 @@ Views/TripPlanner/
 | `TripPlanner_CreatedNotifTitle` | خطة رحلتك جاهزة 🗺️ | Your trip plan is ready 🗺️ |
 | `TripPlanner_CreatedNotifMessage` | خطة رحلتك لـ {0} يوم اتعملت بنجاح. | Your {0}-day trip plan has been created successfully. |
 
-### ⏳ لسه مستني — التحديث التلقائي للشحن
-لسه معملناش حاجة في `ShopOrderShippingBackgroundService.cs` (التحديث التلقائي لتراك الشحن Processing → Shipped → Delivered اللي بيحصل من غير تدخل يدوي من الأدمن). المسار اليدوي (`AdminController.UpdateShopOrderShipping`) بقى بيبعت إشعار، لكن لو فيه مسار تاني أوتوماتيكي بيغيّر نفس الحقل من غير الأدمن، محتاج نراجع الملف ده كمان عشان الإشعار يغطي الحالتين. مستني الملف من صاحب المشروع لو حابب يكمل الجزء ده.
+### ✅ التحديث التلقائي للشحن (26 يوليو — اتعمل فعليًا)
+`ShopOrderShippingBackgroundService.cs` اتعدّل — دلوقتي بيبعت نفس الإشعار بالظبط اللي بيبعته المسار اليدوي (`AdminController.UpdateShopOrderShipping`) في الحالتين:
+- Processing → Shipped (أوتوماتيك بعد 48 ساعة من `ConfirmedAt`) — جوه `ProcessDueShipmentsAsync`
+- Shipped → Delivered (أوتوماتيك حسب عدد أيام المحافظة) — جوه `ProcessDueDeliveriesAsync`
+
+⚠️ نفس القرار بتاع الأدمن بالظبط: نص إنجليزي ثابت (`"Your order has shipped 🚚"` / `"Your order was delivered ✅"`)، مش بيستخدم `_loc`، لأن الـ Background Service ده مالوش وصول لـ `LocalizationService`/Session أصلاً (مفيش Request لنعرف منه لغة اليوزر وقت الحدث) — نفس المنطق اللي خلّى الأدمن داشبورد من غير Localization، بس هنا مفروض تقنيًا مش قرار اختياري.
+كل نداء جوه `try/catch` مستقل لكل أوردر — Best effort، فشل الإشعار مبيوقفش تحديث `ShippingStatus` نفسه ولا باقي الأوردرز في نفس الدورة.
+النتيجة: سواء الأدمن غيّر الحالة يدويًا أو الـ Background Service غيّرها أوتوماتيك، اليوزر بياخد نفس الإشعار بالظبط — مفيش تعارض ولا تكرار (الفلاتر بتضمن كل أوردر يتلقط مرة واحدة بس).
 
 ---
 

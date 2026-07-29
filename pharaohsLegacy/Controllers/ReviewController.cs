@@ -8,12 +8,14 @@ namespace pharaohsLegacy.Controllers
     {
         private readonly AppDbContext _context;
         private readonly LocalizationService _loc;
+        private readonly BadgeEvaluationService _badges; // 🆕 بند 17 — Achievements & Badges
         private const string AdminEmail = "kamalabdlbast89@gmail.com";
 
-        public ReviewController(AppDbContext context, LocalizationService loc)
+        public ReviewController(AppDbContext context, LocalizationService loc, BadgeEvaluationService badges)
         {
             _context = context;
             _loc = loc;
+            _badges = badges;
         }
 
         // 🆕 بدل ما نكرر HttpContext.Session.GetString("Lang") ?? "en" في كل Action (زي باقي الكنترولرز)
@@ -23,7 +25,7 @@ namespace pharaohsLegacy.Controllers
         //  ADD
         // ─────────────────────────────────────────────
         [HttpPost]
-        public IActionResult Add(string type, int itemId, int rating, string comment)
+        public async Task<IActionResult> Add(string type, int itemId, int rating, string comment)
         {
             var email = HttpContext.Session.GetString("UserEmail");
             var role = HttpContext.Session.GetString("UserRole");
@@ -60,6 +62,19 @@ namespace pharaohsLegacy.Controllers
 
             _context.Reviews.Add(review);
             _context.SaveChanges();
+
+            // 🔔 بند 17 — Achievements & Badges: بعد إضافة ريفيو جديد، نفحص Reviewer Badge + Legendary
+            try
+            {
+                var newBadges = await _badges.EvaluateReviewerAsync(email);
+                newBadges.AddRange(await _badges.EvaluateLegendaryAsync(email));
+                _badges.NotifyNewBadges(email, newBadges, Lang());
+                _context.SaveChanges();
+            }
+            catch
+            {
+                // Best effort — الريفيو خلص بنجاح، فشل تقييم البادجات ميوقفش حاجة
+            }
 
             return Json(new { success = true });
         }
@@ -139,7 +154,7 @@ namespace pharaohsLegacy.Controllers
         //  HELPFUL TOGGLE  👍
         // ─────────────────────────────────────────────
         [HttpPost]
-        public IActionResult ToggleHelpful(int reviewId)
+        public async Task<IActionResult> ToggleHelpful(int reviewId)
         {
             var email = HttpContext.Session.GetString("UserEmail");
             if (string.IsNullOrEmpty(email) || email == "guest")
@@ -166,6 +181,31 @@ namespace pharaohsLegacy.Controllers
 
             _context.SaveChanges();
             var count = _context.ReviewHelpfuls.Count(h => h.ReviewId == reviewId);
+
+            // 🔔 بند 17 — Achievements & Badges: بعد ما حد ياخد Helpful vote، نفحص بادج
+            // Community Helper بتاع صاحب الريفيو (مش بتاع اللي داس الزرار) + Legendary بتاعه
+            if (isHelpful)
+            {
+                try
+                {
+                    var review = _context.Reviews.Find(reviewId);
+                    if (review != null)
+                    {
+                        // ⚠️ نفس قرار إشعار الأدمن في BookingController.Confirm(): مفيش لغة مخزنة
+                        // لصاحب الريفيو في السياق ده، فبيتسجل الإشعار بلغة اللي داس "مفيد" (Lang())
+                        // مش لغة صاحب الريفيو نفسه. قرار مقبول مؤقتًا، مش باگ.
+                        var newBadges = await _badges.EvaluateCommunityHelperAsync(review.UserEmail);
+                        newBadges.AddRange(await _badges.EvaluateLegendaryAsync(review.UserEmail));
+                        _badges.NotifyNewBadges(review.UserEmail, newBadges, Lang());
+                        _context.SaveChanges();
+                    }
+                }
+                catch
+                {
+                    // Best effort — الـ Helpful vote خلص بنجاح، فشل تقييم البادجات ميوقفش حاجة
+                }
+            }
+
             return Json(new { success = true, isHelpful, count });
         }
 

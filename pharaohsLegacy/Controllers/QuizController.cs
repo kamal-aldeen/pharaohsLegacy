@@ -27,6 +27,7 @@ namespace pharaohsLegacy.Controllers
         private readonly QuizQuestionGeneratorService _generator;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly LocalizationService _loc;
+        private readonly BadgeEvaluationService _badges; // 🆕 بند 17 — Achievements & Badges
 
         private const string SessionKey = "QuizAttempt";
         private const int QuestionsPerQuiz = 10;
@@ -59,12 +60,13 @@ namespace pharaohsLegacy.Controllers
         private const double SuspiciousStdDevSeconds = 0.4;
 
         public QuizController(AppDbContext db, QuizQuestionGeneratorService generator,
-            IHttpClientFactory httpClientFactory, LocalizationService loc)
+            IHttpClientFactory httpClientFactory, LocalizationService loc, BadgeEvaluationService badges)
         {
             _db = db;
             _generator = generator;
             _httpClientFactory = httpClientFactory;
             _loc = loc;
+            _badges = badges;
         }
 
         private string Lang() => HttpContext.Session.GetString("Lang") ?? "en";
@@ -271,6 +273,24 @@ namespace pharaohsLegacy.Controllers
                         type: "Quiz",
                         link: "/Shop/Index");
                     await _db.SaveChangesAsync();
+                }
+
+                // 🔔 بند 17 — Achievements & Badges: بعد ما الكويز يتسجل (نجح أو فشل، الشرط
+                // جوه EvaluateQuizMasterAsync نفسه بيعتمد على عدد المرات + Streak)
+                try
+                {
+                    var newBadges = await _badges.EvaluateQuizMasterAsync(userEmail);
+                    // 🆕 فحص الشارات السرية المرتبطة بالكويز هنا كمان (Perfect Score + Streak
+                    // Legend + Night Owl-quiz) — قبل كده كانت بس بتتفحص لما اليوزر يفتح صفحة
+                    // أسرة، يعني لو حقق 100% بس معملش كده بعدها، الشارة تفضل متأخرة/معلّقة غلط
+                    newBadges.AddRange(await _badges.EvaluateHiddenAchievementsAsync(userEmail));
+                    newBadges.AddRange(await _badges.EvaluateLegendaryAsync(userEmail));
+                    _badges.NotifyNewBadges(userEmail, newBadges, lang);
+                    await _db.SaveChangesAsync();
+                }
+                catch
+                {
+                    // Best effort — الكويز خلص وسجل بنجاح، فشل تقييم البادجات ميوقفش حاجة
                 }
             }
             else

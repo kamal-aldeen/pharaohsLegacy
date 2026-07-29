@@ -54,6 +54,8 @@ namespace pharaohsLegacy
             // 🆕 التحديث التلقائي لتراك الشحن (Processing → Shipped → Delivered) حسب المحافظة
             builder.Services.AddHostedService<pharaohsLegacy.Services.ShopOrderShippingBackgroundService>();
 
+            builder.Services.AddScoped<BadgeEvaluationService>();
+
             // 🆕 QuestPDF — تصدير خطط الرحلة كـ PDF (TripPlanner/ExportPdf)
             // الرخصة المجانية (Community) كافية للمشروع ده (طالب/شركة صغيرة تحت سقف الإيراد بتاعها)
             QuestPDF.Settings.License = LicenseType.Community;

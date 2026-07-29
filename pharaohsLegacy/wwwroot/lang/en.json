@@ -691,7 +691,15 @@
   "TripPlanner_CreatedNotifMessage": "Your {0}-day trip plan has been created successfully.",
   "Search_RecentSearches": "Recent Searches",
   "Search_TrendingSearches": "Trending Searches",
-  "Common_HistoricalEventsPlural": "Historical Events"
+  "Common_HistoricalEventsPlural": "Historical Events",
+  "Badge_EarnedNotifTitle": "Congrats! You earned the {0} badge 🏆",
+  "Badge_EarnedNotifMessage": "You earned the {0} badge ({1}). Check it out in your profile.",
+  "Dash_Tab_Badges": "Badges",
+  "Badge_Category_Visit": "Visits",
+  "Badge_Category_Knowledge": "Knowledge",
+  "Badge_Category_Community": "Community",
+  "Badge_Category_Legendary": "Legendary",
+  "Badge_Category_Hidden": "Secret Achievements"
 
 
 

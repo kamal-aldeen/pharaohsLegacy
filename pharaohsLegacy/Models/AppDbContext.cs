@@ -42,6 +42,10 @@ namespace pharaohsLegacy.Models
 
         public DbSet<SearchHistory> SearchHistories { get; set; } // 🆕 Smart Search — بند 16 (History + Trending)
 
+        public DbSet<Badge> Badges { get; set; } // 🆕 بند 17 — Achievements & Badges (كتالوج الشارات)
+        public DbSet<UserBadge> UserBadges { get; set; } // 🆕 بند 17 — الشارات اللي كل يوزر خدها فعليًا
+        public DbSet<ItemView> ItemViews { get; set; } // 🆕 بند 17 — Dynasty Expert / True Historian: تتبع عام للزيارات (Type + ItemId)
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // 🆕 منع تكرار السعر لنفس المكان نهائيًا على مستوى الداتا بيز
@@ -50,7 +54,16 @@ namespace pharaohsLegacy.Models
                 .HasIndex(p => new { p.PlaceType, p.PlaceId })
                 .IsUnique();
 
+            // 🆕 بند 17 — منع تسجيل نفس الزيارة (نفس اليوزر/النوع/العنصر) أكتر من مرة
+            // على مستوى الداتا بيز، كـ Safety net فوق فحص alreadyViewed في الكنترولر
+            modelBuilder.Entity<ItemView>()
+                .HasIndex(v => new { v.UserEmail, v.Type, v.ItemId })
+                .IsUnique();
+
             
+            // 🆕 بند 17 — Achievements & Badges: كتالوج الشارات (كل صف = بادج/Tier واحد)
+            modelBuilder.Entity<Badge>().HasData(BadgeCatalogSeed.GetAll());
+
             modelBuilder.Entity<Pharaoh>().HasData(
                 new Pharaoh
                 {

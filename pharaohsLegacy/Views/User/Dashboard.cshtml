@@ -1541,8 +1541,318 @@
             font-size: 0.78rem;
         }
 
+        /* 🆕 بند 17 — Achievements & Badges */
+        .badges-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            margin-top: 8px;
+        }
+
+        .badges-section-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-family: 'Cinzel', serif;
+            font-size: 1rem;
+            letter-spacing: 1px;
+            color: var(--gold-light);
+            border-bottom: 1px solid rgba(var(--gold-rgb), 0.15);
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+
+        .badges-section-count {
+            font-size: 0.75rem;
+            font-family: 'Segoe UI', sans-serif;
+            letter-spacing: 0;
+            color: var(--text-dim);
+            background: rgba(var(--gold-rgb), 0.1);
+            padding: 3px 12px;
+            border-radius: 20px;
+        }
+
+        .badges-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+            gap: 18px;
+        }
+
+        .badge-tile {
+            position: relative;
+            background: var(--dark-card);
+            border: 1px solid rgba(var(--gold-rgb), 0.15);
+            border-radius: 14px;
+            padding: 22px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 8px;
+            min-height: 190px;
+            cursor: pointer;
+            transition: border-color 0.25s, transform 0.25s;
+        }
+
+            .badge-tile:hover {
+                border-color: var(--border-hover);
+                transform: translateY(-2px);
+            }
+
+            .badge-tile.locked {
+                filter: grayscale(100%);
+                opacity: 0.45;
+            }
+
+            .badge-tile.earned {
+                border-color: rgba(var(--gold-rgb), 0.45);
+                box-shadow: var(--shadow-gold);
+            }
+
+        .badge-tile-hint {
+            position: absolute;
+            top: 10px;
+            inset-inline-end: 12px;
+            font-size: 0.75rem;
+            color: rgba(var(--gold-rgb), 0.4);
+        }
+
+        /* 🆕 Badge Details Modal — Tier ladder كامل (Bronze/Silver/Gold) */
+        .badge-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s;
+            padding: 20px;
+        }
+
+            .badge-modal-overlay.open {
+                opacity: 1;
+                pointer-events: auto;
+            }
+
+        .badge-modal {
+            background: var(--dark-card);
+            border: 1px solid rgba(var(--gold-rgb), 0.3);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 440px;
+            max-height: 82vh;
+            overflow-y: auto;
+            padding: 28px;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+            transform: translateY(10px);
+            transition: transform 0.25s;
+        }
+
+        .badge-modal-overlay.open .badge-modal {
+            transform: translateY(0);
+        }
+
+        .badge-modal-close {
+            position: absolute;
+            top: 16px;
+            inset-inline-end: 16px;
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+
+            .badge-modal-close:hover {
+                color: var(--gold-light);
+            }
+
+        .badge-modal-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 26px;
+            text-align: center;
+        }
+
+        .badge-modal-icon {
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
+            background: rgba(var(--gold-rgb), 0.12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            color: var(--gold);
+        }
+
+            .badge-modal-icon svg {
+                width: 36px;
+                height: 36px;
+            }
+
+        .badge-modal-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.15rem;
+            color: var(--gold-light);
+        }
+
+        .badge-modal-tiers {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .badge-tier-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 14px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(var(--gold-rgb), 0.1);
+        }
+
+            .badge-tier-row.earned {
+                border-color: rgba(var(--gold-rgb), 0.4);
+                background: rgba(var(--gold-rgb), 0.06);
+            }
+
+            .badge-tier-row.locked {
+                opacity: 0.5;
+            }
+
+        .badge-tier-icon {
+            width: 32px;
+            height: 32px;
+            flex: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(var(--gold-rgb), 0.1);
+            color: var(--gold);
+            font-size: 0.8rem;
+        }
+
+        .badge-tier-row.earned .badge-tier-icon {
+            background: var(--gold);
+            color: var(--on-gold);
+        }
+
+        .badge-tier-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .badge-tier-name {
+            font-weight: 700;
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-bottom: 3px;
+        }
+
+        .badge-tier-desc {
+            font-size: 0.78rem;
+            color: var(--text-dim);
+            margin-bottom: 6px;
+        }
+
+        .badge-tier-date {
+            font-size: 0.72rem;
+            color: var(--gold-light);
+        }
+
+        .badge-tier-progress-track {
+            width: 100%;
+            height: 5px;
+            border-radius: 6px;
+            background: rgba(var(--gold-rgb), 0.12);
+            overflow: hidden;
+            margin-top: 2px;
+        }
+
+        .badge-tier-progress-fill {
+            height: 100%;
+            background: var(--gold);
+        }
+
+        .badge-tier-progress-label {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            margin-top: 3px;
+        }
+
+        .badge-tile-icon {
+            font-size: 2.2rem;
+            color: var(--gold);
+            width: 64px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(var(--gold-rgb), 0.1);
+        }
+
+            .badge-tile-icon svg {
+                width: 30px;
+                height: 30px;
+            }
+
+        .badge-tile-name {
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            color: var(--gold-light);
+            font-size: 0.95rem;
+        }
+
+        .badge-tile-desc {
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            min-height: 28px;
+        }
+
+        .badge-tile-tier {
+            font-size: 0.7rem;
+            padding: 3px 10px;
+            border-radius: 20px;
+            background: var(--gold);
+            color: var(--on-gold);
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-tile-progress-track {
+            width: 100%;
+            height: 6px;
+            border-radius: 6px;
+            background: rgba(var(--gold-rgb), 0.12);
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .badge-tile-progress-fill {
+            height: 100%;
+            background: var(--gold);
+            border-radius: 6px;
+        }
+
+        .badge-tile-progress-label {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+        }
+
     </style>
-}
+    }
 
 <div class="db-wrap">
 
@@ -1608,6 +1918,13 @@
                 @if (ViewBag.JourneyCount > 0)
                 {
                     <span class="tab-badge">@Html.Digits((object)ViewBag.JourneyCount)</span>
+                }
+            </button>
+            <button class="db-tab" onclick="switchTab('badges', this)">
+                🏆 @Html.L("Dash_Tab_Badges")
+                @if ((int)(ViewBag.EarnedBadgeCount ?? 0) > 0)
+                {
+                    <span class="tab-badge">@Html.Digits((object)ViewBag.EarnedBadgeCount)</span>
                 }
             </button>
             <button class="db-tab" onclick="switchTab('profile', this)">𓁹 @Html.L("Dash_Tab_Profile")</button>
@@ -2139,6 +2456,146 @@
         }
     </div>
 
+    @* {{-- ===== BADGES (بند 17 — Achievements & Badges) ===== --}} *@
+    <div id="tab-badges" class="db-panel">
+        @{
+            var badgeItems = ViewBag.Badges as List<pharaohsLegacy.Models.BadgeDisplayItem>
+                ?? new List<pharaohsLegacy.Models.BadgeDisplayItem>();
+
+            // ترتيب المجموعات ثابت (مش أبجدي) عشان يفضل نفس الترتيب دايمًا في كل مرة
+            var categoryOrder = new[] { "Visit", "Knowledge", "Community", "Legendary", "Hidden" };
+            var groupedBadges = badgeItems
+                .GroupBy(b => b.Category)
+                .OrderBy(g => { var idx = Array.IndexOf(categoryOrder, g.Key); return idx < 0 ? 99 : idx; });
+
+            // 🆕 بيانات الشارات بلغة العرض الحالية بس (مبنية سيرفر-سايد)، عشان الـ Modal
+            // يقدر يعرض تفاصيل أي شارة من غير Round-trip للسيرفر لما تدوس عليها
+            var badgesJson = Json.Serialize(badgeItems.Select(b => new
+            {
+                key = b.Key,
+                icon = pharaohsLegacy.Models.BadgeIconSvg.Get(b.Key),
+                name = lang == "ar" ? b.NameAr : b.NameEn,
+                currentProgress = b.CurrentProgress,
+                tiers = b.Tiers.Select(t => new
+                {
+                    tier = t.Tier,
+                    threshold = t.Threshold,
+                    name = lang == "ar" ? t.NameAr : t.NameEn,
+                    desc = lang == "ar" ? t.DescriptionAr : t.DescriptionEn,
+                    earned = t.Earned,
+                    earnedAt = t.EarnedAt.HasValue ? t.EarnedAt.Value.ToString("yyyy-MM-dd") : null
+                })
+            }));
+        }
+        <script>window.__badgesData = @Html.Raw(badgesJson);</script>
+        <div class="badges-wrap">
+            @foreach (var group in groupedBadges)
+            {
+                var groupList = group.ToList();
+                var earnedInGroup = groupList.Count(x => x.EarnedTier != null);
+                <div class="badges-section">
+                    <div class="badges-section-title">
+                        <span>@Html.L("Badge_Category_" + group.Key)</span>
+                        <span class="badges-section-count">@Html.Digits(earnedInGroup) / @Html.Digits(groupList.Count)</span>
+                    </div>
+                    <div class="badges-grid">
+                        @foreach (var b in groupList)
+                        {
+                            bool earned = b.EarnedTier != null;
+                            string name = lang == "ar" ? b.NameAr : b.NameEn;
+                            string desc = lang == "ar" ? b.DescriptionAr : b.DescriptionEn;
+                            <div class="badge-tile fade-up @(earned ? "earned" : "locked")"
+                                 onclick="openBadgeModal('@b.Key')" role="button" tabindex="0">
+                                <i class="fa-solid fa-circle-info badge-tile-hint"></i>
+                                <div class="badge-tile-icon">@Html.Raw(pharaohsLegacy.Models.BadgeIconSvg.Get(b.Key))</div>
+                                <div class="badge-tile-name">@name</div>
+                                @if (!string.IsNullOrEmpty(desc))
+                                {
+                                    <div class="badge-tile-desc">@desc</div>
+                                }
+                                @if (earned)
+                                {
+                                    <span class="badge-tile-tier">@b.EarnedTier</span>
+                                }
+                                else if (b.NextThreshold.HasValue && b.NextThreshold.Value > 0)
+                                {
+                                    var pct = Math.Min(100, (int)(100.0 * b.CurrentProgress / b.NextThreshold.Value));
+                                    <div class="badge-tile-progress-track">
+                                        <div class="badge-tile-progress-fill" style="width:@pct%"></div>
+                                    </div>
+                                    <div class="badge-tile-progress-label">@Html.Digits(b.CurrentProgress) / @Html.Digits(b.NextThreshold.Value) — @b.NextTier</div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        @* 🆕 Modal تفاصيل الشارة — واحد بس بيتعاد استخدامه لكل الشارات *@
+        <div id="badgeModalOverlay" class="badge-modal-overlay" onclick="if(event.target===this) closeBadgeModal()">
+            <div class="badge-modal">
+                <button type="button" class="badge-modal-close" onclick="closeBadgeModal()"><i class="fa-solid fa-xmark"></i></button>
+                <div class="badge-modal-header">
+                    <div class="badge-modal-icon" id="badgeModalIcon"></div>
+                    <div class="badge-modal-title" id="badgeModalTitle"></div>
+                </div>
+                <div class="badge-modal-tiers" id="badgeModalTiers"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openBadgeModal(key) {
+            var badge = (window.__badgesData || []).find(function (b) { return b.key === key; });
+            if (!badge) return;
+
+            document.getElementById('badgeModalIcon').innerHTML = badge.icon;
+            document.getElementById('badgeModalTitle').textContent = badge.name;
+
+            var tiersWrap = document.getElementById('badgeModalTiers');
+            tiersWrap.innerHTML = '';
+
+            var nextAssigned = false;
+            badge.tiers.forEach(function (t) {
+                var isNext = !t.earned && !nextAssigned;
+                if (isNext) nextAssigned = true;
+
+                var row = document.createElement('div');
+                row.className = 'badge-tier-row ' + (t.earned ? 'earned' : (isNext ? 'next' : 'locked'));
+
+                var rightHtml = '';
+                if (t.earned) {
+                    rightHtml = '<div class="badge-tier-date">' + (t.earnedAt || '') + '</div>';
+                } else if (isNext && t.threshold > 0) {
+                    var pct = Math.min(100, Math.round(100 * (badge.currentProgress || 0) / t.threshold));
+                    rightHtml =
+                        '<div class="badge-tier-progress-track"><div class="badge-tier-progress-fill" style="width:' + pct + '%"></div></div>' +
+                        '<div class="badge-tier-progress-label">' + (badge.currentProgress || 0) + ' / ' + t.threshold + '</div>';
+                }
+
+                row.innerHTML =
+                    '<div class="badge-tier-icon"><i class="fa-solid ' + (t.earned ? 'fa-check' : 'fa-lock') + '"></i></div>' +
+                    '<div class="badge-tier-info">' +
+                    '<div class="badge-tier-name">' + t.tier + ' — ' + t.name + '</div>' +
+                    '<div class="badge-tier-desc">' + t.desc + '</div>' +
+                    rightHtml +
+                    '</div>';
+                tiersWrap.appendChild(row);
+            });
+
+            document.getElementById('badgeModalOverlay').classList.add('open');
+        }
+
+        function closeBadgeModal() {
+            document.getElementById('badgeModalOverlay').classList.remove('open');
+        }
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeBadgeModal();
+        });
+    </script>
+
     @* {{-- ===== PROFILE ===== --}} *@
     <div id="tab-profile" class="db-panel">
         <div style="margin-top:32px;">
@@ -2164,24 +2621,14 @@
                     </div>
                     <div class="db-profile-divider"></div>
 
-                    @if (Model.VisitedCount >= 1)
+                    @{
+                        var explorerBadge = badgeItems.FirstOrDefault(x => x.Key == "explorer");
+                    }
+                    @if (explorerBadge != null && explorerBadge.EarnedTier != null)
                     {
                         <div class="explorer-badge">
-                            @if (Model.VisitedCount >= 10)
-                            {
-                                <span class="badge-icon">𓂀</span>
-                                <span class="badge-title">@Html.L("Badge_GrandExplorer")</span>
-                            }
-                            else if (Model.VisitedCount >= 5)
-                            {
-                                <span class="badge-icon">𓋹</span>
-                                <span class="badge-title">@Html.L("Badge_TempleMaster")</span>
-                            }
-                            else
-                            {
-                                <span class="badge-icon">𓆣</span>
-                                <span class="badge-title">@Html.L("Badge_Explorer")</span>
-                            }
+                            <span class="badge-icon"><i class="@explorerBadge.IconClass"></i></span>
+                            <span class="badge-title">@(lang == "ar" ? explorerBadge.NameAr : explorerBadge.NameEn)</span>
                             <span class="badge-count">@Html.Digits(Model.VisitedCount) @Html.L("Badge_PlacesVisited")</span>
                         </div>
                         <div class="db-profile-divider"></div>
@@ -2399,7 +2846,7 @@
 
         // ===== HASH ROUTING (يشمل journey دلوقتي) =====
         const hash = window.location.hash.replace('#', '');
-        const tabIndex = { overview: 0, bookings: 1, favorites: 2, journey: 3, profile: 4 };
+        const tabIndex = { overview: 0, bookings: 1, favorites: 2, journey: 3, badges: 4, profile: 5 };
         if (tabIndex[hash] !== undefined) {
         switchTab(hash, document.querySelectorAll('.db-tab')[tabIndex[hash]]);
         }

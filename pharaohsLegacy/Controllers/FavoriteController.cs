@@ -1,17 +1,22 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using pharaohsLegacy.Models;
+using pharaohsLegacy.Services;
 
 namespace pharaohsLegacy.Controllers
 {
     public class FavoriteController : Controller
     {
         private AppDbContext context;
+        private readonly BadgeEvaluationService _badges; // 🆕 بند 17 — Achievements & Badges
 
-        public FavoriteController(AppDbContext _context)
+        public FavoriteController(AppDbContext _context, BadgeEvaluationService badges)
         {
             context = _context;
+            _badges = badges;
         }
+
+        private string Lang() => HttpContext.Session.GetString("Lang") ?? "en";
 
         public IActionResult Index()
         {
@@ -107,6 +112,23 @@ namespace pharaohsLegacy.Controllers
                 };
                 context.Favorites.Add(fav);
                 await context.SaveChangesAsync();
+
+                // 🔔 بند 17 — Achievements & Badges: بس لما تكون مفضلة فرعون
+                // (الأنواع التانية مالهاش شارة معتمدة عليها دلوقتي)
+                if (type.ToLower() == "pharaoh")
+                {
+                    try
+                    {
+                        var newBadges = await _badges.EvaluatePharaohExpertAsync(email);
+                        newBadges.AddRange(await _badges.EvaluateLegendaryAsync(email));
+                        _badges.NotifyNewBadges(email, newBadges, Lang());
+                        await context.SaveChangesAsync();
+                    }
+                    catch
+                    {
+                        // Best effort — إضافة المفضلة خلصت بنجاح، فشل تقييم البادجات ميوقفش حاجة
+                    }
+                }
             }
 
             // 🆕 لو الطلب جاي بـ AJAX (fetch من غير Refresh) بنرجع JSON بس، مش Redirect لصفحة كاملة

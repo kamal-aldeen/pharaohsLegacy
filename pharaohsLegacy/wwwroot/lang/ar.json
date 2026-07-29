@@ -686,7 +686,15 @@
   "TripPlanner_CreatedNotifMessage": "خطة رحلتك لـ {0} يوم اتعملت بنجاح.",
   "Search_RecentSearches": "بحثت عنه قبل كده",
   "Search_TrendingSearches": "الأكتر بحثاً",
-  "Common_HistoricalEventsPlural": "الأحداث التاريخية"
+  "Common_HistoricalEventsPlural": "الأحداث التاريخية",
+  "Badge_EarnedNotifTitle": "مبروك! خدت شارة {0} 🏆",
+  "Badge_EarnedNotifMessage": "خدت شارة {0} ({1}). تقدر تشوفها في البروفايل بتاعك.",
+  "Dash_Tab_Badges": "الإنجازات",
+  "Badge_Category_Visit": "زيارات",
+  "Badge_Category_Knowledge": "معرفة",
+  "Badge_Category_Community": "مجتمع",
+  "Badge_Category_Legendary": "أسطوري",
+  "Badge_Category_Hidden": "إنجازات سرية"
 
 
 
